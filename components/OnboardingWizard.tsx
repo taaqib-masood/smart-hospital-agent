@@ -208,13 +208,13 @@ function Step2({
       />
       <InputField
         label="City"
-        placeholder="Mumbai"
+        placeholder="Dubai"
         value={clinicInfo.city}
         onChange={(v) => setClinicInfo({ ...clinicInfo, city: v })}
       />
       <InputField
         label="Phone Number"
-        placeholder="+91 98765 43210"
+        placeholder="+971 50 123 4567"
         value={clinicInfo.phone}
         onChange={(v) => setClinicInfo({ ...clinicInfo, phone: v })}
         type="tel"
@@ -283,7 +283,7 @@ function Step3({
         </div>
         <input
           type="tel"
-          placeholder="+91 98765 43210"
+          placeholder="+971 50 123 4567"
           value={whatsappNum}
           onChange={(e) => setWhatsappNum(e.target.value)}
           className="w-full bg-white/[0.05] border border-white/[0.1] rounded-xl pl-10 pr-4 py-4 text-white placeholder:text-slate-500 text-base focus:outline-none focus:border-cyan-500/50 transition-all"
@@ -506,7 +506,7 @@ function Step6({
   const preview = greeting
     .replace(/\[Name\]/g, "Priya")
     .replace(/\[Clinic Name\]/g, clinicName || "Our Clinic")
-    .replace(/\[Phone\]/g, "+91 98765 43210");
+    .replace(/\[Phone\]/g, "+971 50 123 4567");
 
   return (
     <div className="flex flex-col gap-4">

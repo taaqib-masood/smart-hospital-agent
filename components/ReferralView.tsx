@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
-import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
-import { useCountUp } from "@/lib/hooks";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Send,
   Plus,
@@ -10,33 +9,23 @@ import {
   ChevronUp,
   Star,
   Phone,
-  UserPlus,
-  Network,
   ArrowUpRight,
   ArrowDownLeft,
-  MessageCircle,
-  FileText,
   CheckCircle2,
   Clock,
-  AlertCircle,
   X,
   Search,
-  Activity,
-  TrendingUp,
   Users,
-  Zap,
+  Smartphone,
+  Hospital
 } from "lucide-react";
-
-// ─── Types ───────────────────────────────────────────────────────────────────
 
 interface ReferralViewProps {
   addToast: (msg: string, type: "success" | "info" | "warn") => void;
 }
 
 type ReferralStatus = "Pending" | "Appointment Set" | "Seen" | "Overdue";
-type ReceivedStatus = "New" | "Booked" | "Seen";
 type TabId = "sent" | "received" | "network";
-type UrgencyLevel = "Routine" | "Urgent" | "Emergency";
 
 interface SentReferral {
   id: string;
@@ -57,8 +46,7 @@ interface ReceivedReferral {
   fromDoctor: string;
   reason: string;
   date: string;
-  status: ReceivedStatus;
-  appointmentDate?: string;
+  status: "New" | "Booked" | "Seen";
 }
 
 interface Specialist {
@@ -69,794 +57,375 @@ interface Specialist {
   rating: number;
   hospital: string;
   phone: string;
-  color: string;
 }
 
-// ─── Static Data ─────────────────────────────────────────────────────────────
-
 const INITIAL_SENT: SentReferral[] = [
-  { id: "r1", patient: "Priya Sharma", age: 42, specialist: "Dr. Arjun Mehta", specialty: "Cardiologist", date: "Apr 22", status: "Appointment Set", outcome: null, reason: "Chest pain and palpitations for 2 weeks", specialistPhone: "+91 98765 43210" },
-  { id: "r2", patient: "Rahul Gupta", age: 35, specialist: "Dr. Sneha Patel", specialty: "Endocrinologist", date: "Apr 21", status: "Seen", outcome: "Diabetes management plan given", reason: "Uncontrolled blood sugar levels", specialistPhone: "+91 98765 43211" },
-  { id: "r3", patient: "Ananya Nair", age: 28, specialist: "Dr. Ravi Kumar", specialty: "Orthopedic", date: "Apr 20", status: "Pending", outcome: null, reason: "Knee pain post-injury", specialistPhone: "+91 98765 43212" },
-  { id: "r4", patient: "Vikram Patel", age: 55, specialist: "Dr. Priya Nair", specialty: "Neurologist", date: "Apr 19", status: "Seen", outcome: "MRI recommended, follow-up in 4 wks", reason: "Recurrent headaches and dizziness", specialistPhone: "+91 98765 43213" },
-  { id: "r5", patient: "Sunita Rao", age: 61, specialist: "Dr. Arjun Mehta", specialty: "Cardiologist", date: "Apr 18", status: "Seen", outcome: "Echo normal, continue meds", reason: "Routine cardiac evaluation", specialistPhone: "+91 98765 43210" },
-  { id: "r6", patient: "Karan Mehta", age: 47, specialist: "Dr. Amit Shah", specialty: "Pulmonologist", date: "Apr 17", status: "Appointment Set", outcome: null, reason: "Persistent cough and breathlessness", specialistPhone: "+91 98765 43214" },
-  { id: "r7", patient: "Deepa Singh", age: 39, specialist: "Dr. Sneha Patel", specialty: "Endocrinologist", date: "Apr 16", status: "Pending", outcome: null, reason: "Thyroid irregularities", specialistPhone: "+91 98765 43211" },
-  { id: "r8", patient: "Meera Joshi", age: 52, specialist: "Dr. Ravi Kumar", specialty: "Orthopedic", date: "Apr 15", status: "Seen", outcome: "Physiotherapy recommended", reason: "Lower back pain chronic", specialistPhone: "+91 98765 43212" },
-  { id: "r9", patient: "Arjun Kumar", age: 31, specialist: "Dr. Priya Nair", specialty: "Neurologist", date: "Apr 14", status: "Seen", outcome: "EEG normal", reason: "Seizure episode evaluation", specialistPhone: "+91 98765 43213" },
-  { id: "r10", patient: "Priya Sharma", age: 42, specialist: "Dr. Amit Shah", specialty: "Pulmonologist", date: "Apr 12", status: "Seen", outcome: "Mild asthma, inhaler prescribed", reason: "Wheezing and shortness of breath", specialistPhone: "+91 98765 43214" },
+  { id: "r1", patient: "Priya Sharma", age: 42, specialist: "Dr. Arjun Mehta", specialty: "Cardiologist", date: "Apr 22", status: "Appointment Set", outcome: null, reason: "Chest pain and palpitations for 2 weeks", specialistPhone: "+971 4 377 5500" },
+  { id: "r2", patient: "Rahul Gupta", age: 35, specialist: "Dr. Sneha Patel", specialty: "Endocrinologist", date: "Apr 21", status: "Seen", outcome: "Diabetes management plan given", reason: "Uncontrolled blood sugar levels", specialistPhone: "+971 4 435 9999" },
+  { id: "r3", patient: "Ananya Nair", age: 28, specialist: "Dr. Ravi Kumar", specialty: "Orthopedic Surgeon", date: "Apr 20", status: "Pending", outcome: null, reason: "Knee pain post-injury", specialistPhone: "+971 4 519 9999" },
+  { id: "r4", patient: "Vikram Patel", age: 55, specialist: "Dr. Priya Nair", specialty: "Neurologist", date: "Apr 19", status: "Seen", outcome: "MRI recommended, follow-up in 4 wks", reason: "Recurrent headaches and dizziness", specialistPhone: "+971 4 414 4444" },
+  { id: "r5", patient: "Sunita Rao", age: 61, specialist: "Dr. Arjun Mehta", specialty: "Cardiologist", date: "Apr 18", status: "Seen", outcome: "Echo normal, continue meds", reason: "Routine cardiac evaluation", specialistPhone: "+971 4 377 5500" },
 ];
 
 const RECEIVED_REFERRALS: ReceivedReferral[] = [
   { id: "rec1", patient: "Raj Verma", fromDoctor: "Dr. Amit Shah", reason: "Post-pulmonology follow-up", date: "Apr 23", status: "New" },
-  { id: "rec2", patient: "Kavya Reddy", fromDoctor: "Dr. Ravi Kumar", reason: "Post-ortho rehab check", date: "Apr 22", status: "Booked", appointmentDate: "Apr 26" },
-  { id: "rec3", patient: "Mohan Das", fromDoctor: "Dr. Sneha Patel", reason: "Diabetes complication", date: "Apr 21", status: "Seen", appointmentDate: "Apr 23" },
-  { id: "rec4", patient: "Nalini Menon", fromDoctor: "Dr. Priya Nair", reason: "Neuro follow-up", date: "Apr 20", status: "Seen", appointmentDate: "Apr 22" },
-  { id: "rec5", patient: "Arun Joshi", fromDoctor: "Dr. Amit Shah", reason: "Chest symptoms follow-up", date: "Apr 19", status: "Booked", appointmentDate: "Apr 25" },
-  { id: "rec6", patient: "Rekha Singh", fromDoctor: "Dr. Arjun Mehta", reason: "Cardio follow-up", date: "Apr 18", status: "Seen", appointmentDate: "Apr 20" },
-  { id: "rec7", patient: "Suresh Babu", fromDoctor: "Dr. Ravi Kumar", reason: "Post-fracture check", date: "Apr 17", status: "Seen", appointmentDate: "Apr 19" },
-  { id: "rec8", patient: "Divya Nair", fromDoctor: "Dr. Sneha Patel", reason: "Thyroid follow-up", date: "Apr 16", status: "Seen", appointmentDate: "Apr 18" },
+  { id: "rec2", patient: "Kavya Reddy", fromDoctor: "Dr. Ravi Kumar", reason: "Post-ortho rehab check", date: "Apr 22", status: "Booked" },
+  { id: "rec3", patient: "Mohan Das", fromDoctor: "Dr. Sneha Patel", reason: "Diabetes complication", date: "Apr 21", status: "Seen" },
 ];
 
 const SPECIALISTS: Specialist[] = [
-  { id: "sp1", name: "Dr. Arjun Mehta", specialty: "Cardiologist", referrals: 12, rating: 4.8, hospital: "Apollo Clinic, Andheri", phone: "+91 98765 43210", color: "#F43F5E" },
-  { id: "sp2", name: "Dr. Sneha Patel", specialty: "Endocrinologist", referrals: 8, rating: 4.9, hospital: "Kokilaben Hospital", phone: "+91 98765 43211", color: "#8B5CF6" },
-  { id: "sp3", name: "Dr. Ravi Kumar", specialty: "Orthopedic Surgeon", referrals: 7, rating: 4.7, hospital: "Lilavati Hospital", phone: "+91 98765 43212", color: "#10B981" },
-  { id: "sp4", name: "Dr. Priya Nair", specialty: "Neurologist", referrals: 5, rating: 4.9, hospital: "Bombay Hospital", phone: "+91 98765 43213", color: "#F59E0B" },
-  { id: "sp5", name: "Dr. Amit Shah", specialty: "Pulmonologist", referrals: 4, rating: 4.6, hospital: "Breach Candy Hospital", phone: "+91 98765 43214", color: "#06B6D4" },
+  { id: "sp1", name: "Dr. Arjun Mehta", specialty: "Cardiologist", referrals: 14, rating: 4.9, hospital: "American Hospital Dubai, Oud Metha", phone: "+971 4 377 5500" },
+  { id: "sp2", name: "Dr. Sneha Patel", specialty: "Endocrinologist", referrals: 11, rating: 4.8, hospital: "Mediclinic City Hospital, DHCC", phone: "+971 4 435 9999" },
+  { id: "sp3", name: "Dr. Ravi Kumar", specialty: "Orthopedic Surgeon", referrals: 9, rating: 4.7, hospital: "King's College Hospital, Dubai Hills", phone: "+971 4 519 9999" },
+  { id: "sp4", name: "Dr. Priya Nair", specialty: "Neurologist", referrals: 8, rating: 4.9, hospital: "Fakeeh University Hospital, Silicon Oasis", phone: "+971 4 414 4444" },
 ];
 
-const SPECIALTY_COLORS: Record<string, string> = {
-  Cardiologist: "#F43F5E",
-  Endocrinologist: "#8B5CF6",
-  "Orthopedic": "#10B981",
-  "Orthopedic Surgeon": "#10B981",
-  Neurologist: "#F59E0B",
-  Pulmonologist: "#06B6D4",
-};
+export default function ReferralView({ addToast }: ReferralViewProps) {
+  const [sentList, setSentList] = useState<SentReferral[]>(INITIAL_SENT);
+  const [receivedList, setReceivedList] = useState<ReceivedReferral[]>(RECEIVED_REFERRALS);
+  const [activeTab, setActiveTab] = useState<TabId>("sent");
+  const [search, setSearch] = useState("");
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function getInitials(name: string) {
-  return name
-    .split(" ")
-    .filter((w) => !w.startsWith("Dr"))
-    .slice(0, 2)
-    .map((w) => w[0])
-    .join("")
-    .toUpperCase();
-}
-
-function statusBadge(status: ReferralStatus) {
-  const map: Record<ReferralStatus, { bg: string; text: string; label: string }> = {
-    Pending: { bg: "bg-amber-500/15 border-amber-500/30", text: "text-amber-400", label: "Pending" },
-    "Appointment Set": { bg: "bg-cyan-500/15 border-cyan-500/30", text: "text-cyan-400", label: "Appointment Set" },
-    Seen: { bg: "bg-emerald-500/15 border-emerald-500/30", text: "text-emerald-400", label: "Seen" },
-    Overdue: { bg: "bg-rose-500/15 border-rose-500/30", text: "text-rose-400", label: "Overdue" },
-  };
-  const s = map[status];
-  return (
-    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border ${s.bg} ${s.text}`}>
-      {status === "Pending" && <Clock size={10} />}
-      {status === "Appointment Set" && <CheckCircle2 size={10} />}
-      {status === "Seen" && <CheckCircle2 size={10} />}
-      {status === "Overdue" && <AlertCircle size={10} />}
-      {s.label}
-    </span>
-  );
-}
-
-function receivedBadge(status: ReceivedStatus) {
-  const map: Record<ReceivedStatus, { bg: string; text: string }> = {
-    New: { bg: "bg-cyan-500/15 border-cyan-500/30", text: "text-cyan-400" },
-    Booked: { bg: "bg-violet-500/15 border-violet-500/30", text: "text-violet-400" },
-    Seen: { bg: "bg-emerald-500/15 border-emerald-500/30", text: "text-emerald-400" },
-  };
-  const s = map[status];
-  return (
-    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border ${s.bg} ${s.text}`}>
-      {status}
-    </span>
-  );
-}
-
-// ─── Variants ─────────────────────────────────────────────────────────────────
-
-const fadeUp = {
-  hidden: { opacity: 0, y: 12 },
-  show: { opacity: 1, y: 0, transition: { ease: "easeOut" as const, duration: 0.35 } },
-};
-
-const staggerContainer = (stagger = 0.05) => ({
-  hidden: {},
-  show: { transition: { staggerChildren: stagger } },
-});
-
-const tabContent = {
-  hidden: { opacity: 0, x: 20 },
-  show: { opacity: 1, x: 0, transition: { ease: "easeOut" as const, duration: 0.3 } },
-  exit: { opacity: 0, x: -20, transition: { ease: "easeOut" as const, duration: 0.2 } },
-};
-
-const expandVariant = {
-  hidden: { height: 0, opacity: 0 },
-  show: { height: "auto", opacity: 1, transition: { ease: "easeOut" as const, duration: 0.35 } },
-  exit: { height: 0, opacity: 0, transition: { ease: "easeOut" as const, duration: 0.25 } },
-};
-
-// ─── Sub-components ───────────────────────────────────────────────────────────
-
-function StatCard({
-  label,
-  target,
-  sub,
-  color,
-  icon,
-  decimals,
-  delay,
-}: {
-  label: string;
-  target: number;
-  sub: string;
-  color: string;
-  icon: React.ReactNode;
-  decimals?: number;
-  delay: number;
-}) {
-  const val = useCountUp(target, 1200, decimals ?? 0);
-
-  return (
-    <motion.div
-      variants={fadeUp}
-      className="relative overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-xl p-5"
-    >
-      <div
-        className="absolute inset-0 opacity-[0.04] rounded-2xl"
-        style={{ background: `radial-gradient(circle at 30% 30%, ${color}, transparent 70%)` }}
-      />
-      <div className="flex items-start justify-between mb-3">
-        <div
-          className="w-9 h-9 rounded-xl flex items-center justify-center"
-          style={{ background: `${color}22`, color }}
-        >
-          {icon}
-        </div>
-      </div>
-      <div className="text-3xl font-bold text-white mb-0.5" style={{ color }}>
-        {decimals ? val.toFixed(decimals) : Math.round(val)}
-      </div>
-      <div className="text-[11px] text-white/40 uppercase tracking-wider mb-1">{label}</div>
-      <div className="text-xs text-white/50">{sub}</div>
-    </motion.div>
-  );
-}
-
-function AvatarInitials({ name, color }: { name: string; color?: string }) {
-  const initials = getInitials(name);
-  const bg = color ?? "#06B6D4";
-  return (
-    <div
-      className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
-      style={{ background: `linear-gradient(135deg, ${bg}88, ${bg}44)`, border: `1px solid ${bg}44` }}
-    >
-      {initials}
-    </div>
-  );
-}
-
-// ─── Sent Referral Row ────────────────────────────────────────────────────────
-
-function SentReferralRow({
-  ref: _ref,
-  referral,
-  addToast,
-  onOutcomeSave,
-}: {
-  ref?: never;
-  referral: SentReferral;
-  addToast: ReferralViewProps["addToast"];
-  onOutcomeSave: (id: string, outcome: string) => void;
-}) {
-  const [expanded, setExpanded] = useState(false);
-  const [outcomeText, setOutcomeText] = useState(referral.outcome ?? "");
-
-  const spColor = SPECIALTY_COLORS[referral.specialty] ?? "#06B6D4";
-
-  return (
-    <motion.div variants={fadeUp} className="rounded-xl border border-white/[0.08] bg-white/[0.02] overflow-hidden">
-      <div
-        className="flex items-center gap-3 p-3 cursor-pointer hover:bg-white/[0.03] transition-colors group"
-        onClick={() => setExpanded((p) => !p)}
-      >
-        <AvatarInitials name={referral.patient} color="#06B6D4" />
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-sm font-semibold text-white">{referral.patient}</span>
-            <span className="text-xs text-white/40">→</span>
-            <span className="text-sm text-white/70">{referral.specialist}</span>
-            <span
-              className="text-[10px] font-medium px-1.5 py-0.5 rounded-full"
-              style={{ background: `${spColor}22`, color: spColor, border: `1px solid ${spColor}33` }}
-            >
-              {referral.specialty}
-            </span>
-          </div>
-          {referral.outcome && (
-            <p className="text-xs text-slate-400 italic mt-0.5 truncate">{referral.outcome}</p>
-          )}
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <span className="text-xs text-white/40 hidden sm:block">{referral.date}</span>
-          {statusBadge(referral.status)}
-          <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
-            <button
-              onClick={(e) => { e.stopPropagation(); addToast(`Follow-up sent to ${referral.patient}`, "info"); }}
-              className="text-[11px] px-2 py-0.5 rounded-lg border border-white/10 text-white/50 hover:text-white hover:border-white/20 transition-colors"
-            >
-              Follow Up
-            </button>
-          </div>
-          <motion.div animate={{ rotate: expanded ? 180 : 0 }} transition={{ duration: 0.2 }}>
-            <ChevronDown size={14} className="text-white/30" />
-          </motion.div>
-        </div>
-      </div>
-
-      <AnimatePresence>
-        {expanded && (
-          <motion.div
-            key="expanded"
-            variants={expandVariant}
-            initial="hidden"
-            animate="show"
-            exit="exit"
-            className="overflow-hidden"
-          >
-            <div className="px-4 pb-4 pt-1 space-y-3 border-t border-white/[0.06]">
-              {/* Referral Letter */}
-              <div className="rounded-xl border border-white/[0.08] bg-white/[0.03] p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <FileText size={13} className="text-violet-400" />
-                  <span className="text-xs font-semibold text-white/60 uppercase tracking-wider">Referral Letter</span>
-                </div>
-                <p className="text-sm text-white/70 leading-relaxed">
-                  Dear {referral.specialist},<br /><br />
-                  I am referring <strong className="text-white">{referral.patient}</strong>, {referral.age} years old, for {referral.reason.toLowerCase()}. Please find attached relevant history. Kindly evaluate and advise further management.<br /><br />
-                  Regards,<br />
-                  <span className="text-white">Dr. Sharma</span>
-                </p>
-              </div>
-
-              {/* WhatsApp Sent */}
-              <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/[0.05] p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <MessageCircle size={13} className="text-emerald-400" />
-                  <span className="text-xs font-semibold text-emerald-400/80 uppercase tracking-wider">WhatsApp Sent to Patient</span>
-                </div>
-                <p className="text-sm text-white/70 leading-relaxed">
-                  Hi {referral.patient.split(" ")[0]}, Dr. Sharma has referred you to <strong className="text-white">{referral.specialist}</strong> ({referral.specialty}). Please call{" "}
-                  <span className="text-cyan-400">{referral.specialistPhone}</span> to book your appointment. Your referral note has been sent.
-                </p>
-              </div>
-
-              {/* Outcome Recording */}
-              <div className="space-y-2">
-                <label className="text-xs text-white/40 uppercase tracking-wider">Record Outcome</label>
-                <textarea
-                  value={outcomeText}
-                  onChange={(e) => setOutcomeText(e.target.value)}
-                  placeholder="Enter specialist's feedback and outcome..."
-                  rows={2}
-                  className="w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-sm text-white placeholder:text-white/20 outline-none focus:border-cyan-500/40 resize-none transition-colors"
-                />
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => { onOutcomeSave(referral.id, outcomeText); addToast(`Outcome saved for ${referral.patient}`, "success"); }}
-                    className="flex-1 py-2 rounded-xl text-sm font-semibold text-white transition-all"
-                    style={{ background: "linear-gradient(135deg, #06B6D4, #0891B2)" }}
-                  >
-                    Save Outcome
-                  </button>
-                  <button
-                    onClick={() => addToast(`Follow-up WhatsApp sent to ${referral.patient}`, "success")}
-                    className="flex-1 py-2 rounded-xl text-sm font-semibold transition-all"
-                    style={{ background: "linear-gradient(135deg, #10B981, #059669)", color: "#fff" }}
-                  >
-                    Send Follow-up WhatsApp
-                  </button>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.div>
-  );
-}
-
-// ─── Received Referral Row ────────────────────────────────────────────────────
-
-function ReceivedReferralRow({ referral, addToast }: { referral: ReceivedReferral; addToast: ReferralViewProps["addToast"] }) {
-  return (
-    <motion.div
-      variants={fadeUp}
-      className="flex items-center gap-3 p-3 rounded-xl border border-white/[0.08] bg-white/[0.02] hover:bg-white/[0.04] transition-colors"
-    >
-      <AvatarInitials name={referral.patient} color="#8B5CF6" />
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-sm font-semibold text-white">{referral.patient}</span>
-          {referral.status === "New" && (
-            <motion.span
-              animate={{ opacity: [1, 0.4, 1] }}
-              transition={{ repeat: Infinity, duration: 1.6, ease: "easeInOut" }}
-              className="w-1.5 h-1.5 rounded-full bg-cyan-400 inline-block"
-            />
-          )}
-        </div>
-        <div className="text-xs text-white/50 mt-0.5">
-          <span className="text-violet-400">{referral.fromDoctor}</span> · {referral.reason}
-        </div>
-        {referral.appointmentDate && (
-          <div className="text-xs text-white/30 mt-0.5">Appointment: {referral.appointmentDate}</div>
-        )}
-      </div>
-      <div className="flex items-center gap-2 shrink-0">
-        <span className="text-xs text-white/40 hidden sm:block">{referral.date}</span>
-        {receivedBadge(referral.status)}
-        {referral.status === "New" && (
-          <button
-            onClick={() => addToast(`Appointment booked for ${referral.patient}`, "success")}
-            className="px-3 py-1.5 rounded-xl text-xs font-semibold text-white"
-            style={{ background: "linear-gradient(135deg, #06B6D4, #0891B2)" }}
-          >
-            Book Appointment
-          </button>
-        )}
-      </div>
-    </motion.div>
-  );
-}
-
-// ─── Specialist Card ──────────────────────────────────────────────────────────
-
-function SpecialistCard({
-  specialist,
-  onRefer,
-}: {
-  specialist: Specialist;
-  onRefer: (sp: Specialist) => void;
-}) {
-  const spColor = SPECIALTY_COLORS[specialist.specialty] ?? "#06B6D4";
-  return (
-    <motion.div
-      variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { ease: "easeOut" as const, duration: 0.35 } } }}
-      className="relative rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4 overflow-hidden group hover:border-white/[0.15] transition-colors"
-    >
-      <div
-        className="absolute inset-0 opacity-0 group-hover:opacity-[0.04] transition-opacity rounded-2xl"
-        style={{ background: spColor }}
-      />
-      <div className="flex items-start gap-3 mb-3">
-        <div
-          className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0"
-          style={{ background: `linear-gradient(135deg, ${spColor}88, ${spColor}44)`, border: `1px solid ${spColor}44` }}
-        >
-          {getInitials(specialist.name)}
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="text-sm font-semibold text-white truncate">{specialist.name}</div>
-          <span
-            className="text-[10px] font-medium px-1.5 py-0.5 rounded-full mt-0.5 inline-block"
-            style={{ background: `${spColor}22`, color: spColor, border: `1px solid ${spColor}33` }}
-          >
-            {specialist.specialty}
-          </span>
-        </div>
-      </div>
-      <div className="text-xs text-white/40 mb-2 truncate">{specialist.hospital}</div>
-      <div className="flex items-center gap-3 text-xs text-white/50 mb-3">
-        <span className="flex items-center gap-1">
-          <ArrowUpRight size={11} className="text-cyan-400" />
-          {specialist.referrals} referrals
-        </span>
-        <span className="flex items-center gap-1">
-          <Star size={11} className="text-amber-400 fill-amber-400" />
-          {specialist.rating}
-        </span>
-      </div>
-      <div className="flex gap-2">
-        <button
-          onClick={() => onRefer(specialist)}
-          className="flex-1 py-1.5 rounded-xl text-xs font-semibold text-white transition-all"
-          style={{ background: "linear-gradient(135deg, #06B6D4, #0891B2)" }}
-        >
-          Refer Patient
-        </button>
-        <button
-          onClick={() => window.open(`tel:${specialist.phone}`)}
-          className="px-2.5 py-1.5 rounded-xl border border-white/10 text-white/50 hover:text-white hover:border-white/20 transition-colors"
-        >
-          <Phone size={12} />
-        </button>
-      </div>
-    </motion.div>
-  );
-}
-
-// ─── New Referral Form ────────────────────────────────────────────────────────
-
-function NewReferralForm({
-  addToast,
-  onAdd,
-  prefilledSpecialist,
-  onClearPrefill,
-}: {
-  addToast: ReferralViewProps["addToast"];
-  onAdd: (r: SentReferral) => void;
-  prefilledSpecialist: Specialist | null;
-  onClearPrefill: () => void;
-}) {
-  const [patient, setPatient] = useState("");
-  const [specialist, setSpecialist] = useState(prefilledSpecialist?.name ?? "");
+  const [patientName, setPatientName] = useState("");
+  const [specialistName, setSpecialistName] = useState(SPECIALISTS[0].name);
   const [reason, setReason] = useState("");
-  const [urgency, setUrgency] = useState<UrgencyLevel>("Routine");
-  const [focused, setFocused] = useState(false);
 
-  useEffect(() => {
-    if (prefilledSpecialist) setSpecialist(prefilledSpecialist.name);
-  }, [prefilledSpecialist]);
+  const seenCount = sentList.filter((r) => r.status === "Seen").length;
+  const loopRate = Math.round((seenCount / (sentList.length || 1)) * 100);
 
-  const urgencyColors: Record<UrgencyLevel, string> = {
-    Routine: "#10B981",
-    Urgent: "#F59E0B",
-    Emergency: "#F43F5E",
-  };
-
-  const handleSubmit = () => {
-    if (!patient.trim() || !specialist) {
-      addToast("Fill in patient name and specialist", "warn");
-      return;
-    }
-    const sp = SPECIALISTS.find((s) => s.name === specialist) ?? SPECIALISTS[0];
+  const handleCreateReferral = () => {
+    if (!patientName.trim()) return;
+    const sp = SPECIALISTS.find(s => s.name === specialistName) || SPECIALISTS[0];
     const newRef: SentReferral = {
-      id: `r${Date.now()}`,
-      patient: patient.trim(),
-      age: 40,
+      id: "ref-" + Date.now(),
+      patient: patientName.trim(),
+      age: 38,
       specialist: sp.name,
       specialty: sp.specialty,
-      date: "Apr 24",
+      date: "Today",
       status: "Pending",
       outcome: null,
-      reason: reason || "General consultation",
+      reason: reason.trim() || "Specialist evaluation requested",
       specialistPhone: sp.phone,
     };
-    onAdd(newRef);
-    addToast(`Referral sent — ${patient.trim()} notified via WhatsApp ✓`, "success");
-    setPatient("");
-    setSpecialist(SPECIALISTS[0].name);
+    setSentList(prev => [newRef, ...prev]);
+    setShowCreateModal(false);
+    setPatientName("");
     setReason("");
-    setUrgency("Routine");
-    onClearPrefill();
+    addToast(`Referral for ${newRef.patient} dispatched to ${newRef.specialist} via WhatsApp ✓`, "success");
+  };
+
+  const handleResend = (ref: SentReferral) => {
+    addToast(`Clinical referral note resent to ${ref.specialist} via WhatsApp ✓`, "info");
   };
 
   return (
-    <div
-      className="rounded-2xl border bg-white/[0.03] backdrop-blur-xl p-5 transition-all duration-300"
-      style={{
-        borderColor: focused ? "rgba(6,182,212,0.3)" : "rgba(255,255,255,0.08)",
-        boxShadow: focused ? "0 0 0 2px rgba(6,182,212,0.08)" : "none",
-      }}
-    >
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-cyan-500/15 flex items-center justify-center">
-            <UserPlus size={14} className="text-cyan-400" />
-          </div>
-          <span className="text-sm font-semibold text-white">Refer a Patient</span>
+    <div className="space-y-8 max-w-[1200px] mx-auto">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-[#0F172A] tracking-tight">Referrals & Specialist Network</h2>
+          <p className="text-sm text-slate-500 mt-0.5">
+            Doctor-to-doctor WhatsApp referrals, bi-directional loop tracking, and clinical consult summaries.
+          </p>
         </div>
-        {prefilledSpecialist && (
-          <button onClick={onClearPrefill} className="text-white/30 hover:text-white/60 transition-colors">
-            <X size={13} />
-          </button>
-        )}
+
+        <button
+          onClick={() => setShowCreateModal(true)}
+          className="flex items-center gap-1.5 px-4 py-2 bg-[#00685f] hover:bg-[#005049] text-white text-xs font-bold rounded-lg shadow-xs transition-colors"
+        >
+          <Plus size={14} /> Refer Patient
+        </button>
       </div>
 
-      <div className="space-y-3" onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}>
-        <div className="relative">
-          <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/25" />
-          <input
-            value={patient}
-            onChange={(e) => setPatient(e.target.value)}
-            placeholder="Patient name..."
-            className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl pl-8 pr-3 py-2.5 text-sm text-white placeholder:text-white/25 outline-none focus:border-cyan-500/40 transition-colors"
-          />
+      {/* KPI Bento Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="bg-white border border-[#CCD5DF] rounded-xl p-5 shadow-xs">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block mb-1">Outbound Referrals</span>
+          <p className="text-2xl font-bold text-[#00685f]">{sentList.length}</p>
+          <span className="text-xs text-slate-500">Active consult tracks</span>
         </div>
 
-        <select
-          value={specialist}
-          onChange={(e) => setSpecialist(e.target.value)}
-          className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-3 py-2.5 text-sm text-white outline-none focus:border-cyan-500/40 transition-colors appearance-none"
-          style={{ colorScheme: "dark" }}
+        <div className="bg-white border border-[#CCD5DF] rounded-xl p-5 shadow-xs">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block mb-1">Loop Closed Rate</span>
+          <p className="text-2xl font-bold text-emerald-700">{loopRate}%</p>
+          <span className="text-xs text-emerald-700 font-bold">Consult notes received</span>
+        </div>
+
+        <div className="bg-white border border-[#CCD5DF] rounded-xl p-5 shadow-xs">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block mb-1">Inbound Referrals</span>
+          <p className="text-2xl font-bold text-[#0F172A]">{receivedList.length}</p>
+          <span className="text-xs text-slate-500">From peer doctors</span>
+        </div>
+
+        <div className="bg-white border border-[#CCD5DF] rounded-xl p-5 shadow-xs">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block mb-1">Network Specialists</span>
+          <p className="text-2xl font-bold text-[#0F172A]">{SPECIALISTS.length}</p>
+          <span className="text-xs text-[#00685f] font-semibold">Verified directory</span>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="flex gap-2 border-b border-[#CCD5DF] pb-2">
+        <button
+          onClick={() => setActiveTab("sent")}
+          className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors ${
+            activeTab === "sent" ? "bg-[#00685f] text-white" : "text-slate-600 hover:text-[#0F172A]"
+          }`}
         >
-          {SPECIALISTS.map((s) => (
-            <option key={s.id} value={s.name} className="bg-[#0d1117]">
-              {s.name} — {s.specialty}
-            </option>
-          ))}
-        </select>
+          Outbound Referrals ({sentList.length})
+        </button>
+        <button
+          onClick={() => setActiveTab("received")}
+          className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors ${
+            activeTab === "received" ? "bg-[#00685f] text-white" : "text-slate-600 hover:text-[#0F172A]"
+          }`}
+        >
+          Inbound Patients ({receivedList.length})
+        </button>
+        <button
+          onClick={() => setActiveTab("network")}
+          className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors ${
+            activeTab === "network" ? "bg-[#00685f] text-white" : "text-slate-600 hover:text-[#0F172A]"
+          }`}
+        >
+          Specialist Directory ({SPECIALISTS.length})
+        </button>
+      </div>
 
-        <textarea
-          value={reason}
-          onChange={(e) => setReason(e.target.value)}
-          placeholder="Reason for referral..."
-          rows={2}
-          className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-3 py-2 text-sm text-white placeholder:text-white/25 outline-none focus:border-cyan-500/40 resize-none transition-colors"
-        />
+      {activeTab === "sent" && (
+        <div className="bg-white border border-[#CCD5DF] rounded-xl overflow-hidden shadow-xs">
+          <div className="p-4 border-b border-[#CCD5DF] bg-[#F8FAFC]">
+            <div className="relative max-w-sm">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Search patient, doctor, or condition..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full pl-9 pr-3 py-1.5 bg-white border border-[#CCD5DF] rounded-lg text-xs text-[#0F172A] focus:outline-none focus:border-[#00685f]"
+              />
+            </div>
+          </div>
 
-        <div>
-          <label className="text-[10px] uppercase tracking-wider text-white/30 mb-1.5 block">Urgency</label>
-          <div className="flex gap-2">
-            {(["Routine", "Urgent", "Emergency"] as UrgencyLevel[]).map((u) => (
-              <button
-                key={u}
-                onClick={() => setUrgency(u)}
-                className="flex-1 py-1.5 rounded-xl text-xs font-semibold border transition-all"
-                style={
-                  urgency === u
-                    ? { background: `${urgencyColors[u]}22`, color: urgencyColors[u], borderColor: `${urgencyColors[u]}44` }
-                    : { background: "transparent", color: "rgba(255,255,255,0.3)", borderColor: "rgba(255,255,255,0.08)" }
-                }
-              >
-                {u}
-              </button>
+          <div className="grid grid-cols-[1.5fr_1.5fr_1.5fr_1fr_auto] gap-4 px-6 py-3 bg-[#F8FAFC] border-b border-[#CCD5DF] text-[11px] font-bold uppercase tracking-wider text-slate-500">
+            <span>Patient</span>
+            <span>Referred To</span>
+            <span>Reason</span>
+            <span>Status</span>
+            <span className="text-right">Action</span>
+          </div>
+
+          <div className="divide-y divide-[#CCD5DF]">
+            {sentList.map((ref) => (
+              <div key={ref.id} className="hover:bg-slate-50 transition-colors">
+                <div
+                  onClick={() => setExpandedId(expandedId === ref.id ? null : ref.id)}
+                  className="grid grid-cols-[1.5fr_1.5fr_1.5fr_1fr_auto] gap-4 px-6 py-3.5 items-center cursor-pointer text-xs"
+                >
+                  <div>
+                    <p className="font-bold text-[#0F172A]">{ref.patient}</p>
+                    <p className="text-[11px] text-slate-400">{ref.age} yrs • {ref.date}</p>
+                  </div>
+
+                  <div>
+                    <p className="font-bold text-[#00685f]">{ref.specialist}</p>
+                    <p className="text-[11px] text-slate-500">{ref.specialty}</p>
+                  </div>
+
+                  <span className="text-slate-600 truncate font-medium">{ref.reason}</span>
+
+                  <div>
+                    <span
+                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${
+                        ref.status === "Seen"
+                          ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                          : ref.status === "Appointment Set"
+                          ? "bg-teal-50 text-[#00685f] border-teal-200"
+                          : "bg-amber-50 text-amber-700 border-amber-200"
+                      }`}
+                    >
+                      {ref.status}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2 justify-end">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleResend(ref); }}
+                      className="px-2.5 py-1 bg-white border border-[#CCD5DF] hover:bg-slate-100 text-slate-700 text-[11px] font-bold rounded shadow-xs"
+                    >
+                      WhatsApp Note
+                    </button>
+                    {expandedId === ref.id ? <ChevronUp size={14} className="text-slate-400" /> : <ChevronDown size={14} className="text-slate-400" />}
+                  </div>
+                </div>
+
+                <AnimatePresence>
+                  {expandedId === ref.id && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      className="bg-[#F8FAFC] border-t border-[#CCD5DF] px-6 py-3.5 text-xs space-y-2"
+                    >
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Clinical Notes & Outcome</span>
+                          <p className="font-medium text-[#0F172A] mt-0.5">{ref.outcome || "Pending specialist consult note"}</p>
+                        </div>
+                        <span className="text-slate-400 font-mono text-[11px]">{ref.specialistPhone}</span>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             ))}
           </div>
         </div>
+      )}
 
-        <button
-          onClick={handleSubmit}
-          className="w-full py-3 rounded-xl text-sm font-semibold text-white flex items-center justify-center gap-2 transition-all hover:opacity-90 active:scale-[0.98]"
-          style={{ background: "linear-gradient(135deg, #06B6D4, #0891B2)" }}
-        >
-          <Send size={14} />
-          Send Referral + WhatsApp Patient
-        </button>
-      </div>
-    </div>
-  );
-}
+      {activeTab === "received" && (
+        <div className="bg-white border border-[#CCD5DF] rounded-xl overflow-hidden shadow-xs divide-y divide-[#CCD5DF]">
+          {receivedList.map((r) => (
+            <div key={r.id} className="p-4 flex items-center justify-between text-xs hover:bg-slate-50">
+              <div>
+                <p className="font-bold text-sm text-[#0F172A]">{r.patient}</p>
+                <p className="text-slate-500 mt-0.5">Referred by <span className="font-bold text-[#00685f]">{r.fromDoctor}</span> • {r.date}</p>
+                <p className="text-slate-600 mt-1">{r.reason}</p>
+              </div>
 
-// ─── Referral Insights ────────────────────────────────────────────────────────
-
-function ReferralInsights() {
-  const insights = [
-    { color: "#8B5CF6", icon: <Star size={13} />, title: "Top Specialist", body: "Dr. Arjun Mehta (Cardiology) — 12 referrals, 4.8★ avg feedback" },
-    { color: "#10B981", icon: <Activity size={13} />, title: "Outcome Rate", body: "85% of referrals have recorded outcomes — top 10% of Reva clinics" },
-    { color: "#F59E0B", icon: <Clock size={13} />, title: "Follow-up Gap", body: "3 referrals >7 days old with no outcome recorded" },
-    { color: "#06B6D4", icon: <TrendingUp size={13} />, title: "Network Value", body: "18 back-referrals received — ₹32,400 in new consultations" },
-  ];
-
-  return (
-    <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-xl p-5">
-      <div className="flex items-center gap-2 mb-4">
-        <div className="w-7 h-7 rounded-lg bg-violet-500/15 flex items-center justify-center">
-          <Zap size={14} className="text-violet-400" />
-        </div>
-        <span className="text-sm font-semibold text-white">Referral Insights</span>
-      </div>
-      <div className="space-y-3">
-        {insights.map((ins, i) => (
-          <motion.div
-            key={i}
-            variants={fadeUp}
-            className="flex gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] p-3"
-            style={{ borderLeftColor: `${ins.color}55`, borderLeftWidth: 3 }}
-          >
-            <div className="mt-0.5 shrink-0" style={{ color: ins.color }}>{ins.icon}</div>
-            <div>
-              <div className="text-xs font-semibold mb-0.5" style={{ color: ins.color }}>{ins.title}</div>
-              <div className="text-xs text-white/50 leading-relaxed">{ins.body}</div>
-            </div>
-          </motion.div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ─── Main Component ───────────────────────────────────────────────────────────
-
-export default function ReferralView({ addToast }: ReferralViewProps) {
-  const [activeTab, setActiveTab] = useState<TabId>("sent");
-  const [sentReferrals, setSentReferrals] = useState<SentReferral[]>(INITIAL_SENT);
-  const [prefilledSpecialist, setPrefilledSpecialist] = useState<Specialist | null>(null);
-
-  const tabs: { id: TabId; label: string; icon: React.ReactNode }[] = [
-    { id: "sent", label: "Sent Referrals", icon: <ArrowUpRight size={14} /> },
-    { id: "received", label: "Received Referrals", icon: <ArrowDownLeft size={14} /> },
-    { id: "network", label: "Specialists Network", icon: <Network size={14} /> },
-  ];
-
-  const handleOutcomeSave = useCallback((id: string, outcome: string) => {
-    setSentReferrals((prev) =>
-      prev.map((r) => r.id === id ? { ...r, outcome, status: "Seen" } : r)
-    );
-  }, []);
-
-  const handleAddReferral = useCallback((r: SentReferral) => {
-    setSentReferrals((prev) => [r, ...prev]);
-  }, []);
-
-  return (
-    <div className="min-h-screen p-6 space-y-6" style={{ background: "#050714" }}>
-      {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ ease: "easeOut", duration: 0.4 }}
-        className="flex items-center justify-between"
-      >
-        <div>
-          <h1 className="text-2xl font-bold text-white">Referral Network</h1>
-          <p className="text-sm text-white/40 mt-0.5">Track, send & receive specialist referrals via WhatsApp</p>
-        </div>
-        <button
-          onClick={() => setActiveTab("sent")}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:opacity-90"
-          style={{ background: "linear-gradient(135deg, #06B6D4, #0891B2)" }}
-        >
-          <Plus size={15} />
-          New Referral
-        </button>
-      </motion.div>
-
-      {/* Stat Cards */}
-      <motion.div
-        variants={staggerContainer(0.08)}
-        initial="hidden"
-        animate="show"
-        className="grid grid-cols-2 lg:grid-cols-4 gap-4"
-      >
-        <StatCard label="Referrals Sent" target={34} sub="this month" color="#06B6D4" icon={<ArrowUpRight size={16} />} delay={0} />
-        <StatCard label="Referrals Received" target={18} sub="this month" color="#8B5CF6" icon={<ArrowDownLeft size={16} />} delay={1} />
-        <StatCard label="Outcome Tracked" target={29} sub="85% tracked" color="#10B981" icon={<CheckCircle2 size={16} />} delay={2} />
-        <StatCard label="Avg Outcome Time" target={6.2} sub="days to outcome" color="#F59E0B" icon={<Clock size={16} />} decimals={1} delay={3} />
-      </motion.div>
-
-      {/* Main Content */}
-      <div className="flex gap-6 items-start">
-        {/* LEFT COL */}
-        <div className="flex-1 min-w-0 space-y-4">
-          {/* Tab Bar */}
-          <LayoutGroup id="referral-tabs">
-            <div className="flex gap-1 p-1 rounded-xl border border-white/[0.08] bg-white/[0.02] w-fit">
-              {tabs.map((tab) => (
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  {r.status}
+                </span>
                 <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className="relative flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-                  style={{ color: activeTab === tab.id ? "#fff" : "rgba(255,255,255,0.4)" }}
+                  onClick={() => addToast(`Booking appointment for ${r.patient}`, "success")}
+                  className="px-3 py-1.5 bg-[#00685f] hover:bg-[#005049] text-white font-bold rounded-lg shadow-xs"
                 >
-                  {activeTab === tab.id && (
-                    <motion.div
-                      layoutId="tab-bg"
-                      className="absolute inset-0 rounded-lg"
-                      style={{ background: "rgba(6,182,212,0.12)", borderBottom: "2px solid #06B6D4" }}
-                      transition={{ type: "spring", bounce: 0.2, duration: 0.4 }}
-                    />
-                  )}
-                  <span className="relative z-10 flex items-center gap-1.5">
-                    {tab.icon}
-                    {tab.label}
-                  </span>
+                  Book Slot
                 </button>
-              ))}
+              </div>
             </div>
-          </LayoutGroup>
+          ))}
+        </div>
+      )}
 
-          {/* Tab Content */}
-          <AnimatePresence mode="wait">
-            {activeTab === "sent" && (
-              <motion.div
-                key="sent"
-                variants={tabContent}
-                initial="hidden"
-                animate="show"
-                exit="exit"
-              >
-                <motion.div
-                  variants={staggerContainer(0.05)}
-                  initial="hidden"
-                  animate="show"
-                  className="space-y-2"
+      {activeTab === "network" && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {SPECIALISTS.map((sp) => (
+            <div key={sp.id} className="bg-white border border-[#CCD5DF] rounded-xl p-5 shadow-xs space-y-3">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="font-bold text-base text-[#0F172A]">{sp.name}</h3>
+                  <p className="text-xs font-bold text-[#00685f]">{sp.specialty}</p>
+                  <p className="text-xs text-slate-500 flex items-center gap-1 mt-1">
+                    <Hospital size={12} /> {sp.hospital}
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-1 text-xs font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                  <Star size={12} className="fill-amber-400 text-amber-400" />
+                  {sp.rating}
+                </div>
+              </div>
+
+              <div className="pt-3 border-t border-[#CCD5DF] flex items-center justify-between text-xs">
+                <span className="text-slate-500 font-medium">{sp.referrals} referrals shared</span>
+                <button
+                  onClick={() => {
+                    setSpecialistName(sp.name);
+                    setShowCreateModal(true);
+                  }}
+                  className="px-3 py-1.5 bg-[#00685f] hover:bg-[#005049] text-white font-bold rounded-lg shadow-xs flex items-center gap-1"
                 >
-                  {sentReferrals.map((r) => (
-                    <SentReferralRow
-                      key={r.id}
-                      referral={r}
-                      addToast={addToast}
-                      onOutcomeSave={handleOutcomeSave}
-                    />
-                  ))}
-                </motion.div>
-              </motion.div>
-            )}
+                  <Send size={12} /> Refer Patient
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
-            {activeTab === "received" && (
-              <motion.div
-                key="received"
-                variants={tabContent}
-                initial="hidden"
-                animate="show"
-                exit="exit"
-              >
-                <motion.div
-                  variants={staggerContainer(0.05)}
-                  initial="hidden"
-                  animate="show"
-                  className="space-y-2"
-                >
-                  {RECEIVED_REFERRALS.map((r) => (
-                    <ReceivedReferralRow key={r.id} referral={r} addToast={addToast} />
-                  ))}
-                </motion.div>
-              </motion.div>
-            )}
+      {/* Modal */}
+      <AnimatePresence>
+        {showCreateModal && (
+          <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white border border-[#CCD5DF] rounded-xl p-6 w-full max-w-md shadow-xl space-y-4"
+            >
+              <div className="flex items-center justify-between border-b border-[#CCD5DF] pb-3">
+                <h3 className="text-base font-bold text-[#0F172A]">Send Specialist Referral</h3>
+                <button onClick={() => setShowCreateModal(false)} className="text-slate-400 hover:text-slate-600">
+                  <X size={16} />
+                </button>
+              </div>
 
-            {activeTab === "network" && (
-              <motion.div
-                key="network"
-                variants={tabContent}
-                initial="hidden"
-                animate="show"
-                exit="exit"
-              >
-                <motion.div
-                  variants={staggerContainer(0.07)}
-                  initial="hidden"
-                  animate="show"
-                  className="grid grid-cols-2 gap-3"
-                >
-                  {SPECIALISTS.map((sp) => (
-                    <SpecialistCard
-                      key={sp.id}
-                      specialist={sp}
-                      onRefer={(s) => {
-                        setPrefilledSpecialist(s);
-                        addToast(`Pre-filled referral for ${s.name}`, "info");
-                      }}
-                    />
-                  ))}
+              <div className="space-y-3 text-xs">
+                <div>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                    Patient Name
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Priya Sharma"
+                    value={patientName}
+                    onChange={(e) => setPatientName(e.target.value)}
+                    className="w-full px-3 py-2 bg-white border border-[#CCD5DF] rounded-lg text-xs text-[#0F172A] focus:outline-none focus:border-[#00685f]"
+                  />
+                </div>
 
-                  {/* Add Specialist Card */}
-                  <motion.button
-                    variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { ease: "easeOut" as const, duration: 0.35 } } }}
-                    onClick={() => addToast("Add specialist flow coming soon", "info")}
-                    className="rounded-2xl border-2 border-dashed border-white/[0.1] bg-transparent flex flex-col items-center justify-center gap-2 p-6 hover:border-white/[0.2] hover:bg-white/[0.02] transition-all min-h-[160px]"
+                <div>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                    Referred Specialist
+                  </label>
+                  <select
+                    value={specialistName}
+                    onChange={(e) => setSpecialistName(e.target.value)}
+                    className="w-full px-3 py-2 bg-white border border-[#CCD5DF] rounded-lg text-xs text-[#0F172A] focus:outline-none focus:border-[#00685f]"
                   >
-                    <div className="w-8 h-8 rounded-full border border-white/20 flex items-center justify-center">
-                      <Plus size={16} className="text-white/40" />
-                    </div>
-                    <span className="text-sm text-white/30">Add Specialist</span>
-                  </motion.button>
-                </motion.div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+                    {SPECIALISTS.map((s) => (
+                      <option key={s.id} value={s.name}>{s.name} ({s.specialty})</option>
+                    ))}
+                  </select>
+                </div>
 
-        {/* RIGHT COL */}
-        <div className="w-[360px] shrink-0 space-y-4">
-          <NewReferralForm
-            addToast={addToast}
-            onAdd={handleAddReferral}
-            prefilledSpecialist={prefilledSpecialist}
-            onClearPrefill={() => setPrefilledSpecialist(null)}
-          />
-          <ReferralInsights />
-        </div>
-      </div>
+                <div>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
+                    Clinical Reason / Symptoms
+                  </label>
+                  <textarea
+                    rows={3}
+                    placeholder="e.g. Uncontrolled hypertension with persistent headaches..."
+                    value={reason}
+                    onChange={(e) => setReason(e.target.value)}
+                    className="w-full px-3 py-2 bg-white border border-[#CCD5DF] rounded-lg text-xs text-[#0F172A] focus:outline-none focus:border-[#00685f]"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-2 pt-2 border-t border-[#CCD5DF]">
+                <button
+                  onClick={() => setShowCreateModal(false)}
+                  className="flex-1 py-2 border border-[#CCD5DF] text-slate-600 text-xs font-bold rounded-lg hover:bg-slate-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleCreateReferral}
+                  className="flex-1 py-2 bg-[#00685f] hover:bg-[#005049] text-white text-xs font-bold rounded-lg shadow-xs"
+                >
+                  Dispatch via WhatsApp
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

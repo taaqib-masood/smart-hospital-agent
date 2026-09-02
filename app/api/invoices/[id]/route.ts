@@ -33,7 +33,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     if (patient?.phone) {
       await sendWhatsAppMessage(
         patient.phone,
-        `Hi ${patient.name}, this is a reminder that you have an outstanding payment of ₹${data.amount.toLocaleString("en-IN")} at ${clinic.name}. Please contact us to clear the balance. Thank you! 🙏`,
+        `Hi ${patient.name}, this is a reminder that you have an outstanding payment of AED ${data.amount.toLocaleString("en-AE")} at ${clinic.name}. Please contact us to clear the balance. Thank you! 🙏`,
         clinic.whatsapp_phone_id,
         clinic.whatsapp_token
       ).catch(() => {});

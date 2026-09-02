@@ -42,3 +42,9 @@ next-env.d.ts
 
 # graphify
 graphify-out/cache/
+
+# temp design system & workspace archives
+workspace-*
+stitch_*
+*.zip
+Reva-Ai landing page/

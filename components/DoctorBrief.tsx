@@ -42,8 +42,8 @@ function getBriefData(name: string): BriefData {
       notes: "Symptoms worsen when looking at screens. Had similar episode 2 months ago.",
       submittedAt: "9:45 AM today",
       aiAssessment: [
-        { condition: "Tension Headache", probability: 78, color: "cyan" },
-        { condition: "Migraine", probability: 45, color: "violet" },
+        { condition: "Tension Headache", probability: 78, color: "teal" },
+        { condition: "Migraine", probability: 45, color: "cyan" },
         { condition: "Hypertension-related", probability: 31, color: "amber" },
       ],
       lastVisit: {
@@ -64,7 +64,7 @@ function getBriefData(name: string): BriefData {
     notes: "",
     submittedAt: "10:02 AM today",
     aiAssessment: [
-      { condition: "Routine Check", probability: 92, color: "emerald" },
+      { condition: "Routine Check", probability: 92, color: "teal" },
       { condition: "Viral Infection", probability: 18, color: "amber" },
     ],
     lastVisit: {
@@ -75,38 +75,22 @@ function getBriefData(name: string): BriefData {
   };
 }
 
-const symptomGradients = [
-  "from-cyan-500/20 to-cyan-400/10 border-cyan-500/30 text-cyan-300",
-  "from-violet-500/20 to-violet-400/10 border-violet-500/30 text-violet-300",
-  "from-amber-500/20 to-amber-400/10 border-amber-500/30 text-amber-300",
-  "from-rose-500/20 to-rose-400/10 border-rose-500/30 text-rose-300",
-  "from-emerald-500/20 to-emerald-400/10 border-emerald-500/30 text-emerald-300",
-  "from-sky-500/20 to-sky-400/10 border-sky-500/30 text-sky-300",
-];
-
-const assessmentBarColor: Record<string, string> = {
-  cyan: "from-cyan-500 to-cyan-400",
-  violet: "from-violet-500 to-violet-400",
-  amber: "from-amber-500 to-amber-400",
-  emerald: "from-emerald-500 to-emerald-400",
-};
-
 function SectionHeader({ label, pulse }: { label: string; pulse?: boolean }) {
   return (
-    <div className="flex items-center gap-3 mb-3">
-      <span className="text-[10px] font-semibold tracking-widest text-slate-500 uppercase whitespace-nowrap">
+    <div className="flex items-center gap-3 mb-2.5">
+      <span className="text-[11px] font-bold tracking-wider text-slate-500 uppercase whitespace-nowrap">
         {label}
       </span>
       {pulse && (
-        <span className="flex items-center gap-1 bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-[9px] font-semibold px-2 py-0.5 rounded-full">
+        <span className="flex items-center gap-1 bg-[#00685f]/10 border border-[#00685f]/20 text-[#00685f] text-[10px] font-semibold px-2 py-0.5 rounded-full">
           <span className="relative flex h-1.5 w-1.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75" />
-            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-cyan-400" />
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#00685f] opacity-75" />
+            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#00685f]" />
           </span>
           AI Analysis
         </span>
       )}
-      <div className="flex-1 h-px bg-white/[0.06]" />
+      <div className="flex-1 h-px bg-[#CCD5DF]" />
     </div>
   );
 }
@@ -128,8 +112,6 @@ export default function DoctorBrief({ patient, onClose }: DoctorBriefProps) {
     return () => window.removeEventListener("keydown", handleKey);
   }, [onClose]);
 
-  const sections = [0, 1, 2, 3, 4, 5, 6, 7, 8];
-
   return (
     <AnimatePresence>
       <div className="fixed inset-0 z-50 flex justify-end">
@@ -139,7 +121,7 @@ export default function DoctorBrief({ patient, onClose }: DoctorBriefProps) {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
-          className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+          className="absolute inset-0 bg-slate-900/40 backdrop-blur-xs"
         />
 
         {/* Panel */}
@@ -148,49 +130,54 @@ export default function DoctorBrief({ patient, onClose }: DoctorBriefProps) {
           animate={{ x: 0 }}
           exit={{ x: "100%" }}
           transition={{ type: "spring", damping: 28, stiffness: 280 }}
-          className="relative w-full max-w-xl h-full bg-[#070b1a] border-l border-white/[0.08] flex flex-col overflow-hidden"
+          className="relative w-full max-w-xl h-full bg-white border-l border-[#CCD5DF] shadow-2xl flex flex-col overflow-hidden text-[#0F172A]"
         >
-          {/* Top gradient accent */}
-          <div className="h-0.5 w-full bg-gradient-to-r from-cyan-500 to-violet-600 flex-shrink-0" />
+          {/* Top Surgical Green Accent */}
+          <div className="h-1 w-full bg-[#00685f] flex-shrink-0" />
 
           {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-white/[0.06] flex-shrink-0">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-[#CCD5DF] bg-[#F8FAFC] flex-shrink-0">
             <button
               onClick={onClose}
-              className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors text-sm"
+              className="flex items-center gap-1.5 text-slate-500 hover:text-[#0F172A] transition-colors text-xs font-semibold uppercase tracking-wider"
             >
               <X className="w-4 h-4" />
               Close
             </button>
-            <span className="text-white text-sm font-semibold tracking-wide">Patient Brief</span>
-            <div className="flex items-center gap-1.5 bg-white/[0.04] border border-white/[0.08] rounded-lg px-2.5 py-1">
-              <Brain className="w-3.5 h-3.5 text-cyan-400" />
-              <span className="text-cyan-400 text-xs font-medium">AI</span>
+            <span className="text-[#0F172A] text-sm font-bold tracking-tight">Pre-Consultation Brief</span>
+            <div className="flex items-center gap-1.5 bg-[#00685f]/10 border border-[#00685f]/20 rounded-md px-2 py-0.5">
+              <Brain className="w-3.5 h-3.5 text-[#00685f]" />
+              <span className="text-[#00685f] text-xs font-bold">Reva AI</span>
             </div>
           </div>
 
           {/* Scrollable Content */}
-          <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6 scrollbar-thin scrollbar-thumb-white/10">
+          <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6 surgical-scroll">
 
             {/* Patient identity */}
             <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={mounted ? { opacity: 1, y: 0 } : {}}
               transition={{ delay: 0.05 }}
-              className="flex items-center gap-4"
+              className="flex items-center gap-4 bg-[#F8FAFC] p-4 rounded-xl border border-[#CCD5DF]"
             >
               <div
-                className="w-12 h-12 rounded-xl flex items-center justify-center text-white text-base font-bold flex-shrink-0"
+                className="w-12 h-12 rounded-xl flex items-center justify-center text-white text-base font-bold flex-shrink-0 shadow-xs"
                 style={{ background: patient.avatarColor }}
               >
                 {patient.initials}
               </div>
-              <div>
-                <p className="text-white text-base font-semibold">{patient.name}</p>
-                <p className="text-slate-400 text-sm">
-                  {patient.appointmentType} &bull; {patient.time}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between">
+                  <p className="text-[#0F172A] text-base font-bold truncate">{patient.name}</p>
+                  <span className="text-xs font-semibold px-2 py-0.5 bg-[#00685f]/10 text-[#00685f] rounded-full">
+                    {patient.time}
+                  </span>
+                </div>
+                <p className="text-slate-500 text-xs font-medium mt-0.5">
+                  {patient.appointmentType}
                 </p>
-                <div className="flex items-center gap-1 mt-0.5 text-cyan-400 text-xs">
+                <div className="flex items-center gap-1 mt-1 text-[#00685f] text-xs font-medium">
                   <Zap className="w-3 h-3" />
                   <span>Submitted {brief.submittedAt}</span>
                 </div>
@@ -204,8 +191,8 @@ export default function DoctorBrief({ patient, onClose }: DoctorBriefProps) {
               transition={{ delay: 0.1 }}
             >
               <SectionHeader label="Chief Complaint" />
-              <div className="border-l-2 border-cyan-400 pl-4">
-                <p className="text-white text-lg font-medium italic leading-relaxed">
+              <div className="border-l-3 border-[#00685f] bg-[#F8FAFC] p-3.5 rounded-r-lg border-y border-r border-[#CCD5DF]">
+                <p className="text-[#0F172A] text-sm font-semibold italic leading-relaxed">
                   &ldquo;{brief.complaint}&rdquo;
                 </p>
               </div>
@@ -217,7 +204,7 @@ export default function DoctorBrief({ patient, onClose }: DoctorBriefProps) {
               animate={mounted ? { opacity: 1, y: 0 } : {}}
               transition={{ delay: 0.15 }}
             >
-              <SectionHeader label={`Symptoms (${brief.symptoms.length})`} />
+              <SectionHeader label={`Reported Symptoms (${brief.symptoms.length})`} />
               <div className="flex flex-wrap gap-2">
                 {brief.symptoms.map((symptom, i) => (
                   <motion.span
@@ -225,11 +212,9 @@ export default function DoctorBrief({ patient, onClose }: DoctorBriefProps) {
                     initial={{ opacity: 0, scale: 0.85 }}
                     animate={mounted ? { opacity: 1, scale: 1 } : {}}
                     transition={{ delay: 0.15 + i * 0.06 }}
-                    className={`rounded-full px-3 py-1 text-xs font-medium border bg-gradient-to-r ${
-                      symptomGradients[i % symptomGradients.length]
-                    }`}
+                    className="rounded-lg px-3 py-1.5 text-xs font-semibold border border-[#00685f]/25 bg-[#00685f]/5 text-[#00685f]"
                   >
-                    {symptom}
+                    • {symptom}
                   </motion.span>
                 ))}
               </div>
@@ -240,24 +225,23 @@ export default function DoctorBrief({ patient, onClose }: DoctorBriefProps) {
               initial={{ opacity: 0, y: 12 }}
               animate={mounted ? { opacity: 1, y: 0 } : {}}
               transition={{ delay: 0.2 }}
+              className="bg-white border border-[#CCD5DF] p-4 rounded-xl"
             >
-              <SectionHeader label="Severity" />
+              <SectionHeader label="Pain / Severity Level" />
               <div className="flex items-center gap-3 mb-2">
-                <span className="text-xl">{severityEmoji(brief.severity)}</span>
-                <span className="text-white text-2xl font-bold">{brief.severity}</span>
-                <span className="text-slate-400 text-sm">/10</span>
-                <span className="ml-1 text-slate-300 text-sm font-medium">{brief.severityLabel}</span>
+                <span className="text-2xl">{severityEmoji(brief.severity)}</span>
+                <span className="text-[#0F172A] text-2xl font-bold">{brief.severity}</span>
+                <span className="text-slate-400 text-sm font-semibold">/10</span>
+                <span className="ml-auto text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                  {brief.severityLabel}
+                </span>
               </div>
-              <div className="h-2 w-full rounded-full bg-white/[0.06] overflow-hidden">
+              <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden border border-slate-200">
                 <motion.div
                   initial={{ width: 0 }}
                   animate={mounted ? { width: `${brief.severity * 10}%` } : {}}
                   transition={{ delay: 0.25, duration: 0.8, ease: "easeOut" }}
-                  className="h-full rounded-full"
-                  style={{
-                    background: `linear-gradient(to right, #22d3ee, #f59e0b, #ef4444)`,
-                    width: `${brief.severity * 10}%`,
-                  }}
+                  className="h-full rounded-full bg-gradient-to-r from-[#00685f] via-amber-500 to-rose-500"
                 />
               </div>
             </motion.div>
@@ -268,9 +252,9 @@ export default function DoctorBrief({ patient, onClose }: DoctorBriefProps) {
               animate={mounted ? { opacity: 1, y: 0 } : {}}
               transition={{ delay: 0.25 }}
             >
-              <SectionHeader label="Duration" />
-              <div className="flex items-center gap-2 text-slate-200 text-sm">
-                <Calendar className="w-4 h-4 text-slate-500" />
+              <SectionHeader label="Symptom Duration" />
+              <div className="flex items-center gap-2 text-slate-700 text-sm font-medium bg-[#F8FAFC] p-3 rounded-lg border border-[#CCD5DF]">
+                <Calendar className="w-4 h-4 text-[#00685f]" />
                 <span>{brief.duration}</span>
               </div>
             </motion.div>
@@ -280,16 +264,17 @@ export default function DoctorBrief({ patient, onClose }: DoctorBriefProps) {
               initial={{ opacity: 0, y: 12 }}
               animate={mounted ? { opacity: 1, y: 0 } : {}}
               transition={{ delay: 0.3 }}
+              className="space-y-3"
             >
-              <SectionHeader label="Medications" />
-              <div className="flex items-start gap-2 text-slate-200 text-sm mb-3">
-                <Pill className="w-4 h-4 text-slate-500 mt-0.5 flex-shrink-0" />
+              <SectionHeader label="Medications & Alerts" />
+              <div className="flex items-start gap-2 text-slate-700 text-sm font-medium bg-[#F8FAFC] p-3 rounded-lg border border-[#CCD5DF]">
+                <Pill className="w-4 h-4 text-[#00685f] mt-0.5 flex-shrink-0" />
                 <span>{brief.medications}</span>
               </div>
               {brief.allergies && brief.allergies !== "None" && brief.allergies !== "None reported" && (
-                <div className="inline-flex items-center gap-1.5 bg-red-500/20 border border-red-500/40 text-red-300 text-xs font-semibold px-3 py-1.5 rounded-full">
-                  <AlertTriangle className="w-3 h-3" />
-                  ALLERGY: {brief.allergies}
+                <div className="flex items-center gap-2 bg-rose-50 border border-rose-200 text-rose-800 text-xs font-bold px-3 py-2 rounded-lg">
+                  <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
+                  <span>KNOWN ALLERGY: {brief.allergies}</span>
                 </div>
               )}
             </motion.div>
@@ -302,8 +287,8 @@ export default function DoctorBrief({ patient, onClose }: DoctorBriefProps) {
                 transition={{ delay: 0.35 }}
               >
                 <SectionHeader label="Patient Notes" />
-                <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-4">
-                  <p className="text-slate-300 text-sm leading-relaxed">&ldquo;{brief.notes}&rdquo;</p>
+                <div className="bg-[#F8FAFC] border border-[#CCD5DF] rounded-xl p-3.5">
+                  <p className="text-slate-600 text-xs leading-relaxed italic">&ldquo;{brief.notes}&rdquo;</p>
                 </div>
               </motion.div>
             )}
@@ -314,22 +299,20 @@ export default function DoctorBrief({ patient, onClose }: DoctorBriefProps) {
               animate={mounted ? { opacity: 1, y: 0 } : {}}
               transition={{ delay: 0.4 }}
             >
-              <SectionHeader label="AI Assessment" pulse />
-              <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-4 space-y-4">
+              <SectionHeader label="Differential AI Assessment" pulse />
+              <div className="bg-white border border-[#CCD5DF] rounded-xl p-4 space-y-3">
                 {brief.aiAssessment.map((item, i) => (
                   <div key={item.condition}>
-                    <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-white text-sm font-medium">{item.condition}</span>
-                      <span className="text-slate-400 text-xs">{item.probability}%</span>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[#0F172A] text-xs font-bold">{item.condition}</span>
+                      <span className="text-[#00685f] text-xs font-mono font-bold">{item.probability}% match</span>
                     </div>
-                    <div className="h-1.5 w-full rounded-full bg-white/[0.06] overflow-hidden">
+                    <div className="h-1.5 w-full rounded-full bg-slate-100 overflow-hidden">
                       <motion.div
                         initial={{ width: 0 }}
                         animate={mounted ? { width: `${item.probability}%` } : {}}
                         transition={{ delay: 0.45 + i * 0.12, duration: 0.8, ease: "easeOut" }}
-                        className={`h-full rounded-full bg-gradient-to-r ${
-                          assessmentBarColor[item.color] ?? "from-slate-500 to-slate-400"
-                        }`}
+                        className="h-full rounded-full bg-[#00685f]"
                       />
                     </div>
                   </div>
@@ -343,41 +326,33 @@ export default function DoctorBrief({ patient, onClose }: DoctorBriefProps) {
               animate={mounted ? { opacity: 1, y: 0 } : {}}
               transition={{ delay: 0.45 }}
             >
-              <SectionHeader label={`Last Visit — ${brief.lastVisit.date}`} />
-              <div className="bg-white/[0.02] border border-white/[0.05] rounded-xl p-4 space-y-1">
-                <p className="text-slate-200 text-sm font-medium">{brief.lastVisit.diagnosis}</p>
+              <SectionHeader label={`Past Record — ${brief.lastVisit.date}`} />
+              <div className="bg-[#F8FAFC] border border-[#CCD5DF] rounded-xl p-3.5 space-y-1">
+                <p className="text-[#0F172A] text-xs font-bold">{brief.lastVisit.diagnosis}</p>
                 <p className="text-slate-500 text-xs leading-relaxed">&ldquo;{brief.lastVisit.notes}&rdquo;</p>
               </div>
             </motion.div>
 
-            {/* Bottom spacing */}
-            <div className="h-4" />
+            <div className="h-2" />
           </div>
 
           {/* Action buttons */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={mounted ? { opacity: 1, y: 0 } : {}}
-            transition={{ delay: 0.5 }}
-            className="flex-shrink-0 px-6 py-4 border-t border-white/[0.06] flex gap-3"
-          >
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.97 }}
-              className="flex-1 flex items-center justify-center gap-2 bg-white/[0.04] hover:bg-white/[0.07] border border-white/[0.08] text-slate-300 hover:text-white text-sm font-medium rounded-xl py-2.5 transition-all"
+          <div className="flex-shrink-0 px-6 py-4 border-t border-[#CCD5DF] bg-[#F8FAFC] flex gap-3">
+            <button
+              onClick={onClose}
+              className="flex-1 flex items-center justify-center gap-2 bg-white hover:bg-slate-50 border border-[#CCD5DF] text-slate-700 text-xs font-bold rounded-lg py-2.5 transition-all shadow-xs"
             >
-              <Edit3 className="w-4 h-4" />
-              Add Note
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.97 }}
-              className="flex-1 flex items-center justify-center gap-2 bg-white/[0.04] hover:bg-white/[0.07] border border-white/[0.08] text-slate-300 hover:text-white text-sm font-medium rounded-xl py-2.5 transition-all"
+              <Edit3 className="w-3.5 h-3.5" />
+              Add Clinical Note
+            </button>
+            <button
+              onClick={onClose}
+              className="flex-1 flex items-center justify-center gap-2 bg-[#00685f] hover:bg-[#005049] text-white text-xs font-bold rounded-lg py-2.5 transition-all shadow-xs"
             >
-              <ExternalLink className="w-4 h-4" />
-              Open Patient Record
-            </motion.button>
-          </motion.div>
+              <ExternalLink className="w-3.5 h-3.5" />
+              Open Full Dossier
+            </button>
+          </div>
         </motion.div>
       </div>
     </AnimatePresence>

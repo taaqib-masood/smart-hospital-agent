@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
   // Send WhatsApp confirmation if patient has a phone
   const patient = appt.patient as { name: string; phone: string } | null;
   if (patient?.phone) {
-    const dateStr = new Date(appointment_date).toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" });
+    const dateStr = new Date(appointment_date).toLocaleDateString("en-AE", { weekday: "short", day: "numeric", month: "short" });
     const [h, m] = appointment_time.split(":").map(Number);
     const period = h >= 12 ? "PM" : "AM";
     const h12 = h % 12 || 12;

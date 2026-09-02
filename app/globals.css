@@ -4,6 +4,19 @@
   --bg: #050714;
   --surface: rgba(255, 255, 255, 0.03);
   --border: rgba(255, 255, 255, 0.08);
+
+  /* Premium Surgical Green Theme Tokens */
+  --surgical-primary: #00685f;
+  --surgical-primary-hover: #005049;
+  --surgical-primary-container: #008378;
+  --surgical-primary-light: #f0fdfa;
+  --surgical-secondary: #216963;
+  --surgical-bg: #f7f9fb;
+  --surgical-surface: #ffffff;
+  --surgical-wash: #f8fafc;
+  --surgical-border: #ccd5df;
+  --surgical-text-main: #0f172a;
+  --surgical-text-muted: #64748b;
 }
 
 * { box-sizing: border-box; }
@@ -16,10 +29,20 @@ body {
   overflow-x: hidden;
 }
 
+/* Clinical Scrollbar */
+.surgical-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+.surgical-scroll::-webkit-scrollbar-track { background: #f1f5f9; }
+.surgical-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+.surgical-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
 ::-webkit-scrollbar { width: 5px; }
 ::-webkit-scrollbar-track { background: #080c1a; }
 ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+
+/* Phone mockup: hide scrollbar like real WhatsApp */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
 
 @keyframes float {
   0%, 100% { transform: translateY(0px); }
@@ -87,3 +110,197 @@ body {
 .dot1 { animation: dot-bounce 1.2s ease-in-out 0.0s infinite; }
 .dot2 { animation: dot-bounce 1.2s ease-in-out 0.2s infinite; }
 .dot3 { animation: dot-bounce 1.2s ease-in-out 0.4s infinite; }
+
+/* Workspace CSS appended below */
+
+
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-jakarta);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+@theme {
+  /* Aloka clinical green palette */
+  --color-aloka-50: #f0fdfa;
+  --color-aloka-100: #ccfbf1;
+  --color-aloka-200: #99f6e4;
+  --color-aloka-300: #5eead4;
+  --color-aloka-400: #2dd4bf;
+  --color-aloka-500: #10b981;
+  --color-aloka-600: #007e7f;
+  --color-aloka-700: #046a6b;
+  --color-aloka-800: #0a4d4e;
+  --color-aloka-900: #0b3b3c;
+
+  /* Soft, thin shadows — no harsh drop shadows */
+  --shadow-soft: 0 4px 24px rgba(0, 0, 0, 0.04);
+  --shadow-soft-lg: 0 8px 40px rgba(15, 23, 42, 0.06);
+  --shadow-glow: 0 12px 48px rgba(0, 126, 127, 0.16);
+
+  --animate-marquee: marquee 42s linear infinite;
+  --animate-typing: typing-dot 1.4s ease-in-out infinite;
+
+  @keyframes marquee {
+    to {
+      transform: translateX(-50%);
+    }
+  }
+  @keyframes typing-dot {
+    0%,
+    60%,
+    100% {
+      transform: translateY(0);
+      opacity: 0.35;
+    }
+    30% {
+      transform: translateY(-4px);
+      opacity: 1;
+    }
+  }
+}
+
+:root {
+  --radius: 0.75rem;
+  --background: #ffffff;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+  --primary: #007e7f;
+  --primary-foreground: #ffffff;
+  --secondary: #f8fafc;
+  --secondary-foreground: #0f172a;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --accent: #f8fafc;
+  --accent-foreground: #0f172a;
+  --destructive: #ef4444;
+  --border: #e5e7eb;
+  --input: #e5e7eb;
+  --ring: #10b981;
+  --chart-1: #007e7f;
+  --chart-2: #10b981;
+  --chart-3: #5eead4;
+  --chart-4: #0f172a;
+  --chart-5: #64748b;
+  --sidebar: #f8fafc;
+  --sidebar-foreground: #0f172a;
+  --sidebar-primary: #007e7f;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f1f5f9;
+  --sidebar-accent-foreground: #0f172a;
+  --sidebar-border: #e5e7eb;
+  --sidebar-ring: #10b981;
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 92px;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  ::selection {
+    background-color: rgba(16, 185, 129, 0.18);
+    color: #0f172a;
+  }
+}
+
+@layer utilities {
+  /* Slim custom scrollbar for in-card scrollable lists */
+  .landing-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: #e2e8f0 transparent;
+  }
+  .landing-scroll::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+  .landing-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .landing-scroll::-webkit-scrollbar-thumb {
+    background: #e2e8f0;
+    border-radius: 9999px;
+  }
+  .landing-scroll::-webkit-scrollbar-thumb:hover {
+    background: #cbd5e1;
+  }
+}

@@ -41,7 +41,7 @@ async function runReminders() {
       const diffMinutes = Math.abs((apptH * 60 + apptM) - (targetHour * 60 + targetMin));
       if (diffMinutes > 30) continue;
 
-      const dateStr = new Date(appt.appointment_date).toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" });
+      const dateStr = new Date(appt.appointment_date).toLocaleDateString("en-AE", { weekday: "short", day: "numeric", month: "short" });
       const h12 = apptH % 12 || 12;
       const period = apptH >= 12 ? "PM" : "AM";
       const timeStr = `${h12}:${String(apptM).padStart(2, "0")} ${period}`;

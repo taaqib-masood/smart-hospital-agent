@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { motion, AnimatePresence, useSpring, useMotionValue, animate } from "framer-motion";
-import { QrCode, Clock, Bell, Check, Star, MessageCircle, Phone } from "lucide-react";
+import { motion, AnimatePresence, useSpring, useMotionValue } from "framer-motion";
+import { QrCode, Clock, Bell, Check, Star, MessageCircle, Phone, ArrowRight } from "lucide-react";
 
 type Phase = "lookup" | "waiting" | "ready" | "done";
 
@@ -24,9 +24,9 @@ function AnimatedNumber({ value }: { value: number }) {
 }
 
 const statusUpdates = [
-  { icon: Check, text: "You're checked in", color: "text-slate-400", border: "border-slate-700/60", bg: "bg-slate-800/40" },
-  { icon: Bell, text: "We'll WhatsApp you when you're next", color: "text-cyan-400", border: "border-cyan-500/30", bg: "bg-cyan-500/5" },
-  { icon: MessageCircle, text: "You can wait outside — we'll notify you", color: "text-slate-500", border: "border-slate-700/40", bg: "bg-slate-800/20" },
+  { icon: Check, text: "You are checked in and verified", color: "text-[#00685f]", border: "border-emerald-200", bg: "bg-emerald-50" },
+  { icon: Bell, text: "We will WhatsApp you automatically when you are 2 ahead", color: "text-amber-800", border: "border-amber-200", bg: "bg-amber-50" },
+  { icon: MessageCircle, text: "Feel free to wait in the cafeteria or outside", color: "text-slate-600", border: "border-[#CCD5DF]", bg: "bg-[#F8FAFC]" },
 ];
 
 export default function QueuePage() {
@@ -87,80 +87,58 @@ export default function QueuePage() {
   const progressPercent = Math.max(0, Math.min(100, ((22 - estimatedWait) / 22) * 100));
 
   return (
-    <div className="min-h-screen bg-[#050714] text-white relative overflow-hidden flex flex-col">
-      {/* Background orb */}
-      <motion.div
-        className="pointer-events-none absolute inset-0 z-0"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 1.2 }}
-      >
-        {phase === "ready" ? (
-          <motion.div
-            className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-emerald-500/20 blur-[120px]"
-            animate={{ scale: [1, 1.15, 1], opacity: [0.3, 0.5, 0.3] }}
-            transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
-          />
-        ) : (
-          <motion.div
-            className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-cyan-500/10 blur-[140px]"
-            animate={{ scale: [1, 1.1, 1], opacity: [0.2, 0.35, 0.2] }}
-            transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-          />
-        )}
-      </motion.div>
-
-      {/* Content */}
+    <div className="min-h-screen bg-[#f7f9fb] text-[#0F172A] relative overflow-hidden flex flex-col font-sans">
       <div className="relative z-10 flex-1 flex flex-col">
         <AnimatePresence mode="wait">
           {/* ─── PHASE: LOOKUP ─── */}
           {phase === "lookup" && (
             <motion.div
               key="lookup"
-              initial={{ opacity: 0, y: 24 }}
+              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.5 }}
+              transition={{ duration: 0.4 }}
               className="flex-1 flex flex-col items-center justify-center px-6 py-12"
             >
-              <p className="text-slate-500 text-sm tracking-widest uppercase mb-10">
-                Dr. Sharma&apos;s Clinic
-              </p>
-
-              <h1 className="text-3xl md:text-4xl font-bold text-center mb-3 leading-tight">
-                Check your queue position
-              </h1>
-              <p className="text-slate-400 text-center mb-10 text-base">
-                Enter the name you booked with
-              </p>
-
-              <div className="w-full max-w-sm space-y-6">
-                <input
-                  type="text"
-                  value={inputName}
-                  onChange={(e) => setInputName(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleLookup()}
-                  placeholder="Your full name"
-                  className="w-full bg-transparent border-b border-slate-600 focus:border-cyan-400 outline-none text-2xl text-white placeholder:text-slate-600 py-3 transition-colors duration-200"
-                />
-
-                <motion.button
-                  onClick={handleLookup}
-                  whileTap={{ scale: 0.97 }}
-                  whileHover={{ scale: 1.02 }}
-                  className="w-full py-4 rounded-full text-base font-semibold bg-gradient-to-r from-cyan-500 to-violet-600 hover:from-cyan-400 hover:to-violet-500 transition-all shadow-lg shadow-cyan-500/20"
-                >
-                  Find My Position →
-                </motion.button>
-              </div>
-
-              <div className="mt-14 flex flex-col items-center gap-3">
-                <div className="w-20 h-20 border border-slate-700 rounded-lg flex items-center justify-center">
-                  <QrCode className="w-10 h-10 text-slate-600" />
+              <div className="w-full max-w-md bg-white border border-[#CCD5DF] rounded-2xl p-8 shadow-xs text-center space-y-6">
+                <div>
+                  <span className="text-xs font-bold text-[#00685f] uppercase tracking-widest block mb-1">
+                    Dr. Sharma&apos;s Clinic • Live OPD
+                  </span>
+                  <h1 className="text-2xl font-bold text-[#0F172A] tracking-tight">
+                    Check Your Queue Position
+                  </h1>
+                  <p className="text-xs text-slate-500 mt-1">
+                    Enter the patient name you used during booking
+                  </p>
                 </div>
-                <p className="text-slate-600 text-xs text-center">
-                  Or scan the QR code at reception
-                </p>
+
+                <div className="space-y-3">
+                  <input
+                    type="text"
+                    value={inputName}
+                    onChange={(e) => setInputName(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleLookup()}
+                    placeholder="e.g. Priya Sharma"
+                    className="w-full px-4 py-3 bg-[#F8FAFC] border border-[#CCD5DF] rounded-xl text-center text-lg font-bold text-[#0F172A] placeholder:text-slate-400 focus:outline-none focus:border-[#00685f]"
+                  />
+
+                  <button
+                    onClick={handleLookup}
+                    className="w-full py-3 bg-[#00685f] hover:bg-[#005049] text-white font-bold text-sm rounded-xl shadow-xs transition-colors flex items-center justify-center gap-1.5"
+                  >
+                    Track Live Position <ArrowRight size={16} />
+                  </button>
+                </div>
+
+                <div className="pt-4 border-t border-[#CCD5DF] flex flex-col items-center gap-2">
+                  <div className="w-16 h-16 bg-[#F8FAFC] border border-[#CCD5DF] rounded-xl flex items-center justify-center">
+                    <QrCode className="w-8 h-8 text-[#00685f]" />
+                  </div>
+                  <p className="text-[11px] text-slate-400">
+                    Or scan the physical QR code displayed at reception
+                  </p>
+                </div>
               </div>
             </motion.div>
           )}
@@ -172,109 +150,83 @@ export default function QueuePage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.4 }}
-              className="flex-1 flex flex-col"
+              transition={{ duration: 0.3 }}
+              className="flex-1 flex flex-col max-w-xl mx-auto w-full px-6 py-8"
             >
               {/* Header */}
-              <div className="flex items-center justify-between px-6 pt-6 pb-4">
-                <span className="text-slate-300 font-medium text-sm">Dr. Sharma&apos;s Clinic</span>
-                <div className="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-3 py-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  <span className="text-emerald-400 text-xs font-medium">Live</span>
+              <div className="flex items-center justify-between pb-6 border-b border-[#CCD5DF]">
+                <div>
+                  <span className="text-xs font-bold text-slate-500">Dr. Sharma&apos;s Clinic</span>
+                  <h2 className="text-base font-bold text-[#0F172A]">{patientName}</h2>
+                </div>
+                <div className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 rounded-full px-3 py-1">
+                  <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
+                  <span className="text-emerald-700 text-xs font-bold">Live Synced</span>
                 </div>
               </div>
 
               {/* Big position number */}
-              <div className="flex flex-col items-center pt-8 pb-6 px-6">
-                <p className="text-slate-500 text-xs tracking-widest uppercase mb-1">YOUR POSITION</p>
-                <motion.div
-                  key={position}
-                  layout
-                  className="text-[120px] md:text-[180px] font-black leading-none bg-gradient-to-b from-cyan-300 to-violet-500 bg-clip-text text-transparent"
-                >
+              <div className="bg-white border border-[#CCD5DF] rounded-2xl p-8 my-6 text-center shadow-xs">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">
+                  Patients Ahead of You
+                </span>
+                <div className="text-8xl font-black text-[#00685f] leading-none my-2">
                   <AnimatedNumber value={position} />
-                </motion.div>
-                <p className="text-slate-400 text-base mt-1">patients ahead of you</p>
+                </div>
+                <p className="text-xs font-bold text-slate-600 mt-2">
+                  {position === 0 ? "You are next! Please proceed." : `Estimated wait time: ~${estimatedWait} mins`}
+                </p>
               </div>
 
               {/* Visual queue circles */}
-              <div className="flex items-end justify-center gap-3 px-6 mb-8">
+              <div className="flex items-center justify-center gap-3 mb-6">
                 {Array.from({ length: Math.min(totalAhead, 4) }).map((_, i) => (
                   <div key={i} className="flex flex-col items-center gap-1">
-                    {i === 0 && (
-                      <span className="text-[10px] text-emerald-400 font-medium">Next</span>
-                    )}
-                    <motion.div
-                      animate={i === 0 ? { boxShadow: ["0 0 0px #10b981", "0 0 16px #10b981", "0 0 0px #10b981"] } : {}}
-                      transition={{ duration: 1.8, repeat: Infinity }}
-                      className={`w-10 h-10 rounded-full border ${
+                    <div
+                      className={`w-9 h-9 rounded-full border flex items-center justify-center text-xs font-bold ${
                         i === 0
-                          ? "bg-emerald-500/20 border-emerald-500/50"
-                          : "bg-white/[0.07] border-white/[0.08]"
+                          ? "bg-emerald-100 border-emerald-300 text-emerald-800"
+                          : "bg-slate-100 border-slate-300 text-slate-500"
                       }`}
-                    />
+                    >
+                      {i === 0 ? "1" : i + 1}
+                    </div>
+                    <span className="text-[10px] text-slate-400 font-bold">{i === 0 ? "Next" : ""}</span>
                   </div>
                 ))}
-                {/* Patient's own circle */}
                 <div className="flex flex-col items-center gap-1">
-                  <span className="text-[10px] text-cyan-400 font-medium">You</span>
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-500 to-violet-600 border border-cyan-400/40 flex items-center justify-center">
-                    <span className="text-[10px] font-bold text-white">
-                      {patientName.slice(0, 2).toUpperCase()}
-                    </span>
+                  <div className="w-9 h-9 rounded-full bg-[#00685f] text-white flex items-center justify-center text-xs font-bold shadow-xs">
+                    You
                   </div>
-                </div>
-              </div>
-
-              {/* Wait time card */}
-              <div className="mx-6 mb-6 bg-white/[0.04] border border-white/[0.07] rounded-2xl p-5 backdrop-blur-sm">
-                <div className="flex items-center gap-2 mb-1">
-                  <Clock className="w-4 h-4 text-cyan-400" />
-                  <span className="text-white font-medium text-sm">
-                    Estimated wait: {estimatedWait} minutes
-                  </span>
-                </div>
-                <p className="text-slate-500 text-xs mb-3">Average consultation: 7–8 mins</p>
-                <div className="w-full h-1.5 bg-white/[0.07] rounded-full overflow-hidden">
-                  <motion.div
-                    className="h-full bg-gradient-to-r from-cyan-500 to-violet-500 rounded-full"
-                    animate={{ width: `${progressPercent}%` }}
-                    transition={{ duration: 0.8 }}
-                  />
+                  <span className="text-[10px] text-[#00685f] font-bold">Current</span>
                 </div>
               </div>
 
               {/* Status updates */}
-              <div className="mx-6 mb-6 space-y-2">
+              <div className="space-y-2.5 mb-6">
                 {statusUpdates.map((item, i) => (
-                  <motion.div
+                  <div
                     key={i}
-                    initial={{ opacity: 0, x: -16 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.15 + 0.3 }}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-xl border ${item.border} ${item.bg}`}
+                    className={`flex items-center gap-3 p-3.5 rounded-xl border text-xs font-medium ${item.border} ${item.bg}`}
                   >
-                    <item.icon className={`w-4 h-4 flex-shrink-0 ${item.color}`} />
-                    <span className={`text-sm ${item.color}`}>{item.text}</span>
-                  </motion.div>
+                    <item.icon className={`w-4 h-4 shrink-0 ${item.color}`} />
+                    <span className={item.color}>{item.text}</span>
+                  </div>
                 ))}
               </div>
 
-              {/* Notify toggle */}
-              <div className="mx-6 mb-6">
-                <motion.button
-                  onClick={() => setNotifyEnabled((v) => !v)}
-                  whileTap={{ scale: 0.97 }}
-                  className={`w-full py-4 rounded-2xl font-semibold text-sm flex items-center justify-center gap-3 transition-all border ${
-                    notifyEnabled
-                      ? "bg-cyan-500/15 border-cyan-500/40 text-cyan-300"
-                      : "bg-white/[0.04] border-white/[0.08] text-slate-400"
-                  }`}
-                >
-                  <Bell className={`w-4 h-4 ${notifyEnabled ? "text-cyan-400" : "text-slate-500"}`} />
-                  {notifyEnabled ? "Notifications ON — WhatsApp when 2 ahead" : "Notify me when I'm next"}
-                </motion.button>
-              </div>
+              {/* Notify toggle button */}
+              <button
+                onClick={() => setNotifyEnabled((v) => !v)}
+                className={`w-full py-3.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 border transition-all ${
+                  notifyEnabled
+                    ? "bg-emerald-50 border-emerald-300 text-emerald-800"
+                    : "bg-white border-[#CCD5DF] text-slate-700 hover:bg-slate-50"
+                }`}
+              >
+                <Bell size={14} className={notifyEnabled ? "text-emerald-600" : "text-slate-400"} />
+                {notifyEnabled ? "WhatsApp alerts active ✓" : "Enable 2-ahead WhatsApp push alert"}
+              </button>
             </motion.div>
           )}
 
@@ -285,26 +237,15 @@ export default function QueuePage() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.5 }}
+              transition={{ duration: 0.4 }}
               className="flex-1 flex flex-col items-center justify-center px-6 text-center"
             >
-              <motion.div
-                animate={{
-                  boxShadow: [
-                    "0 0 0px #10b981",
-                    "0 0 60px #10b981",
-                    "0 0 0px #10b981",
-                  ],
-                }}
-                transition={{ duration: 1.8, repeat: Infinity }}
-                className="w-28 h-28 rounded-full bg-emerald-500/20 border-2 border-emerald-400 flex items-center justify-center mb-8"
-              >
-                <Check className="w-14 h-14 text-emerald-400" strokeWidth={3} />
-              </motion.div>
-
-              <h1 className="text-4xl font-black mb-3">It&apos;s your turn! 🎉</h1>
-              <p className="text-slate-300 text-lg mb-2">Please head to the consultation room</p>
-              <p className="text-slate-500 text-sm">Dr. Sharma is ready for you</p>
+              <div className="w-24 h-24 rounded-full bg-emerald-100 border-2 border-emerald-500 flex items-center justify-center mb-6 shadow-md">
+                <Check className="w-12 h-12 text-emerald-700" strokeWidth={3} />
+              </div>
+              <h1 className="text-3xl font-black text-[#0F172A] mb-2">It&apos;s Your Turn!</h1>
+              <p className="text-slate-600 text-base mb-1">Please head to Consultation Room #2</p>
+              <p className="text-xs text-slate-400">Dr. Sharma is ready to see you now.</p>
             </motion.div>
           )}
 
@@ -312,63 +253,50 @@ export default function QueuePage() {
           {phase === "done" && (
             <motion.div
               key="done"
-              initial={{ opacity: 0, y: 24 }}
+              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.5 }}
-              className="flex-1 flex flex-col items-center justify-center px-6 text-center"
+              transition={{ duration: 0.4 }}
+              className="flex-1 flex flex-col items-center justify-center px-6 text-center max-w-md mx-auto"
             >
-              <h1 className="text-2xl font-bold mb-2">Thank you for visiting</h1>
-              <p className="text-slate-400 mb-8">Dr. Sharma&apos;s Clinic</p>
+              <h1 className="text-2xl font-bold text-[#0F172A] mb-1">Consultation Completed</h1>
+              <p className="text-slate-500 text-xs mb-6">Dr. Sharma&apos;s Clinic • OPD</p>
 
-              <p className="text-slate-400 text-sm mb-4">How was your experience?</p>
-              <div className="flex gap-3 mb-6">
-                {[1, 2, 3, 4, 5].map((val) => (
-                  <motion.button
-                    key={val}
-                    onClick={() => handleRating(val)}
-                    whileTap={{ scale: 1.2 }}
-                    whileHover={{ scale: 1.1 }}
-                  >
-                    <Star
-                      className={`w-9 h-9 transition-colors ${
-                        val <= rating ? "text-amber-400 fill-amber-400" : "text-slate-600"
-                      }`}
-                    />
-                  </motion.button>
-                ))}
+              <div className="bg-white border border-[#CCD5DF] rounded-2xl p-6 shadow-xs w-full mb-6">
+                <p className="text-xs font-bold text-slate-700 mb-3">How was your visit today?</p>
+                <div className="flex justify-center gap-2 mb-4">
+                  {[1, 2, 3, 4, 5].map((val) => (
+                    <button key={val} onClick={() => handleRating(val)}>
+                      <Star
+                        className={`w-7 h-7 transition-colors ${
+                          val <= rating ? "text-amber-400 fill-amber-400" : "text-slate-300"
+                        }`}
+                      />
+                    </button>
+                  ))}
+                </div>
+                {showReview && (
+                  <button className="w-full py-2.5 bg-[#00685f] text-white font-bold text-xs rounded-xl shadow-xs">
+                    Leave a Google Review
+                  </button>
+                )}
               </div>
 
-              <AnimatePresence>
-                {showReview && (
-                  <motion.a
-                    href="#"
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="px-6 py-3 rounded-full bg-gradient-to-r from-cyan-500 to-violet-600 font-semibold text-sm mb-4 inline-block"
-                  >
-                    Leave a Google Review →
-                  </motion.a>
-                )}
-              </AnimatePresence>
-
-              <div className="flex items-center gap-2 text-slate-500 text-sm mt-4">
-                <MessageCircle className="w-4 h-4" />
-                <span>We&apos;ll send your prescription via WhatsApp shortly</span>
+              <div className="flex items-center gap-2 text-xs text-slate-500">
+                <MessageCircle size={14} className="text-emerald-600" />
+                <span>Your digital prescription has been dispatched via WhatsApp</span>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
       </div>
 
-      {/* Floating bottom bar (all phases except done) */}
       {phase !== "done" && (
-        <div className="relative z-20 border-t border-white/[0.06] bg-[#050714]/80 backdrop-blur-md px-6 py-4 flex items-center justify-between">
-          <span className="text-slate-500 text-xs">Dr. Sharma&apos;s Clinic · Mumbai</span>
-          <a href="tel:+912212345678" className="flex items-center gap-1.5 text-slate-500 text-xs">
-            <Phone className="w-3 h-3" />
-            +91 22 1234 5678
-          </a>
+        <div className="relative z-20 border-t border-[#CCD5DF] bg-white px-6 py-3 flex items-center justify-between text-xs text-slate-500">
+          <span>Dr. Sharma&apos;s Clinic • Jumeirah Medical District, Dubai</span>
+          <span className="flex items-center gap-1">
+            <Phone size={12} /> +971 4 345 6789
+          </span>
         </div>
       )}
     </div>

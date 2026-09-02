@@ -2,186 +2,134 @@
 
 import { useRef } from "react";
 import { motion, useInView } from "framer-motion";
-import { Link2, Calendar, CheckCircle } from "lucide-react";
+import { Link2, Calendar, CheckCircle2, XCircle, ArrowRight } from "lucide-react";
 
-interface Step {
-  number: string;
-  icon: React.ElementType;
-  title: string;
-  description: string;
-}
-
-const steps: Step[] = [
+const steps = [
   {
     number: "01",
     icon: Link2,
-    title: "Connect Your WhatsApp",
-    description:
-      "Link your clinic's WhatsApp Business number to Reva. Takes 3 minutes — we walk you through it.",
+    title: "Connect WhatsApp Business",
+    description: "Link your official clinic phone number to Reva in under 3 minutes with our step-by-step setup wizard.",
   },
   {
     number: "02",
     icon: Calendar,
-    title: "Set Your Schedule",
-    description:
-      "Tell Reva your working hours, doctors, and services. It learns your clinic in minutes.",
+    title: "Configure Doctor Timings",
+    description: "Define consultation slots, OPD working days, doctor specialties, and pricing rules.",
   },
   {
     number: "03",
-    icon: CheckCircle,
-    title: "Patients Book, You Focus",
-    description:
-      "Share your WhatsApp number. Patients book automatically. You get a notification for every confirmed appointment.",
+    icon: CheckCircle2,
+    title: "Patients Book Automatically",
+    description: "Patients message on WhatsApp, receive instant slot options, and confirm appointments 24/7.",
   },
 ];
 
-const beforeItems = [
-  "Missed calls during consultations",
-  "Patients call 3 competitors",
-  "Receptionist manually calls 40 patients for recalls",
-  "No-shows with no warning",
-];
-
-const afterItems = [
-  "Every inquiry answered instantly",
-  "Patient books in 60 seconds on WhatsApp",
-  "Recall campaigns sent automatically",
-  "Smart reminders slash no-shows",
+const BEFORE_AFTER = [
+  {
+    before: "Front desk overwhelmed with phone calls during peak clinic hours",
+    after: "100% of patient chats & bookings handled in parallel by Reva AI",
+  },
+  {
+    before: "Missed calls go to competitor clinics nearby",
+    after: "Instant WhatsApp callback recovers 75% of missed callers",
+  },
+  {
+    before: "Manual reminder calls take 2 hours of staff time daily",
+    after: "Automated WhatsApp reminders slash no-show rates by 40%",
+  },
+  {
+    before: "Paper prescriptions get misplaced by patients",
+    after: "Instant verified PDF prescriptions dispatched directly to WhatsApp",
+  },
 ];
 
 export default function HowItWorks() {
   const stepsRef = useRef<HTMLDivElement>(null);
-  const compareRef = useRef<HTMLDivElement>(null);
-  const stepsInView = useInView(stepsRef, { once: true, margin: "-80px" });
-  const compareInView = useInView(compareRef, { once: true, margin: "-80px" });
+  const inView = useInView(stepsRef, { once: true, margin: "-60px" });
 
   return (
-    <section id="how-it-works" className="bg-[#050714] py-24 px-4">
-      <div className="max-w-6xl mx-auto">
-        {/* Heading */}
-        <motion.div
-          className="text-center mb-16"
-          initial={{ opacity: 0, y: 30 }}
-          animate={stepsInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
-          transition={{ duration: 0.6 }}
-        >
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-            Up and Running in 10 Minutes
+    <section id="how-it-works" className="py-24 px-6 bg-[#f7f9fb] border-t border-[#CCD5DF]">
+      <div className="max-w-7xl mx-auto space-y-20">
+        {/* Header */}
+        <div className="text-center max-w-2xl mx-auto space-y-3">
+          <span className="text-xs font-bold uppercase tracking-wider text-[#00685f] bg-[#00685f]/10 px-3 py-1 rounded-full border border-[#00685f]/20">
+            Effortless Setup
+          </span>
+          <h2 className="text-3xl sm:text-4xl font-bold text-[#0F172A] tracking-tight">
+            Up & Running in 10 Minutes
           </h2>
-          <p className="text-slate-400 text-lg max-w-2xl mx-auto">
-            No IT team needed. If you can use WhatsApp, you can use Reva.
+          <p className="text-slate-600 text-sm sm:text-base">
+            No complicated IT hardware or training required. If your staff can use WhatsApp, they can use Reva.
           </p>
-        </motion.div>
+        </div>
 
-        {/* Steps */}
-        <div
-          ref={stepsRef}
-          className="flex flex-col md:flex-row items-stretch gap-6 md:gap-0 mb-20"
-        >
+        {/* 3 Steps */}
+        <div ref={stepsRef} className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {steps.map((step, i) => {
             const Icon = step.icon;
             return (
-              <div key={step.number} className="flex flex-col md:flex-row items-center flex-1">
-                <motion.div
-                  className="relative bg-white/[0.03] border border-white/[0.08] rounded-2xl p-8 flex-1 w-full overflow-hidden"
-                  initial={{ opacity: 0, y: 40 }}
-                  animate={stepsInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
-                  transition={{ duration: 0.5, delay: i * 0.15 }}
-                >
-                  {/* Background number */}
-                  <span className="absolute top-4 right-4 text-6xl font-black gradient-text opacity-20 select-none leading-none">
-                    {step.number}
-                  </span>
+              <motion.div
+                key={step.number}
+                initial={{ opacity: 0, y: 30 }}
+                animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+                transition={{ duration: 0.5, delay: i * 0.15 }}
+                className="bg-white border border-[#CCD5DF] rounded-2xl p-7 shadow-xs relative overflow-hidden"
+              >
+                <span className="absolute top-4 right-4 text-5xl font-black text-slate-100 select-none">
+                  {step.number}
+                </span>
 
-                  {/* Icon */}
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-400 to-violet-500 flex items-center justify-center mb-5">
-                    <Icon className="w-6 h-6 text-white" />
-                  </div>
+                <div className="w-12 h-12 rounded-xl bg-[#00685f] text-white flex items-center justify-center mb-5 shadow-xs">
+                  <Icon size={22} />
+                </div>
 
-                  <h3 className="text-white font-semibold text-lg mb-2">{step.title}</h3>
-                  <p className="text-slate-400 text-sm leading-relaxed">{step.description}</p>
-                </motion.div>
-
-                {/* Dashed arrow between steps (desktop only) */}
-                {i < steps.length - 1 && (
-                  <div className="hidden md:flex items-center justify-center px-3 text-slate-600 text-2xl flex-shrink-0">
-                    <svg
-                      width="32"
-                      height="16"
-                      viewBox="0 0 32 16"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <line
-                        x1="0"
-                        y1="8"
-                        x2="24"
-                        y2="8"
-                        stroke="#334155"
-                        strokeWidth="2"
-                        strokeDasharray="4 3"
-                      />
-                      <path d="M24 3L31 8L24 13" stroke="#334155" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </div>
-                )}
-              </div>
+                <h3 className="font-bold text-base text-[#0F172A] mb-2">{step.title}</h3>
+                <p className="text-slate-600 text-xs leading-relaxed">{step.description}</p>
+              </motion.div>
             );
           })}
         </div>
 
-        {/* Before vs After */}
-        <motion.div
-          ref={compareRef}
-          className="bg-white/[0.03] border border-white/[0.08] rounded-2xl overflow-hidden"
-          initial={{ opacity: 0, y: 40 }}
-          animate={compareInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
-          transition={{ duration: 0.6 }}
-        >
-          <div className="grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-white/[0.08]">
-            {/* Before */}
-            <div className="p-8">
-              <h4 className="text-red-400 font-semibold text-base mb-5 uppercase tracking-widest text-xs">
-                Before Reva
+        {/* Before vs After Comparison */}
+        <div className="bg-white border border-[#CCD5DF] rounded-3xl p-8 lg:p-12 shadow-xs space-y-8">
+          <div className="text-center space-y-2">
+            <h3 className="text-2xl font-bold text-[#0F172A]">The Reva AI Advantage</h3>
+            <p className="text-slate-500 text-xs">How clinics transform their daily operations</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Traditional Clinic */}
+            <div className="bg-rose-50/50 border border-rose-200 rounded-2xl p-6 space-y-4">
+              <h4 className="font-bold text-sm text-rose-800 flex items-center gap-2">
+                <XCircle size={16} /> Traditional Clinic Front Desk
               </h4>
-              <ul className="space-y-4">
-                {beforeItems.map((item, i) => (
-                  <motion.li
-                    key={item}
-                    className="flex items-start gap-3 text-slate-500 text-sm"
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={compareInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }}
-                    transition={{ duration: 0.4, delay: 0.2 + i * 0.1 }}
-                  >
-                    <span className="text-red-500 mt-0.5 flex-shrink-0">❌</span>
-                    {item}
-                  </motion.li>
+              <ul className="space-y-3 text-xs text-rose-950/80">
+                {BEFORE_AFTER.map((item, idx) => (
+                  <li key={idx} className="flex items-start gap-2">
+                    <span className="text-rose-500 font-bold">•</span>
+                    <span>{item.before}</span>
+                  </li>
                 ))}
               </ul>
             </div>
 
-            {/* After */}
-            <div className="p-8 bg-emerald-950/10">
-              <h4 className="text-emerald-400 font-semibold text-base mb-5 uppercase tracking-widest text-xs">
-                After Reva
+            {/* With Reva AI */}
+            <div className="bg-teal-50/50 border border-teal-200 rounded-2xl p-6 space-y-4">
+              <h4 className="font-bold text-sm text-emerald-800 flex items-center gap-2">
+                <CheckCircle2 size={16} /> With Reva AI Autonomous Agent
               </h4>
-              <ul className="space-y-4">
-                {afterItems.map((item, i) => (
-                  <motion.li
-                    key={item}
-                    className="flex items-start gap-3 text-slate-300 text-sm"
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={compareInView ? { opacity: 1, x: 0 } : { opacity: 0, x: 20 }}
-                    transition={{ duration: 0.4, delay: 0.2 + i * 0.1 }}
-                  >
-                    <span className="text-emerald-400 mt-0.5 flex-shrink-0">✅</span>
-                    {item}
-                  </motion.li>
+              <ul className="space-y-3 text-xs text-emerald-950/80">
+                {BEFORE_AFTER.map((item, idx) => (
+                  <li key={idx} className="flex items-start gap-2">
+                    <span className="text-emerald-600 font-bold">✓</span>
+                    <span className="font-medium">{item.after}</span>
+                  </li>
                 ))}
               </ul>
             </div>
           </div>
-        </motion.div>
+        </div>
       </div>
     </section>
   );

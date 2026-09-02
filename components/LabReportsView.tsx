@@ -1,26 +1,21 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
-import { motion, AnimatePresence, useAnimation } from "framer-motion";
+import { useState, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useCountUp } from "@/lib/hooks";
 import {
   UploadCloud,
   Search,
-  Filter,
   ChevronDown,
+  ChevronUp,
   Send,
-  Eye,
-  Flag,
-  CheckCircle2,
   AlertTriangle,
-  MessageCircle,
-  X,
-  CheckSquare,
-  Square,
   Clock,
   TrendingUp,
-  Activity,
-  Inbox,
+  FileText,
+  CheckCircle,
+  CheckCircle2,
+  X
 } from "lucide-react";
 
 interface LabReportsViewProps {
@@ -40,21 +35,21 @@ interface Report {
 }
 
 const INITIAL_REPORTS: Report[] = [
-  { id: 1, patient: "Priya Sharma", age: 34, test: "CBC", date: "Apr 24", status: "Delivered", flagged: false, notes: "WBC slightly elevated", phone: "+91 98765 43210" },
-  { id: 2, patient: "Rahul Gupta", age: 45, test: "Lipid Profile", date: "Apr 24", status: "Pending", flagged: false, notes: "", phone: "+91 87654 32109" },
-  { id: 3, patient: "Ananya Nair", age: 29, test: "HbA1c", date: "Apr 23", status: "Delivered", flagged: true, notes: "HbA1c 8.2 — above normal", phone: "+91 76543 21098" },
-  { id: 4, patient: "Vikram Patel", age: 52, test: "LFT", date: "Apr 23", status: "Delivered", flagged: false, notes: "", phone: "+91 65432 10987" },
-  { id: 5, patient: "Sunita Rao", age: 41, test: "Blood Sugar Fast", date: "Apr 23", status: "Pending", flagged: false, notes: "", phone: "+91 54321 09876" },
-  { id: 6, patient: "Karan Mehta", age: 38, test: "TSH", date: "Apr 22", status: "Delivered", flagged: true, notes: "TSH 6.8 — subclinical hypothyroid", phone: "+91 43210 98765" },
-  { id: 7, patient: "Deepa Singh", age: 26, test: "Urine Routine", date: "Apr 22", status: "Delivered", flagged: false, notes: "", phone: "+91 32109 87654" },
-  { id: 8, patient: "Meera Joshi", age: 60, test: "Chest X-Ray", date: "Apr 21", status: "Delivered", flagged: false, notes: "Mild cardiomegaly noted", phone: "+91 21098 76543" },
-  { id: 9, patient: "Arjun Kumar", age: 47, test: "ECG", date: "Apr 21", status: "Delivered", flagged: false, notes: "", phone: "+91 10987 65432" },
-  { id: 10, patient: "Priya Sharma", age: 34, test: "Lipid Profile", date: "Apr 20", status: "Delivered", flagged: false, notes: "", phone: "+91 98765 43210" },
-  { id: 11, patient: "Rahul Gupta", age: 45, test: "RFT", date: "Apr 20", status: "Delivered", flagged: false, notes: "", phone: "+91 87654 32109" },
-  { id: 12, patient: "Ananya Nair", age: 29, test: "CBC", date: "Apr 19", status: "Delivered", flagged: false, notes: "", phone: "+91 76543 21098" },
-  { id: 13, patient: "Vikram Patel", age: 52, test: "HbA1c", date: "Apr 19", status: "Delivered", flagged: true, notes: "HbA1c 7.9 — borderline", phone: "+91 65432 10987" },
-  { id: 14, patient: "Sunita Rao", age: 41, test: "Lipid Profile", date: "Apr 18", status: "Delivered", flagged: false, notes: "", phone: "+91 54321 09876" },
-  { id: 15, patient: "Karan Mehta", age: 38, test: "Blood Sugar PP", date: "Apr 18", status: "Delivered", flagged: false, notes: "", phone: "+91 43210 98765" },
+  { id: 1, patient: "Priya Sharma", age: 34, test: "CBC", date: "Apr 24", status: "Delivered", flagged: false, notes: "WBC slightly elevated", phone: "+971 50 123 4567" },
+  { id: 2, patient: "Rahul Gupta", age: 45, test: "Lipid Profile", date: "Apr 24", status: "Pending", flagged: false, notes: "", phone: "+971 55 234 5678" },
+  { id: 3, patient: "Ananya Nair", age: 29, test: "HbA1c", date: "Apr 23", status: "Delivered", flagged: true, notes: "HbA1c 8.2 — above normal", phone: "+971 52 345 6789" },
+  { id: 4, patient: "Vikram Patel", age: 52, test: "LFT", date: "Apr 23", status: "Delivered", flagged: false, notes: "", phone: "+971 58 456 7890" },
+  { id: 5, patient: "Sunita Rao", age: 41, test: "Blood Sugar Fast", date: "Apr 23", status: "Pending", flagged: false, notes: "", phone: "+971 50 987 6543" },
+  { id: 6, patient: "Karan Mehta", age: 38, test: "TSH", date: "Apr 22", status: "Delivered", flagged: true, notes: "TSH 6.8 — subclinical hypothyroid", phone: "+971 55 876 5432" },
+  { id: 7, patient: "Deepa Singh", age: 26, test: "Urine Routine", date: "Apr 22", status: "Delivered", flagged: false, notes: "", phone: "+971 52 765 4321" },
+  { id: 8, patient: "Meera Joshi", age: 60, test: "Chest X-Ray", date: "Apr 21", status: "Delivered", flagged: false, notes: "Mild cardiomegaly noted", phone: "+971 58 654 3210" },
+  { id: 9, patient: "Arjun Kumar", age: 47, test: "ECG", date: "Apr 21", status: "Delivered", flagged: false, notes: "", phone: "+971 50 543 2109" },
+  { id: 10, patient: "Priya Sharma", age: 34, test: "Lipid Profile", date: "Apr 20", status: "Delivered", flagged: false, notes: "", phone: "+971 50 123 4567" },
+  { id: 11, patient: "Rahul Gupta", age: 45, test: "RFT", date: "Apr 20", status: "Delivered", flagged: false, notes: "", phone: "+971 55 234 5678" },
+  { id: 12, patient: "Ananya Nair", age: 29, test: "CBC", date: "Apr 19", status: "Delivered", flagged: false, notes: "", phone: "+971 52 345 6789" },
+  { id: 13, patient: "Vikram Patel", age: 52, test: "HbA1c", date: "Apr 19", status: "Delivered", flagged: true, notes: "HbA1c 7.9 — borderline", phone: "+971 58 456 7890" },
+  { id: 14, patient: "Sunita Rao", age: 41, test: "Lipid Profile", date: "Apr 18", status: "Delivered", flagged: false, notes: "", phone: "+971 50 987 6543" },
+  { id: 15, patient: "Karan Mehta", age: 38, test: "Blood Sugar PP", date: "Apr 18", status: "Delivered", flagged: false, notes: "", phone: "+971 55 876 5432" },
 ];
 
 const PENDING_REPORTS = [
@@ -71,746 +66,368 @@ const FLAGGED_REPORTS = [
   { id: 13, patient: "Vikram Patel", test: "HbA1c", note: "HbA1c 7.9 — borderline" },
 ];
 
-const DAILY_DELIVERIES = [
-  { day: "Mon", count: 12 },
-  { day: "Tue", count: 18 },
-  { day: "Wed", count: 9 },
-  { day: "Thu", count: 21 },
-  { day: "Fri", count: 8 },
-];
-
-function getInitials(name: string) {
-  return name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
-}
-
-function getAvatarGradient(name: string) {
-  const gradients = [
-    "from-cyan-500 to-violet-600",
-    "from-emerald-500 to-cyan-600",
-    "from-violet-500 to-rose-600",
-    "from-amber-500 to-orange-600",
-    "from-rose-500 to-pink-600",
-  ];
-  const idx = name.charCodeAt(0) % gradients.length;
-  return gradients[idx];
-}
-
-const cardVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: (i: number) => ({
-    opacity: 1,
-    y: 0,
-    transition: { delay: i * 0.08, duration: 0.4, ease: "easeOut" as const },
-  }),
-};
-
-const rowVariants = {
-  hidden: { opacity: 0, x: -10 },
-  visible: (i: number) => ({
-    opacity: 1,
-    x: 0,
-    transition: { delay: i * 0.05, duration: 0.3, ease: "easeOut" as const },
-  }),
-  exit: { opacity: 0, x: 20, transition: { duration: 0.2, ease: "easeOut" as const } },
-};
-
-const expandVariants = {
-  hidden: { opacity: 0, height: 0 },
-  visible: { opacity: 1, height: "auto", transition: { duration: 0.3, ease: "easeOut" as const } },
-  exit: { opacity: 0, height: 0, transition: { duration: 0.2, ease: "easeOut" as const } },
-};
-
 function StatCard({
   label,
   value,
-  suffix,
   sub,
-  color,
   icon,
-  index,
+  trend,
+  delay,
 }: {
   label: string;
   value: number;
-  suffix?: string;
   sub?: string;
-  color: string;
   icon: React.ReactNode;
-  index: number;
+  trend?: string;
+  delay: number;
 }) {
   const count = useCountUp(value);
   return (
     <motion.div
-      custom={index}
-      variants={cardVariants}
-      initial="hidden"
-      animate="visible"
-      className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-5 flex flex-col gap-3 backdrop-blur-xl"
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay, duration: 0.4, ease: "easeOut" }}
+      className="bg-white border border-[#CCD5DF] rounded-xl p-6 shadow-xs flex flex-col justify-between"
     >
-      <div className="flex items-center justify-between">
-        <span className="text-xs text-white/40 font-medium uppercase tracking-widest">{label}</span>
-        <div className={`p-2 rounded-xl bg-white/[0.05] ${color}`}>{icon}</div>
-      </div>
-      <div className="flex items-end gap-2">
-        <span className={`text-3xl font-bold ${color}`}>
-          {count}{suffix}
-        </span>
-        {sub && <span className="text-xs text-white/40 mb-1">{sub}</span>}
-      </div>
-    </motion.div>
-  );
-}
-
-function UploadZone({
-  onUpload,
-  uploading,
-  uploadProgress,
-}: {
-  onUpload: () => void;
-  uploading: boolean;
-  uploadProgress: number;
-}) {
-  const [dragging, setDragging] = useState(false);
-  return (
-    <motion.div
-      whileHover={{ borderColor: "rgba(6,182,212,0.6)", backgroundColor: "rgba(6,182,212,0.03)" }}
-      onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
-      onDragLeave={() => setDragging(false)}
-      onDrop={(e) => { e.preventDefault(); setDragging(false); onUpload(); }}
-      onClick={onUpload}
-      className="relative border-2 border-dashed border-cyan-500/30 rounded-2xl h-28 flex flex-col items-center justify-center gap-1 cursor-pointer transition-colors duration-200 overflow-hidden"
-      style={{ backgroundColor: dragging ? "rgba(6,182,212,0.05)" : undefined }}
-    >
-      {uploading ? (
-        <div className="w-full px-8 flex flex-col gap-2">
-          <div className="flex items-center justify-between text-xs text-white/50">
-            <span>Uploading report...</span>
-            <span>{Math.round(uploadProgress)}%</span>
-          </div>
-          <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
-            <motion.div
-              className="h-full bg-gradient-to-r from-cyan-500 to-violet-500 rounded-full"
-              style={{ width: `${uploadProgress}%` }}
-              transition={{ duration: 0.05 }}
-            />
-          </div>
+      <div className="flex justify-between items-start mb-3">
+        <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">{label}</span>
+        <div className="w-8 h-8 rounded-lg bg-[#F8FAFC] border border-[#CCD5DF] flex items-center justify-center text-[#00685f]">
+          {icon}
         </div>
-      ) : (
-        <>
-          <UploadCloud className="w-6 h-6 text-cyan-400/70" />
-          <p className="text-sm text-white/50 font-medium">Drop lab reports here or click to upload</p>
-          <p className="text-xs text-white/30">PDF, JPG, PNG — max 10MB</p>
-        </>
+      </div>
+      <div className="text-3xl font-bold text-[#0F172A] mb-1">
+        {count.toLocaleString("en-AE")}
+      </div>
+      {sub && <p className="text-xs text-slate-500 font-medium">{sub}</p>}
+      {trend && (
+        <div className="flex items-center gap-1 text-[#00685f] text-xs font-semibold mt-1">
+          <TrendingUp className="w-3.5 h-3.5" />
+          <span>{trend}</span>
+        </div>
       )}
     </motion.div>
   );
 }
 
-function ReportRow({
-  report,
-  index,
-  selected,
-  onSelect,
-  onSend,
-  onFlag,
-  addToast,
-}: {
-  report: Report;
-  index: number;
-  selected: boolean;
-  onSelect: (id: number) => void;
-  onSend: (report: Report) => void;
-  onFlag: (id: number) => void;
-  addToast: (msg: string, type: "success" | "info" | "warn") => void;
-}) {
-  const [expanded, setExpanded] = useState(false);
-  const [noteText, setNoteText] = useState(report.notes || "Results within normal range");
-  const [reviewed, setReviewed] = useState(false);
-  const [hovered, setHovered] = useState(false);
-
-  const whatsappMsg = `Hi ${report.patient.split(" ")[0]}, your ${report.test} report from Dr. Sharma's Clinic is ready. ${noteText}. Please consult your doctor if you have questions.`;
-
-  return (
-    <motion.div
-      custom={index}
-      variants={rowVariants}
-      initial="hidden"
-      animate="visible"
-      layout
-      className="bg-white/[0.03] border border-white/[0.08] rounded-xl overflow-hidden"
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-    >
-      <div className="flex items-center gap-3 p-3 cursor-pointer" onClick={() => setExpanded((e) => !e)}>
-        <div onClick={(e) => { e.stopPropagation(); onSelect(report.id); }} className="flex-shrink-0">
-          {selected ? (
-            <CheckSquare className="w-4 h-4 text-cyan-400" />
-          ) : (
-            <Square className="w-4 h-4 text-white/20" />
-          )}
-        </div>
-        <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${getAvatarGradient(report.patient)} flex items-center justify-center flex-shrink-0`}>
-          <span className="text-xs font-bold text-white">{getInitials(report.patient)}</span>
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-white truncate">{report.patient}</p>
-          <p className="text-xs text-white/40">{report.test} · {report.date}</p>
-        </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
-          {report.flagged && (
-            <span className="text-xs px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-400 border border-rose-500/20 flex items-center gap-1">
-              <AlertTriangle className="w-3 h-3" /> Abnormal
-            </span>
-          )}
-          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-            report.status === "Delivered"
-              ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/20"
-              : "bg-amber-500/15 text-amber-400 border border-amber-500/20"
-          }`}>
-            {report.status}
-          </span>
-          <AnimatePresence>
-            {hovered && (
-              <motion.div
-                initial={{ opacity: 0, x: 8 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 8 }}
-                transition={{ duration: 0.15, ease: "easeOut" as const }}
-                className="flex items-center gap-1"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <button
-                  onClick={() => { onSend(report); }}
-                  className="text-xs px-2 py-1 rounded-lg bg-[#25D366]/15 text-[#25D366] border border-[#25D366]/20 hover:bg-[#25D366]/25 transition-colors flex items-center gap-1"
-                >
-                  <MessageCircle className="w-3 h-3" /> Send
-                </button>
-                <button
-                  onClick={() => setExpanded((e) => !e)}
-                  className="p-1.5 rounded-lg bg-white/5 text-white/40 hover:text-white hover:bg-white/10 transition-colors"
-                >
-                  <Eye className="w-3 h-3" />
-                </button>
-                <button
-                  onClick={() => onFlag(report.id)}
-                  className={`p-1.5 rounded-lg transition-colors ${report.flagged ? "bg-rose-500/20 text-rose-400" : "bg-white/5 text-white/40 hover:text-rose-400"}`}
-                >
-                  <Flag className="w-3 h-3" />
-                </button>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-      </div>
-
-      <AnimatePresence>
-        {expanded && (
-          <motion.div
-            variants={expandVariants}
-            initial="hidden"
-            animate="visible"
-            exit="exit"
-            className="overflow-hidden"
-          >
-            <div className="px-4 pb-4 border-t border-white/[0.06] pt-3 flex flex-col gap-3">
-              <div className="grid grid-cols-3 gap-3 text-xs">
-                <div>
-                  <p className="text-white/30 mb-0.5">Patient</p>
-                  <p className="text-white font-medium">{report.patient}, {report.age}y</p>
-                </div>
-                <div>
-                  <p className="text-white/30 mb-0.5">Test</p>
-                  <p className="text-white font-medium">{report.test}</p>
-                </div>
-                <div>
-                  <p className="text-white/30 mb-0.5">Ordered by</p>
-                  <p className="text-white font-medium">Dr. Sharma</p>
-                </div>
-              </div>
-
-              {report.flagged && (
-                <div className="flex items-start gap-2 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20">
-                  <AlertTriangle className="w-4 h-4 text-rose-400 flex-shrink-0 mt-0.5" />
-                  <p className="text-xs text-rose-300">⚠ Abnormal values detected — review recommended</p>
-                </div>
-              )}
-
-              <div>
-                <p className="text-xs text-white/30 mb-1.5">Report Summary</p>
-                <textarea
-                  value={noteText}
-                  onChange={(e) => setNoteText(e.target.value)}
-                  className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl p-3 text-xs text-white/80 resize-none focus:outline-none focus:border-cyan-500/50 transition-colors"
-                  rows={2}
-                />
-              </div>
-
-              <div className="p-3 rounded-xl bg-[#25D366]/5 border border-[#25D366]/15">
-                <p className="text-xs text-white/30 mb-1.5 flex items-center gap-1.5">
-                  <MessageCircle className="w-3 h-3 text-[#25D366]" /> WhatsApp Message Preview
-                </p>
-                <p className="text-xs text-white/60 leading-relaxed">{whatsappMsg}</p>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => {
-                    onSend(report);
-                    setExpanded(false);
-                  }}
-                  className="flex-1 py-2 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/30 transition-colors text-xs font-semibold flex items-center justify-center gap-1.5"
-                >
-                  <MessageCircle className="w-3.5 h-3.5" /> Send to Patient via WhatsApp
-                </button>
-                <button
-                  onClick={() => addToast("Doctor's note saved", "info")}
-                  className="px-3 py-2 rounded-xl bg-white/5 text-white/40 border border-white/10 hover:text-white hover:bg-white/10 transition-colors text-xs"
-                >
-                  Add Doctor's Note
-                </button>
-                <button
-                  onClick={() => setReviewed((r) => !r)}
-                  className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs transition-colors ${reviewed ? "bg-cyan-500/20 text-cyan-400 border-cyan-500/20" : "bg-white/5 text-white/40 border-white/10"}`}
-                >
-                  <CheckCircle2 className="w-3.5 h-3.5" /> {reviewed ? "Reviewed" : "Mark Reviewed"}
-                </button>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.div>
-  );
-}
-
-function DeliveryGauge({ percent }: { percent: number }) {
-  const controls = useAnimation();
-  const radius = 40;
-  const circumference = 2 * Math.PI * radius;
-  const dashoffset = circumference - (percent / 100) * circumference;
-
-  useEffect(() => {
-    controls.start({ strokeDashoffset: dashoffset });
-  }, [controls, dashoffset]);
-
-  return (
-    <div className="flex items-center gap-4">
-      <div className="relative w-24 h-24 flex-shrink-0">
-        <svg width="96" height="96" viewBox="0 0 96 96" className="-rotate-90">
-          <circle cx="48" cy="48" r={radius} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="8" />
-          <motion.circle
-            cx="48"
-            cy="48"
-            r={radius}
-            fill="none"
-            stroke="url(#gaugeGrad)"
-            strokeWidth="8"
-            strokeLinecap="round"
-            strokeDasharray={circumference}
-            initial={{ strokeDashoffset: circumference }}
-            animate={controls}
-            transition={{ duration: 1.2, ease: "easeOut" as const }}
-          />
-          <defs>
-            <linearGradient id="gaugeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#06B6D4" />
-              <stop offset="100%" stopColor="#8B5CF6" />
-            </linearGradient>
-          </defs>
-        </svg>
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-lg font-bold text-white">{percent}%</span>
-        </div>
-      </div>
-      <div>
-        <p className="text-sm font-semibold text-white mb-0.5">WhatsApp Delivery Rate</p>
-        <p className="text-xs text-white/40">89 of 94 reports delivered</p>
-        <p className="text-xs text-emerald-400 mt-1">↑ 3% vs last month</p>
-      </div>
-    </div>
-  );
-}
-
-function MiniBarChart() {
-  const maxCount = Math.max(...DAILY_DELIVERIES.map((d) => d.count));
-  return (
-    <div className="flex items-end gap-2 h-14">
-      {DAILY_DELIVERIES.map((d, i) => (
-        <div key={d.day} className="flex flex-col items-center gap-1 flex-1">
-          <div className="w-full relative" style={{ height: "40px" }}>
-            <motion.div
-              className="absolute bottom-0 w-full rounded-t-sm bg-gradient-to-t from-cyan-500/60 to-violet-500/60"
-              initial={{ height: 0 }}
-              animate={{ height: `${(d.count / maxCount) * 100}%` }}
-              transition={{ delay: i * 0.1, duration: 0.6, ease: "easeOut" as const }}
-            />
-          </div>
-          <span className="text-[10px] text-white/30">{d.day}</span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
 export default function LabReportsView({ addToast }: LabReportsViewProps) {
   const [reports, setReports] = useState<Report[]>(INITIAL_REPORTS);
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState<"All" | "Delivered" | "Pending" | "Flagged">("All");
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [expandedId, setExpandedId] = useState<number | null>(null);
   const [pendingList, setPendingList] = useState(PENDING_REPORTS);
   const [flaggedList, setFlaggedList] = useState(FLAGGED_REPORTS);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [filterStatus, setFilterStatus] = useState<"All" | "Pending" | "Delivered" | "Flagged">("All");
-  const [sortOrder, setSortOrder] = useState("Newest First");
-  const [selectedIds, setSelectedIds] = useState<number[]>([]);
-  const [uploading, setUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [showSortDropdown, setShowSortDropdown] = useState(false);
-  const uploadIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const handleUpload = useCallback(() => {
-    if (uploading) return;
-    setUploading(true);
-    setUploadProgress(0);
-    let progress = 0;
-    uploadIntervalRef.current = setInterval(() => {
-      progress += 100 / 30;
-      setUploadProgress(Math.min(progress, 100));
-      if (progress >= 100) {
-        clearInterval(uploadIntervalRef.current!);
-        setTimeout(() => {
-          setUploading(false);
-          setUploadProgress(0);
-          const newReport: Report = {
-            id: Date.now(),
-            patient: "Neha Verma",
-            age: 31,
-            test: "Thyroid Panel",
-            date: "Apr 24",
-            status: "Pending",
-            flagged: false,
-            notes: "",
-            phone: "+91 99887 76655",
-          };
-          setReports((prev) => [newReport, ...prev]);
-          addToast("Report uploaded — patient notified via WhatsApp ✓", "success");
-        }, 200);
-      }
-    }, 50);
-  }, [uploading, addToast]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    return () => { if (uploadIntervalRef.current) clearInterval(uploadIntervalRef.current); };
-  }, []);
+  const filtered = reports.filter((r) => {
+    const matchSearch =
+      r.patient.toLowerCase().includes(search.toLowerCase()) ||
+      r.test.toLowerCase().includes(search.toLowerCase());
+    if (!matchSearch) return false;
+    if (filter === "Delivered") return r.status === "Delivered";
+    if (filter === "Pending") return r.status === "Pending";
+    if (filter === "Flagged") return r.flagged;
+    return true;
+  });
 
-  const handleSend = (report: Report) => {
-    addToast(`Report sent to ${report.patient} via WhatsApp ✓`, "success");
+  const handleSendReport = (id: number, patient: string) => {
     setReports((prev) =>
-      prev.map((r) => r.id === report.id ? { ...r, status: "Delivered" as const } : r)
+      prev.map((r) => (r.id === id ? { ...r, status: "Delivered" as const } : r))
     );
-    setPendingList((prev) => prev.filter((p) => p.id !== report.id));
+    setPendingList((prev) => prev.filter((p) => p.id !== id));
+    addToast(`Lab report sent to ${patient} via WhatsApp ✓`, "success");
   };
 
-  const handleFlag = (id: number) => {
+  const handleBatchSend = () => {
+    if (selectedIds.size === 0) return;
     setReports((prev) =>
-      prev.map((r) => r.id === id ? { ...r, flagged: !r.flagged } : r)
+      prev.map((r) => (selectedIds.has(r.id) ? { ...r, status: "Delivered" as const } : r))
     );
+    setPendingList((prev) => prev.filter((p) => !selectedIds.has(p.id)));
+    addToast(`${selectedIds.size} reports sent via WhatsApp`, "success");
+    setSelectedIds(new Set());
   };
 
-  const handleSelect = (id: number) => {
-    setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
-    );
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    const newReport: Report = {
+      id: Date.now(),
+      patient: "New Patient",
+      age: 30,
+      test: files[0].name.replace(/\.[^/.]+$/, ""),
+      date: "Today",
+      status: "Pending",
+      flagged: false,
+      notes: "Uploaded just now",
+      phone: "+971 50 888 9999",
+    };
+    setReports((prev) => [newReport, ...prev]);
+    setPendingList((prev) => [
+      { id: newReport.id, patient: newReport.patient, test: newReport.test, uploadedAt: "Just now", timeAgo: "1m ago" },
+      ...prev,
+    ]);
+    addToast(`"${files[0].name}" uploaded & queued for delivery`, "success");
   };
-
-  const handleBulkSend = () => {
-    addToast(`${selectedIds.length} reports sent via WhatsApp ✓`, "success");
-    setSelectedIds([]);
-  };
-
-  const handleBulkReview = () => {
-    addToast(`${selectedIds.length} reports marked as reviewed`, "success");
-    setSelectedIds([]);
-  };
-
-  const handleSendPending = (id: number) => {
-    const report = pendingList.find((p) => p.id === id);
-    if (report) {
-      setPendingList((prev) => prev.filter((p) => p.id !== id));
-      addToast(`Report sent to ${report.patient} via WhatsApp ✓`, "success");
-    }
-  };
-
-  const handleSendAllPending = () => {
-    setPendingList([]);
-    addToast("All pending reports sent via WhatsApp ✓", "success");
-  };
-
-  const handleReviewFlagged = (id: number) => {
-    setFlaggedList((prev) => prev.filter((f) => f.id !== id));
-    addToast("Marked as reviewed", "success");
-  };
-
-  const filteredReports = reports
-    .filter((r) => {
-      const q = searchQuery.toLowerCase();
-      if (q && !r.patient.toLowerCase().includes(q) && !r.test.toLowerCase().includes(q)) return false;
-      if (filterStatus === "Pending" && r.status !== "Pending") return false;
-      if (filterStatus === "Delivered" && r.status !== "Delivered") return false;
-      if (filterStatus === "Flagged" && !r.flagged) return false;
-      return true;
-    })
-    .sort((a, b) => {
-      if (sortOrder === "Patient A-Z") return a.patient.localeCompare(b.patient);
-      if (sortOrder === "Oldest First") return a.id - b.id;
-      return b.id - a.id;
-    });
-
-  const filterPills = (["All", "Pending", "Delivered", "Flagged"] as const);
 
   return (
-    <div className="flex flex-col gap-5 h-full">
-      {/* Stat Cards */}
-      <div className="grid grid-cols-4 gap-4">
-        <StatCard label="Reports This Month" value={94} color="text-cyan-400" icon={<Activity className="w-4 h-4" />} index={0} />
-        <StatCard label="Delivered via WhatsApp" value={89} sub="94% delivery" color="text-emerald-400" icon={<MessageCircle className="w-4 h-4" />} index={1} />
-        <StatCard label="Awaiting Delivery" value={5} color="text-amber-400" icon={<Clock className="w-4 h-4" />} index={2} />
-        <StatCard label="Avg Delivery Time" value={4} suffix=" min" color="text-violet-400" icon={<TrendingUp className="w-4 h-4" />} index={3} />
+    <div className="space-y-8 max-w-[1200px] mx-auto">
+      <div>
+        <h2 className="text-2xl font-bold text-[#0F172A] tracking-tight">Lab Report Inbox</h2>
+        <p className="text-sm text-slate-500 mt-0.5">
+          Upload diagnostic reports and dispatch automated PDF notifications via WhatsApp.
+        </p>
       </div>
 
-      {/* Two-column layout */}
-      <div className="flex gap-5 flex-1 min-h-0">
-        {/* LEFT COL */}
-        <div className="flex-1 flex flex-col gap-3 min-w-0">
-          {/* Upload Zone */}
-          <UploadZone onUpload={handleUpload} uploading={uploading} uploadProgress={uploadProgress} />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatCard
+          label="Reports This Month"
+          value={94}
+          icon={<FileText className="w-4 h-4" />}
+          trend="+14% vs last month"
+          delay={0.05}
+        />
+        <StatCard
+          label="Delivered via WhatsApp"
+          value={89}
+          sub="94% delivery rate"
+          icon={<CheckCircle className="w-4 h-4 text-emerald-600" />}
+          delay={0.1}
+        />
+        <StatCard
+          label="Awaiting Delivery"
+          value={pendingList.length}
+          sub="Requires dispatch"
+          icon={<Clock className="w-4 h-4 text-amber-600" />}
+          delay={0.15}
+        />
+        <StatCard
+          label="Abnormal / Flagged"
+          value={flaggedList.length}
+          sub="Doctor review needed"
+          icon={<AlertTriangle className="w-4 h-4 text-rose-600" />}
+          delay={0.2}
+        />
+      </div>
 
-          {/* Filter + Search */}
-          <div className="flex flex-col gap-2">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search by patient or test..."
-                className="w-full bg-white/[0.03] border border-white/[0.08] rounded-xl pl-9 pr-4 py-2.5 text-sm text-white placeholder-white/30 focus:outline-none focus:border-cyan-500/50 transition-colors"
-              />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 space-y-6">
+          <div
+            onClick={() => fileInputRef.current?.click()}
+            className="bg-white border-2 border-dashed border-[#CCD5DF] hover:border-[#00685f] hover:bg-[#00685f]/[0.02] rounded-xl p-6 text-center cursor-pointer transition-all shadow-xs flex flex-col items-center justify-center gap-2"
+          >
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileUpload}
+              className="hidden"
+              accept=".pdf,.png,.jpg,.jpeg"
+            />
+            <div className="w-10 h-10 rounded-full bg-[#00685f]/10 text-[#00685f] flex items-center justify-center">
+              <UploadCloud className="w-5 h-5" />
             </div>
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1 flex-1">
-                {filterPills.map((pill) => (
-                  <button
-                    key={pill}
-                    onClick={() => setFilterStatus(pill)}
-                    className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
-                      filterStatus === pill
-                        ? "bg-cyan-500/20 text-cyan-400 border border-cyan-500/30"
-                        : "bg-white/[0.03] text-white/40 border border-white/[0.08] hover:text-white/70"
-                    }`}
-                  >
-                    {pill}
-                  </button>
-                ))}
-              </div>
-              <div className="relative">
-                <button
-                  onClick={() => setShowSortDropdown((s) => !s)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.08] text-xs text-white/40 hover:text-white/70 transition-colors"
-                >
-                  <Filter className="w-3 h-3" /> {sortOrder} <ChevronDown className="w-3 h-3" />
-                </button>
-                <AnimatePresence>
-                  {showSortDropdown && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -6 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -6 }}
-                      transition={{ duration: 0.15, ease: "easeOut" as const }}
-                      className="absolute right-0 top-full mt-1 bg-[#0d1017] border border-white/[0.1] rounded-xl overflow-hidden z-20 min-w-[160px]"
-                    >
-                      {["Newest First", "Oldest First", "Patient A-Z"].map((opt) => (
-                        <button
-                          key={opt}
-                          onClick={() => { setSortOrder(opt); setShowSortDropdown(false); }}
-                          className={`w-full text-left px-3 py-2 text-xs transition-colors ${sortOrder === opt ? "text-cyan-400 bg-cyan-500/10" : "text-white/50 hover:text-white hover:bg-white/5"}`}
-                        >
-                          {opt}
-                        </button>
-                      ))}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            </div>
+            <p className="text-sm font-bold text-[#0F172A]">
+              Drop PDF or image lab reports here to auto-match patients
+            </p>
+            <p className="text-xs text-slate-500">
+              Supports PDF, PNG, JPG & DICOM up to 25MB with instant OCR extraction
+            </p>
           </div>
 
-          {/* Bulk Actions */}
-          <AnimatePresence>
-            {selectedIds.length > 0 && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.2, ease: "easeOut" as const }}
-                className="flex items-center gap-2 px-3 py-2 bg-white/[0.04] border border-white/[0.08] rounded-xl"
-              >
-                <span className="text-xs text-white/50 flex-1">{selectedIds.length} selected</span>
-                <button onClick={handleBulkSend} className="text-xs px-3 py-1 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/30 transition-colors">Send All via WhatsApp</button>
-                <button onClick={handleBulkReview} className="text-xs px-3 py-1 rounded-lg bg-cyan-500/20 text-cyan-400 border border-cyan-500/20 hover:bg-cyan-500/30 transition-colors">Mark All Reviewed</button>
-                <button onClick={() => setSelectedIds([])} className="p-1 text-white/30 hover:text-white transition-colors"><X className="w-3.5 h-3.5" /></button>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Report List */}
-          <div className="flex-1 overflow-y-auto flex flex-col gap-2 pr-1" style={{ scrollbarWidth: "thin", scrollbarColor: "rgba(255,255,255,0.1) transparent" }}>
-            <AnimatePresence>
-              {filteredReports.map((report, i) => (
-                <ReportRow
-                  key={report.id}
-                  report={report}
-                  index={i}
-                  selected={selectedIds.includes(report.id)}
-                  onSelect={handleSelect}
-                  onSend={handleSend}
-                  onFlag={handleFlag}
-                  addToast={addToast}
+          <div className="bg-white border border-[#CCD5DF] rounded-xl overflow-hidden shadow-xs">
+            <div className="p-4 border-b border-[#CCD5DF] flex items-center justify-between gap-4 flex-wrap bg-[#F8FAFC]">
+              <div className="relative flex-1 min-w-[200px]">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Search by patient name or test..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full pl-9 pr-3 py-1.5 bg-white border border-[#CCD5DF] rounded-lg text-xs text-[#0F172A] focus:outline-none focus:border-[#00685f]"
                 />
-              ))}
-            </AnimatePresence>
-            {filteredReports.length === 0 && (
-              <div className="flex flex-col items-center justify-center py-12 text-white/30">
-                <Inbox className="w-8 h-8 mb-2" />
-                <p className="text-sm">No reports match your filter</p>
               </div>
-            )}
+              <div className="flex items-center gap-2">
+                {selectedIds.size > 0 && (
+                  <button
+                    onClick={handleBatchSend}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-[#00685f] text-white rounded-lg text-xs font-bold shadow-xs hover:bg-[#005049] transition-colors"
+                  >
+                    <Send className="w-3 h-3" /> Send Selected ({selectedIds.size})
+                  </button>
+                )}
+                <div className="flex bg-slate-100 p-0.5 rounded-lg border border-[#CCD5DF]">
+                  {(["All", "Pending", "Delivered", "Flagged"] as const).map((tab) => (
+                    <button
+                      key={tab}
+                      onClick={() => setFilter(tab)}
+                      className={`px-2.5 py-1 text-xs font-bold rounded-md transition-all ${
+                        filter === tab
+                          ? "bg-white text-[#00685f] shadow-xs"
+                          : "text-slate-600 hover:text-[#0F172A]"
+                      }`}
+                    >
+                      {tab}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-[auto_1.5fr_1fr_1fr_1fr_auto] gap-3 px-6 py-3 bg-[#F8FAFC] border-b border-[#CCD5DF] text-[11px] font-bold uppercase tracking-wider text-slate-500">
+              <input
+                type="checkbox"
+                checked={selectedIds.size === filtered.length && filtered.length > 0}
+                onChange={(e) => {
+                  if (e.target.checked) setSelectedIds(new Set(filtered.map((r) => r.id)));
+                  else setSelectedIds(new Set());
+                }}
+                className="rounded border-[#CCD5DF] text-[#00685f] focus:ring-[#00685f]"
+              />
+              <span>Patient</span>
+              <span>Investigation</span>
+              <span>Date</span>
+              <span>Status</span>
+              <span className="text-right">Action</span>
+            </div>
+
+            <div className="divide-y divide-[#CCD5DF]">
+              {filtered.map((report) => (
+                <div key={report.id} className="hover:bg-slate-50 transition-colors">
+                  <div
+                    onClick={() => setExpandedId(expandedId === report.id ? null : report.id)}
+                    className="grid grid-cols-[auto_1.5fr_1fr_1fr_1fr_auto] gap-3 px-6 py-3.5 items-center cursor-pointer text-xs"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(report.id)}
+                      onClick={(e) => e.stopPropagation()}
+                      onChange={(e) => {
+                        const next = new Set(selectedIds);
+                        if (e.target.checked) next.add(report.id);
+                        else next.delete(report.id);
+                        setSelectedIds(next);
+                      }}
+                      className="rounded border-[#CCD5DF] text-[#00685f] focus:ring-[#00685f]"
+                    />
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className="w-7 h-7 rounded-full bg-[#00685f]/15 text-[#00685f] font-bold text-[10px] flex items-center justify-center shrink-0">
+                        {report.patient.split(" ").map((n) => n[0]).join("")}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-bold text-[#0F172A] truncate">{report.patient}</p>
+                        <p className="text-slate-400 text-[11px]">{report.age} yrs</p>
+                      </div>
+                    </div>
+
+                    <span className="font-medium text-slate-700">{report.test}</span>
+                    <span className="text-slate-500">{report.date}</span>
+
+                    <div>
+                      {report.status === "Delivered" ? (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          <CheckCircle className="w-3 h-3" /> Delivered
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                          <Clock className="w-3 h-3" /> Pending
+                        </span>
+                      )}
+                      {report.flagged && (
+                        <span className="ml-1.5 inline-flex items-center text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200">
+                          Abnormal
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-2 justify-end">
+                      {report.status === "Pending" ? (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleSendReport(report.id, report.patient);
+                          }}
+                          className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-[#00685f] text-white text-[11px] font-bold hover:bg-[#005049] shadow-xs"
+                        >
+                          <Send className="w-3 h-3" /> Send
+                        </button>
+                      ) : (
+                        <span className="text-[11px] text-slate-400 font-medium">Delivered ✓</span>
+                      )}
+                      {expandedId === report.id ? <ChevronUp size={14} className="text-slate-400" /> : <ChevronDown size={14} className="text-slate-400" />}
+                    </div>
+                  </div>
+
+                  <AnimatePresence>
+                    {expandedId === report.id && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="bg-[#F8FAFC] border-t border-[#CCD5DF] px-6 py-3 text-xs"
+                      >
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <span className="font-bold text-slate-600">Clinical Finding: </span>
+                            <span className="text-slate-800">{report.notes || "All parameters within normal reference limits."}</span>
+                          </div>
+                          <span className="text-slate-400 font-mono text-[11px]">{report.phone}</span>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
-        {/* RIGHT COL */}
-        <div className="w-[360px] flex flex-col gap-4 flex-shrink-0">
-          {/* Pending Delivery */}
-          <div className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-4 flex flex-col gap-3">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-white flex items-center gap-2">
-                <Clock className="w-4 h-4 text-amber-400" /> Pending Delivery
-              </h3>
-              <span className="text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full">{pendingList.length}</span>
+        <div className="space-y-6">
+          <div className="bg-white border border-[#CCD5DF] rounded-xl p-5 shadow-xs space-y-4">
+            <div className="flex items-center justify-between border-b border-[#CCD5DF] pb-3">
+              <h3 className="text-sm font-bold text-[#0F172A]">Pending Dispatch</h3>
+              <span className="text-xs font-bold px-2 py-0.5 bg-amber-50 text-amber-700 border border-amber-200 rounded-full">
+                {pendingList.length} queued
+              </span>
             </div>
-            <div className="flex flex-col gap-2">
-              <AnimatePresence>
-                {pendingList.map((p) => (
-                  <motion.div
-                    key={p.id}
-                    layout
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 20, transition: { duration: 0.2, ease: "easeOut" as const } }}
-                    transition={{ duration: 0.25, ease: "easeOut" as const }}
-                    className="group flex items-center gap-3 p-2.5 rounded-xl bg-white/[0.02] border border-white/[0.06] hover:border-emerald-500/20 transition-colors"
+            <div className="space-y-2.5">
+              {pendingList.map((p) => (
+                <div key={p.id} className="flex items-center justify-between p-2.5 rounded-lg bg-[#F8FAFC] border border-[#CCD5DF] text-xs">
+                  <div>
+                    <p className="font-bold text-[#0F172A]">{p.patient}</p>
+                    <p className="text-[11px] text-slate-500">{p.test} • {p.timeAgo}</p>
+                  </div>
+                  <button
+                    onClick={() => handleSendReport(p.id, p.patient)}
+                    className="px-2.5 py-1 bg-[#00685f] text-white text-[11px] font-bold rounded-md hover:bg-[#005049] shadow-xs"
                   >
-                    <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${getAvatarGradient(p.patient)} flex items-center justify-center flex-shrink-0`}>
-                      <span className="text-xs font-bold text-white">{getInitials(p.patient)}</span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-semibold text-white truncate">{p.patient}</p>
-                      <p className="text-[10px] text-white/40 truncate">{p.test} · {p.uploadedAt}</p>
-                    </div>
-                    <div className="flex flex-col items-end gap-1">
-                      <span className="text-[10px] text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded-full">{p.timeAgo}</span>
-                      <button
-                        onClick={() => handleSendPending(p.id)}
-                        className="text-[10px] px-2 py-0.5 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/25 transition-colors opacity-0 group-hover:opacity-100"
-                      >
-                        Send Now
-                      </button>
-                    </div>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-              {pendingList.length === 0 && (
-                <motion.p
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="text-xs text-emerald-400 text-center py-2"
-                >
-                  ✓ All reports delivered
-                </motion.p>
-              )}
-            </div>
-            {pendingList.length > 0 && (
-              <button
-                onClick={handleSendAllPending}
-                className="w-full py-2 rounded-xl bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/20 text-amber-400 text-xs font-semibold hover:from-amber-500/30 hover:to-orange-500/30 transition-all"
-              >
-                Send All Pending ({pendingList.length})
-              </button>
-            )}
-          </div>
-
-          {/* Flagged Reports */}
-          <div className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-4 flex flex-col gap-3">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-white flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 text-rose-400" /> Flagged Reports
-              </h3>
-              <span className="text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 px-2 py-0.5 rounded-full">{flaggedList.length}</span>
-            </div>
-            <div className="flex flex-col gap-2">
-              <AnimatePresence>
-                {flaggedList.map((f, i) => (
-                  <motion.div
-                    key={f.id}
-                    custom={i}
-                    initial={{ opacity: 0, x: -8 }}
-                    animate={{ opacity: 1, x: 0, transition: { delay: i * 0.06, duration: 0.25, ease: "easeOut" as const } }}
-                    exit={{ opacity: 0, x: 20, transition: { duration: 0.2, ease: "easeOut" as const } }}
-                    layout
-                    className="flex items-start gap-2.5 p-2.5 rounded-xl border-l-2 border-rose-500/50 bg-rose-500/5 border border-rose-500/10"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-semibold text-white">{f.patient}</p>
-                      <p className="text-[10px] text-white/40">{f.test}</p>
-                      <p className="text-[10px] text-rose-300/70 mt-0.5">{f.note}</p>
-                    </div>
-                    <button
-                      onClick={() => handleReviewFlagged(f.id)}
-                      className="text-[10px] px-2 py-1 rounded-lg bg-white/5 text-white/40 border border-white/10 hover:bg-emerald-500/15 hover:text-emerald-400 hover:border-emerald-500/20 transition-colors flex-shrink-0"
-                    >
-                      Review
-                    </button>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-              <AnimatePresence>
-                {flaggedList.length === 0 && (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.3, ease: "easeOut" as const }}
-                    className="flex items-center gap-2 justify-center py-2"
-                  >
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                    <p className="text-xs text-emerald-400">All flagged reports reviewed</p>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                    Send
+                  </button>
+                </div>
+              ))}
             </div>
           </div>
 
-          {/* Delivery Stats */}
-          <div className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-4 flex flex-col gap-4 flex-1">
-            <h3 className="text-sm font-semibold text-white flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-violet-400" /> Delivery Stats
-            </h3>
-            <div className="flex items-center gap-2 text-xs">
-              <span className="text-white/50">Today:</span>
-              <span className="text-emerald-400 font-medium">8 sent</span>
-              <span className="text-white/20">·</span>
-              <span className="text-amber-400 font-medium">2 pending</span>
+          <div className="bg-white border border-[#CCD5DF] rounded-xl p-5 shadow-xs space-y-4">
+            <div className="flex items-center justify-between border-b border-[#CCD5DF] pb-3">
+              <h3 className="text-sm font-bold text-[#0F172A] flex items-center gap-1.5">
+                <AlertTriangle className="w-4 h-4 text-rose-600" /> Abnormal Flagged Scans
+              </h3>
+              <span className="text-xs font-bold px-2 py-0.5 bg-rose-50 text-rose-700 border border-rose-200 rounded-full">
+                {flaggedList.length}
+              </span>
             </div>
-            <div>
-              <p className="text-[10px] text-white/30 mb-2 uppercase tracking-widest">This Week</p>
-              <MiniBarChart />
+            <div className="space-y-2.5">
+              {flaggedList.map((f) => (
+                <div key={f.id} className="p-3 rounded-lg bg-rose-50/50 border border-rose-200 text-xs space-y-1">
+                  <div className="flex justify-between items-start">
+                    <p className="font-bold text-rose-900">{f.patient}</p>
+                    <span className="text-[10px] font-bold text-rose-700 bg-rose-100 px-1.5 py-0.5 rounded">{f.test}</span>
+                  </div>
+                  <p className="text-[11px] text-rose-800 italic">{f.note}</p>
+                </div>
+              ))}
             </div>
-            <DeliveryGauge percent={94} />
           </div>
         </div>
       </div>

@@ -127,6 +127,7 @@ export function extractMessageText(message: Record<string, unknown>): string {
 export function normalizePhone(raw: string): string {
   const digits = raw.replace(/\D/g, "");
   if (digits.startsWith("91") && digits.length === 12) return `+${digits}`;
-  if (digits.length === 10) return `+91${digits}`;
+  if (digits.length === 9 && digits.startsWith("5")) return `+971${digits}`;
+  if (digits.length === 10) return `+971${digits.slice(1)}`;
   return `+${digits}`;
 }

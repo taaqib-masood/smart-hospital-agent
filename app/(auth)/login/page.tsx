@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Eye, EyeOff, Zap, ArrowRight, Mail, Lock } from "lucide-react";
+import { Eye, EyeOff, ArrowRight, Mail, Lock } from "lucide-react";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const next = searchParams.get("next") ?? "/dashboard";
@@ -24,7 +24,9 @@ export default function LoginPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setError(""); setSuccess(""); setLoading(true);
+    setError("");
+    setSuccess("");
+    setLoading(true);
 
     if (process.env.NEXT_PUBLIC_DEMO_MODE === "true") {
       router.push(next);
@@ -38,12 +40,12 @@ export default function LoginPage() {
         router.push(next);
       } else {
         const { data, error } = await supabase.auth.signUp({
-          email, password,
+          email,
+          password,
           options: { emailRedirectTo: `${window.location.origin}/api/auth/callback` },
         });
         if (error) throw error;
 
-        // Create clinic row
         if (data.user) {
           await supabase.from("reva_clinics").insert({
             owner_id: data.user.id,
@@ -62,112 +64,129 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#050714] flex items-center justify-center px-4"
-      style={{ backgroundImage: "radial-gradient(ellipse at top, rgba(6,182,212,0.08) 0%, transparent 60%), radial-gradient(ellipse at bottom, rgba(139,92,246,0.08) 0%, transparent 60%)" }}>
+    <div className="w-full max-w-md">
+      {/* Brand Header */}
+      <div className="flex items-center gap-3 justify-center mb-8">
+        <div className="w-12 h-12 flex items-center justify-center shrink-0">
+          <img src="/reva-icon.png" alt="Reva AI" className="w-full h-full object-contain" />
+        </div>
+        <div>
+          <span className="text-[#0F172A] font-bold text-2xl tracking-tight">Reva AI</span>
+          <p className="text-xs font-semibold text-slate-500">Autonomous Clinic Portal</p>
+        </div>
+      </div>
 
-      <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, ease: "easeOut" as const }}
-        className="w-full max-w-md">
-
-        {/* Logo */}
-        <div className="flex items-center gap-2.5 justify-center mb-8">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-500 to-violet-600 flex items-center justify-center shadow-lg shadow-cyan-500/30">
-            <Zap className="w-4 h-4 text-white" />
-          </div>
-          <span className="text-white font-bold text-xl tracking-tight">Reva <span className="text-cyan-400">AI</span></span>
+      <div className="bg-white border border-[#CCD5DF] rounded-2xl p-8 shadow-sm space-y-5">
+        {/* Tabs */}
+        <div className="flex bg-[#F8FAFC] border border-[#CCD5DF] rounded-xl p-1">
+          {(["login", "signup"] as const).map((m) => (
+            <button
+              key={m}
+              onClick={() => { setMode(m); setError(""); }}
+              className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${
+                mode === m
+                  ? "bg-[#00685f] text-white shadow-xs"
+                  : "text-slate-500 hover:text-[#0F172A]"
+              }`}
+            >
+              {m === "login" ? "Sign In" : "Register Clinic"}
+            </button>
+          ))}
         </div>
 
-        <div className="bg-white/[0.03] border border-white/[0.08] rounded-2xl p-8 backdrop-blur-xl">
-          {/* Tab */}
-          <div className="flex bg-white/[0.04] rounded-xl p-1 mb-6">
-            {(["login", "signup"] as const).map(m => (
-              <button key={m} onClick={() => { setMode(m); setError(""); }}
-                className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${mode === m ? "bg-white/[0.08] text-white" : "text-slate-500 hover:text-slate-300"}`}>
-                {m === "login" ? "Log In" : "Sign Up"}
-              </button>
-            ))}
-          </div>
-
-          <AnimatePresence>
-            {error && (
-              <motion.p initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                className="text-rose-400 text-xs mb-4 bg-rose-500/10 border border-rose-500/20 rounded-lg px-3 py-2">
-                {error}
-              </motion.p>
-            )}
-            {success && (
-              <motion.p initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                className="text-emerald-400 text-xs mb-4 bg-emerald-500/10 border border-emerald-500/20 rounded-lg px-3 py-2">
-                {success}
-              </motion.p>
-            )}
-          </AnimatePresence>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <AnimatePresence>
-              {mode === "signup" && (
-                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.2 }}>
-                  <label className="block text-slate-400 text-xs mb-1.5">Clinic Name</label>
-                  <input value={clinicName} onChange={e => setClinicName(e.target.value)}
-                    placeholder="Dr. Sharma's Clinic"
-                    className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-3 text-white text-sm placeholder-slate-600 focus:outline-none focus:border-cyan-500/50 transition-colors" />
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            <div>
-              <label className="block text-slate-400 text-xs mb-1.5">Email</label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                <input type="email" value={email} onChange={e => setEmail(e.target.value)} required
-                  placeholder="doctor@clinic.com"
-                  className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl pl-9 pr-4 py-3 text-white text-sm placeholder-slate-600 focus:outline-none focus:border-cyan-500/50 transition-colors" />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-slate-400 text-xs mb-1.5">Password</label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                <input type={showPass ? "text" : "password"} value={password} onChange={e => setPassword(e.target.value)} required
-                  placeholder="••••••••"
-                  className="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl pl-9 pr-10 py-3 text-white text-sm placeholder-slate-600 focus:outline-none focus:border-cyan-500/50 transition-colors" />
-                <button type="button" onClick={() => setShowPass(p => !p)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors">
-                  {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-            </div>
-
-            <motion.button whileTap={{ scale: 0.98 }} type="submit" disabled={loading}
-              className="w-full py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-violet-600 text-white text-sm font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-60 mt-2">
-              {loading ? (
-                <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" as const }}
-                  className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full" />
-              ) : (
-                <>
-                  {mode === "login" ? "Log In" : "Create Account"}
-                  <ArrowRight className="w-4 h-4" />
-                </>
-              )}
-            </motion.button>
-          </form>
-
-          {mode === "login" && (
-            <p className="text-center text-slate-600 text-xs mt-4">
-              Don&apos;t have an account?{" "}
-              <button onClick={() => setMode("signup")} className="text-cyan-400 hover:text-cyan-300 transition-colors">
-                Sign up free
-              </button>
-            </p>
+        <AnimatePresence>
+          {error && (
+            <motion.p
+              initial={{ opacity: 0, y: -6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="text-rose-700 text-xs bg-rose-50 border border-rose-200 rounded-lg px-3.5 py-2 font-medium"
+            >
+              {error}
+            </motion.p>
           )}
-        </div>
+          {success && (
+            <motion.p
+              initial={{ opacity: 0, y: -6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="text-emerald-800 text-xs bg-emerald-50 border border-emerald-200 rounded-lg px-3.5 py-2 font-medium"
+            >
+              {success}
+            </motion.p>
+          )}
+        </AnimatePresence>
 
-        <p className="text-center text-slate-600 text-xs mt-4">
-          AI Receptionist for Indian Clinics · Trusted by 200+ doctors
-        </p>
-      </motion.div>
+        <form onSubmit={handleSubmit} className="space-y-4 text-xs">
+          {mode === "signup" && (
+            <div>
+              <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">Clinic Name</label>
+              <input
+                value={clinicName}
+                onChange={(e) => setClinicName(e.target.value)}
+                placeholder="Dr. Sharma's Clinic"
+                className="w-full px-3.5 py-2.5 bg-[#F8FAFC] border border-[#CCD5DF] rounded-xl text-[#0F172A] text-xs focus:outline-none focus:border-[#00685f] focus:bg-white transition-colors"
+              />
+            </div>
+          )}
+
+          <div>
+            <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">Doctor Email</label>
+            <div className="relative">
+              <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                placeholder="doctor@clinic.com"
+                className="w-full pl-10 pr-3.5 py-2.5 bg-[#F8FAFC] border border-[#CCD5DF] rounded-xl text-[#0F172A] text-xs focus:outline-none focus:border-[#00685f] focus:bg-white transition-colors"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">Password</label>
+            <div className="relative">
+              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <input
+                type={showPass ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                placeholder="••••••••"
+                className="w-full pl-10 pr-10 py-2.5 bg-[#F8FAFC] border border-[#CCD5DF] rounded-xl text-[#0F172A] text-xs focus:outline-none focus:border-[#00685f] focus:bg-white transition-colors"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPass(!showPass)}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              >
+                {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full mt-2 py-3 bg-[#00685f] hover:bg-[#005049] text-white text-xs font-bold rounded-xl shadow-xs flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+          >
+            {loading ? "Authenticating..." : mode === "login" ? "Sign In to Portal" : "Complete Registration"}
+            <ArrowRight size={14} />
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <div className="min-h-screen bg-[#f7f9fb] flex items-center justify-center px-4 font-sans antialiased">
+      <Suspense fallback={<div className="text-slate-500 text-xs font-bold">Loading portal...</div>}>
+        <LoginForm />
+      </Suspense>
     </div>
   );
 }

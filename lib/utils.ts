@@ -1,3 +1,6 @@
+import { clsx, type ClassValue } from "clsx"
+import { twMerge } from "tailwind-merge"
+
 /**
  * Shared gradient color palette for user and patient avatars
  */
@@ -36,7 +39,7 @@ export function formatDate(date: string | Date | number): string {
   const d = new Date(date);
   return isNaN(d.getTime())
     ? String(date)
-    : d.toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric" });
+    : d.toLocaleDateString("en-AE", { month: "short", day: "numeric", year: "numeric" });
 }
 
 /**
@@ -46,5 +49,9 @@ export function formatTime(date: string | Date | number): string {
   const d = new Date(date);
   return isNaN(d.getTime())
     ? String(date)
-    : d.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true });
+    : d.toLocaleTimeString("en-AE", { hour: "2-digit", minute: "2-digit", hour12: true });
+}
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs))
 }
