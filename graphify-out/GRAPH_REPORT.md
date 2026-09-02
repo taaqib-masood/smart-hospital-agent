@@ -1,12 +1,12 @@
 # Graph Report - /Users/taaqibmasood/Documents/Web Dev & Saas/reva-ai  (2026-08-31)
 
 ## Corpus Check
-- 201 files · ~974,968 words
+- 201 files · ~975,612 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 536 nodes · 600 edges · 123 communities detected
-- Extraction: 83% EXTRACTED · 17% INFERRED · 0% AMBIGUOUS · INFERRED: 103 edges (avg confidence: 0.8)
+- 536 nodes · 602 edges · 123 communities detected
+- Extraction: 83% EXTRACTED · 17% INFERRED · 0% AMBIGUOUS · INFERRED: 105 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Community Hubs (Navigation)
@@ -135,11 +135,11 @@
 - [[_COMMUNITY_Community 122|Community 122]]
 
 ## God Nodes (most connected - your core abstractions)
-1. `addToast()` - 27 edges
+1. `addToast()` - 28 edges
 2. `POST()` - 25 edges
 3. `GET()` - 18 edges
-4. `apiFetch()` - 17 edges
-5. `now()` - 16 edges
+4. `now()` - 17 edges
+5. `apiFetch()` - 17 edges
 6. `handleBotMessage()` - 13 edges
 7. `useLang()` - 10 edges
 8. `Select()` - 9 edges
@@ -173,7 +173,7 @@ Cohesion: 0.08
 Nodes (11): BackToTop(), Footer(), applyToDocument(), LanguageProvider(), useLang(), PricingAlternatives(), PricingStarter(), SectionDots() (+3 more)
 
 ### Community 3 - "Community 3"
-Cohesion: 0.15
+Cohesion: 0.16
 Nodes (17): initCtaTracking(), trackCTA(), trackEvent(), agentReply(), clearTimers(), detectIntent(), nextId(), now() (+9 more)
 
 ### Community 4 - "Community 4"
@@ -787,11 +787,11 @@ _Questions this graph is uniquely positioned to answer:_
   _High betweenness centrality (0.045) - this node is a cross-community bridge._
 - **Why does `addToast()` connect `Community 0` to `Community 16`, `Community 3`?**
   _High betweenness centrality (0.044) - this node is a cross-community bridge._
-- **Are the 26 inferred relationships involving `addToast()` (e.g. with `handleSendMessage()` and `sendLink()`) actually correct?**
-  _`addToast()` has 26 INFERRED edges - model-reasoned connections that need verification._
+- **Are the 27 inferred relationships involving `addToast()` (e.g. with `handleSendMessage()` and `handleQuickReply()`) actually correct?**
+  _`addToast()` has 27 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 10 inferred relationships involving `POST()` (e.g. with `createClient()` and `Select()`) actually correct?**
   _`POST()` has 10 INFERRED edges - model-reasoned connections that need verification._
 - **Are the 4 inferred relationships involving `GET()` (e.g. with `isRateLimited()` and `getClientIp()`) actually correct?**
   _`GET()` has 4 INFERRED edges - model-reasoned connections that need verification._
-- **Are the 13 inferred relationships involving `now()` (e.g. with `isRateLimited()` and `POST()`) actually correct?**
-  _`now()` has 13 INFERRED edges - model-reasoned connections that need verification._
+- **Are the 14 inferred relationships involving `now()` (e.g. with `isRateLimited()` and `POST()`) actually correct?**
+  _`now()` has 14 INFERRED edges - model-reasoned connections that need verification._
