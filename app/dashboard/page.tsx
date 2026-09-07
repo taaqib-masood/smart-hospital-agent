@@ -6,8 +6,8 @@ import {
   LayoutDashboard, Calendar, MessageSquare, BarChart3,
   Settings, Bell, TrendingUp, AlertCircle,
   Send, Check, X, ChevronLeft, ChevronRight, Search,
-  Plus, Users, Activity,
-  CreditCard, ListOrdered, FileText, GitMerge, Shield,
+  Plus, Users,
+  CreditCard, ListOrdered, GitMerge, Shield,
   Clock, Star, LogOut, Zap
 } from "lucide-react";
 import PatientsView from "@/components/PatientsView";
@@ -15,8 +15,6 @@ import BillingView from "@/components/BillingView";
 import QueueView from "@/components/QueueView";
 import FollowUpView from "@/components/FollowUpView";
 import NoShowView from "@/components/NoShowView";
-import PrescriptionView from "@/components/PrescriptionView";
-import LabReportsView from "@/components/LabReportsView";
 import ReferralView from "@/components/ReferralView";
 import ConsentView from "@/components/ConsentView";
 import AvailabilityView from "@/components/AvailabilityView";
@@ -31,7 +29,7 @@ import DoctorBrief from "@/components/DoctorBrief";
 import BriefButton from "@/components/BriefButton";
 
 /* ─── Types ─── */
-type View = "Dashboard" | "Calendar" | "Messages" | "Analytics" | "Settings" | "Notifications" | "Patients" | "Billing" | "Queue" | "Follow-Up" | "No-Show" | "Prescriptions" | "Lab Reports" | "Referrals" | "Consent" | "Availability" | "Deposits" | "Reviews";
+type View = "Dashboard" | "Calendar" | "Messages" | "Analytics" | "Settings" | "Notifications" | "Patients" | "Billing" | "Queue" | "Follow-Up" | "No-Show" | "Referrals" | "Consent" | "Availability" | "Deposits" | "Reviews";
 type AppointmentStatus = "Confirmed" | "Pending" | "Cancelled";
 
 interface Appointment {
@@ -91,8 +89,6 @@ const NAV_ITEMS: { icon: React.ElementType; label: View; badge?: number }[] = [
   { icon: CreditCard,      label: "Billing" },
   { icon: Send,            label: "Follow-Up" },
   { icon: AlertCircle,     label: "No-Show" },
-  { icon: Activity,        label: "Prescriptions" },
-  { icon: FileText,        label: "Lab Reports" },
   { icon: GitMerge,        label: "Referrals" },
   { icon: Shield,          label: "Consent" },
   { icon: Clock,           label: "Availability" },
@@ -778,8 +774,6 @@ function DashboardPageInner() {
               {activeView === "Billing"       && <BillingView addToast={addToast} />}
               {activeView === "Follow-Up"     && <FollowUpView addToast={addToast} />}
               {activeView === "No-Show"       && <NoShowView addToast={addToast} />}
-              {activeView === "Prescriptions" && <PrescriptionView addToast={addToast} />}
-              {activeView === "Lab Reports"  && <LabReportsView addToast={addToast} />}
               {activeView === "Referrals"    && <ReferralView addToast={addToast} />}
               {activeView === "Consent"      && <ConsentView addToast={addToast} />}
               {activeView === "Availability" && <AvailabilityView addToast={addToast} />}
