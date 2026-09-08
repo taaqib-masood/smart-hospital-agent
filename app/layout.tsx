@@ -19,18 +19,18 @@ const tajawal = Tajawal({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://reva-ai.ae"),
-  title: "Reva AI — AI Patient Operations Layer for UAE Clinics",
+  title: "Reva AI — WhatsApp Receptionist Automation for UAE Clinics",
   description:
-    "Reva AI integrates with WhatsApp to recover missed calls, reduce no-shows, and manage patient journeys for procedures like Cataract, LASIK, and Dry Eye care. DHA & HIPAA Compliant. Built for UAE clinics like Aloka Eye Clinic, Dubai.",
+    "Reva AI helps UAE clinic reception teams handle WhatsApp enquiries, appointment booking, reminders, consent requests, and billing follow-ups with human handoff.",
   keywords: [
     "Reva AI",
     "clinic automation",
     "WhatsApp Business API",
-    "eye clinic software",
-    "missed call recovery",
+    "clinic receptionist software",
+    "patient appointment reminders",
     "no-show prevention",
     "Dubai healthcare",
-    "DHA compliant",
+    "UAE clinic software",
   ],
   authors: [{ name: "Reva AI" }],
   icons: {
@@ -42,9 +42,9 @@ export const metadata: Metadata = {
     apple: "/apple-touch-icon.png",
   },
   openGraph: {
-    title: "Reva AI — Never Miss a Patient",
+    title: "Reva AI — WhatsApp Support for Your Reception Team",
     description:
-      "Automate your clinic's front desk on WhatsApp. Missed-call recovery, no-show prevention, and AI patient briefs for UAE clinics.",
+      "Handle clinic WhatsApp enquiries, bookings, reminders, consent requests, and billing follow-ups with human handoff.",
     siteName: "Reva AI",
     type: "website",
     images: [
@@ -58,9 +58,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Reva AI — Never Miss a Patient",
+    title: "Reva AI — WhatsApp Support for Your Reception Team",
     description:
-      "Automate your clinic's front desk on WhatsApp. Missed-call recovery, no-show prevention, and AI patient briefs for UAE clinics.",
+      "Handle clinic WhatsApp enquiries, bookings, reminders, consent requests, and billing follow-ups with human handoff.",
     images: ["/og-image.png"],
   },
 };

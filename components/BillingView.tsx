@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCountUp } from "@/lib/hooks";
 import {
@@ -12,16 +12,18 @@ import {
   Plus,
   X,
   CreditCard,
-  CheckCircle,
   ChevronDown,
   ChevronUp
 } from "lucide-react";
+import { createInvoice, getInvoices, getPatients, updateInvoice } from "@/lib/api";
+import type { RevaInvoice, RevaPatient } from "@/lib/supabase/types";
 
 type PaymentMethod = "Cash" | "Apple Pay" | "Card" | "Tabby" | null;
 type InvoiceStatus = "Paid" | "Pending" | "Waived";
 
 interface Invoice {
-  id: number;
+  id: string | number;
+  patientId?: string;
   patientName: string;
   initials: string;
   service: string;
@@ -72,7 +74,7 @@ function StatCard({ label, value, prefix = "", suffix = "", sub, icon, trend }: 
 
   return (
     <div className="bg-white border border-[#CCD5DF] rounded-xl p-5 shadow-xs space-y-3">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">{label}</span>
         <div className="w-8 h-8 rounded-lg bg-[#00685f]/10 text-[#00685f] flex items-center justify-center">
           {icon}
@@ -94,9 +96,11 @@ function StatCard({ label, value, prefix = "", suffix = "", sub, icon, trend }: 
 
 export default function BillingView({ addToast }: BillingViewProps) {
   const [invoices, setInvoices] = useState<Invoice[]>(INVOICES_DATA);
+  const [patients, setPatients] = useState<RevaPatient[]>([]);
+  const [usingRealData, setUsingRealData] = useState(false);
   const [filter, setFilter] = useState<"All" | InvoiceStatus>("All");
   const [search, setSearch] = useState("");
-  const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [expandedId, setExpandedId] = useState<string | number | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
 
   const [newName, setNewName] = useState("");
@@ -121,22 +125,98 @@ export default function BillingView({ addToast }: BillingViewProps) {
     return matchStatus && matchSearch;
   });
 
-  const markPaid = (id: number, method: PaymentMethod) => {
+  useEffect(() => {
+    if (process.env.NEXT_PUBLIC_DEMO_MODE === "true") return;
+    void Promise.all([getInvoices(), getPatients()]).then(([invoiceRows, patientRows]) => {
+      setPatients(patientRows);
+      setInvoices(invoiceRows.map((invoice: RevaInvoice) => {
+        const created = new Date(invoice.created_at);
+        const today = new Date().toDateString() === created.toDateString();
+        const name = invoice.patient?.name ?? "Unassigned contact";
+        return {
+          id: invoice.id,
+          patientId: invoice.patient_id ?? undefined,
+          patientName: name,
+          initials: name.split(/\s+/).slice(0, 2).map(part => part[0]?.toUpperCase()).join("") || "--",
+          service: invoice.service_description,
+          date: today ? "Today" : new Date(invoice.invoice_date).toLocaleDateString("en-AE"),
+          time: created.toLocaleTimeString("en-AE", { hour: "2-digit", minute: "2-digit" }),
+          amount: invoice.amount,
+          paymentMethod: invoice.payment_method as PaymentMethod,
+          status: invoice.status as InvoiceStatus,
+          daysOverdue: Math.max(0, Math.floor((Date.now() - new Date(invoice.invoice_date).getTime()) / 86_400_000)),
+        };
+      }));
+      setUsingRealData(true);
+    }).catch(() => addToast("Could not load billing data", "warn"));
+  }, [addToast]);
+
+  const markPaid = async (id: string | number, method: PaymentMethod) => {
+    if (usingRealData) {
+      try { await updateInvoice(String(id), { status: "Paid", payment_method: method ?? undefined }); }
+      catch { addToast("Could not update invoice", "warn"); return; }
+    }
     setInvoices(prev => prev.map(inv => inv.id === id ? { ...inv, status: "Paid", paymentMethod: method } : inv));
     addToast(`Invoice marked as paid via ${method} ✓`, "success");
   };
 
-  const waiveInvoice = (id: number) => {
+  const waiveInvoice = async (id: string | number) => {
+    if (usingRealData) {
+      try { await updateInvoice(String(id), { status: "Waived", waived_reason: "Waived by receptionist" }); }
+      catch { addToast("Could not waive invoice", "warn"); return; }
+    }
     setInvoices(prev => prev.map(inv => inv.id === id ? { ...inv, status: "Waived" } : inv));
     addToast("Invoice waived", "warn");
   };
 
-  const sendAllReminders = () => {
-    addToast(`WhatsApp payment reminders dispatched to ${pendingInvoices.length} patients ✓`, "success");
+  const sendAllReminders = async () => {
+    if (usingRealData) {
+      const results = await Promise.allSettled(pendingInvoices.map(invoice => updateInvoice(String(invoice.id), { send_reminder: true })));
+      const queued = results.filter(result => result.status === "fulfilled").length;
+      addToast(queued ? `${queued} payment reminder${queued === 1 ? "" : "s"} queued` : "No reminders could be queued", queued ? "success" : "warn");
+      return;
+    }
+    addToast(`Demo reminders prepared for ${pendingInvoices.length} patients`, "success");
   };
 
-  const handleCreateInvoice = () => {
+  const handleCreateInvoice = async () => {
     if (!newName.trim()) return;
+    const patient = patients.find(item => item.name.toLowerCase() === newName.trim().toLowerCase());
+    if (usingRealData && !patient) {
+      addToast("Choose an existing contact name before creating an invoice", "warn");
+      return;
+    }
+    if (usingRealData) {
+      try {
+        const created = await createInvoice({
+          patient_id: patient?.id ?? null,
+          service_description: newService,
+          amount: newAmount,
+          status: "Pending",
+          invoice_date: new Date().toISOString().split("T")[0],
+        });
+        const createdName = created.patient?.name ?? newName.trim();
+        setInvoices(prev => [{
+          id: created.id,
+          patientId: created.patient_id ?? undefined,
+          patientName: createdName,
+          initials: createdName.split(/\s+/).slice(0, 2).map(word => word[0]).join("").toUpperCase(),
+          service: created.service_description,
+          date: "Today",
+          time: "Just now",
+          amount: created.amount,
+          paymentMethod: null,
+          status: "Pending",
+          daysOverdue: 0,
+        }, ...prev]);
+        setShowAddModal(false);
+        setNewName("");
+        addToast("Invoice created", "success");
+      } catch {
+        addToast("Could not create invoice", "warn");
+      }
+      return;
+    }
     const newInv: Invoice = {
       id: Date.now(),
       patientName: newName.trim(),
@@ -152,7 +232,7 @@ export default function BillingView({ addToast }: BillingViewProps) {
     setInvoices(prev => [newInv, ...prev]);
     setShowAddModal(false);
     setNewName("");
-    addToast("New invoice generated & dispatched via WhatsApp ✓", "success");
+    addToast("Demo invoice generated", "success");
   };
 
   return (
@@ -207,7 +287,7 @@ export default function BillingView({ addToast }: BillingViewProps) {
       </div>
 
       {/* Invoices Ledger */}
-      <div className="bg-white border border-[#CCD5DF] rounded-xl overflow-hidden shadow-xs">
+      <div className="bg-white border border-[#CCD5DF] rounded-xl overflow-x-auto shadow-xs">
         <div className="p-4 border-b border-[#CCD5DF] bg-[#F8FAFC] flex items-center justify-between">
           <div className="relative max-w-sm w-full">
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -246,7 +326,7 @@ export default function BillingView({ addToast }: BillingViewProps) {
           </div>
         </div>
 
-        <div className="grid grid-cols-[1.8fr_1.6fr_1fr_1.3fr_180px] gap-4 px-6 py-3 bg-[#F8FAFC] border-b border-[#CCD5DF] text-[11px] font-bold uppercase tracking-wider text-slate-500 items-center">
+        <div className="grid min-w-[820px] grid-cols-[1.8fr_1.6fr_1fr_1.3fr_180px] gap-4 px-6 py-3 bg-[#F8FAFC] border-b border-[#CCD5DF] text-[11px] font-bold uppercase tracking-wider text-slate-500 items-center">
           <span>Patient</span>
           <span>Service</span>
           <span>Amount</span>
@@ -259,7 +339,7 @@ export default function BillingView({ addToast }: BillingViewProps) {
             <div key={inv.id} className="hover:bg-slate-50 transition-colors">
               <div
                 onClick={() => setExpandedId(expandedId === inv.id ? null : inv.id)}
-                className="grid grid-cols-[1.8fr_1.6fr_1fr_1.3fr_180px] gap-4 px-6 py-3.5 items-center cursor-pointer text-xs"
+                className="grid min-w-[820px] grid-cols-[1.8fr_1.6fr_1fr_1.3fr_180px] gap-4 px-6 py-3.5 items-center cursor-pointer text-xs"
               >
                 <div className="flex items-center gap-2.5 min-w-0">
                   <div className="w-7 h-7 rounded-full bg-[#00685f]/15 text-[#00685f] font-bold text-[10px] flex items-center justify-center shrink-0">

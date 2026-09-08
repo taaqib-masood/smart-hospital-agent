@@ -1,11 +1,11 @@
 const FAQ_JSONLD = [
   {
     q: "Is Reva compliant with UAE healthcare regulations?",
-    a: "Yes. Reva is built to be DHA & HIPAA compliant end to end — patient data is encrypted in transit and at rest, hosted with UAE data residency, and access is role-based with full audit trails. We sign a clinic-specific data processing agreement before go-live.",
+    a: "Reva includes role-based access, audit logging, consent records, and security controls. Each clinic must complete its own legal, privacy, hosting, and regulator review before production use.",
   },
   {
     q: "How does Reva connect to our clinic's WhatsApp?",
-    a: "We provision an official WhatsApp Business API number for Aloka (or migrate your existing one). This is the verified, green-badge channel — not an unofficial automation tool. Your clinic keeps full ownership of the number and its conversation history.",
+    a: "Reva connects through the official WhatsApp Business Platform after the clinic completes Meta business and number setup. Number ownership and migration details are confirmed during onboarding.",
   },
   {
     q: "What happens when the AI can't answer a patient?",
@@ -17,7 +17,7 @@ const FAQ_JSONLD = [
   },
   {
     q: "How long does setup really take?",
-    a: "48 hours. Day one: we provision your WhatsApp Business API access and verify your number. Day two: we map your doctors, procedures, and automation rules with a one-hour call — then you're live. No IT team required from your side; we handle everything.",
+    a: "The timeline depends on Meta approval, number setup, clinic data, templates, and any calendar integration. A limited pilot is configured first and production starts only after testing and clinic approval.",
   },
   {
     q: "Can patients still reach a human at the front desk?",
@@ -33,7 +33,7 @@ const structuredData = {
       "@id": "https://reva-ai.ae/#org",
       name: "Reva AI",
       description:
-        "AI Patient Operations Layer for UAE clinics — missed-call recovery, no-show prevention, and AI patient briefs native on WhatsApp.",
+        "WhatsApp receptionist automation for UAE clinics, with appointment workflows and human handoff.",
       logo: "https://reva-ai.ae/reva-icon.svg",
       areaServed: "AE",
     },
@@ -45,21 +45,14 @@ const structuredData = {
       applicationSubCategory: "Healthcare Practice Automation",
       operatingSystem: "Web, WhatsApp",
       description:
-        "Reva AI integrates with WhatsApp to recover missed calls, reduce no-shows, and manage patient journeys for procedures like Cataract, LASIK, and Dry Eye care. DHA & HIPAA Compliant. Built for UAE clinics.",
-      offers: {
-        "@type": "Offer",
-        name: "Clinic Pro",
-        price: "1499",
-        priceCurrency: "AED",
-        description: "Per clinic, per month — 14-day free trial included.",
-      },
+        "Reva AI helps clinic reception teams manage WhatsApp enquiries, appointments, reminders, consent requests, billing follow-ups, and human handoff.",
       featureList: [
-        "Missed-call recovery on WhatsApp",
-        "Smart no-show prevention",
-        "AI patient briefs",
-        "Cataract pre-op & post-op automation",
-        "LASIK eligibility triage",
-        "Dry eye reactivation campaigns",
+        "WhatsApp receptionist inbox",
+        "Appointment booking and reminders",
+        "Human handoff",
+        "Consent request tracking",
+        "Billing follow-up",
+        "Opt-in and opt-out records",
       ],
     },
     {

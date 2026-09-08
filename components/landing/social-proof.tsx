@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  BadgeCheck,
   Building2,
   CalendarCheck,
   CheckCircle2,
@@ -72,7 +71,7 @@ export function SocialProof() {
                     </div>
                   </div>
                   <span className="inline-flex items-center gap-1.5 rounded-full border border-aloka-200 bg-aloka-50/80 px-3 py-1 text-[11px] font-bold text-aloka-700">
-                    <BadgeCheck className="size-3.5 text-aloka-600" />
+                    <Building2 className="size-3.5 text-aloka-600" />
                     {s.badgeLabel}
                   </span>
                 </div>
@@ -113,8 +112,8 @@ export function SocialProof() {
                     },
                     {
                       icon: FileText,
-                      title: isAr ? "ملخصات طبية ذكية" : "DHA Doctor Briefs",
-                      desc: isAr ? "جاهزة قبل دخول المريض" : "Pre-consultation intake",
+                      title: isAr ? "تحويل إلى موظف" : "Human Handoff",
+                      desc: isAr ? "مع سياق المحادثة" : "With conversation context",
                     },
                   ].map((f, i) => (
                     <div
@@ -154,11 +153,11 @@ export function SocialProof() {
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="size-4 text-aloka-600 shrink-0" />
-                    <span>{isAr ? "إعداد متوافق تماماً مع هيئة الصحة بدبي واستضافة البيانات" : "Full DHA compliance & UAE data residency setup"}</span>
+                    <span>{isAr ? "مراجعة الخصوصية والأمان قبل التشغيل" : "Pre-launch privacy and security review"}</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="size-4 text-aloka-600 shrink-0" />
-                    <span>{isAr ? "تفعيل واتساب الرسمي الموثّق بالعلامة الخضراء" : "Official WhatsApp Green-Badge API onboarding"}</span>
+                    <span>{isAr ? "تهيئة منصة WhatsApp Business الرسمية" : "Official WhatsApp Business Platform setup"}</span>
                   </li>
                 </ul>
 

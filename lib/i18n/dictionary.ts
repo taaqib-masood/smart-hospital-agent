@@ -25,10 +25,10 @@ const en = {
   nav: {
     features: "Features",
     howItWorks: "How it Works",
-    pricing: "Pricing",
-    login: "Log in",
-    trial: "Start Free Trial",
-    trialMobile: "Start 14-Day Free Trial",
+    pricing: "Try Demo",
+    login: "Dashboard Demo",
+    trial: "Request a Pilot",
+    trialMobile: "Request a Clinic Pilot",
     navAria: "Main navigation",
     openMenu: "Open menu",
     closeMenu: "Close menu",
@@ -37,27 +37,27 @@ const en = {
   },
 
   hero: {
-    eyebrow: "AI Patient Operations Layer for UAE Clinics",
-    h1a: "Never Miss a Patient.",
-    h1b: "Automate Your Clinic\u2019s Front Desk.",
+    eyebrow: "WhatsApp Receptionist Support for UAE Clinics",
+    h1a: "Give Every Enquiry a Clear Next Step.",
+    h1b: "Help Your Reception Team on WhatsApp.",
     p: [
-      { t: "Reva AI integrates with WhatsApp to recover missed calls, reduce no-shows, and manage patient journeys for procedures like " },
-      { t: "Cataract", b: true },
+      { t: "Reva works alongside receptionists to handle " },
+      { t: "enquiries", b: true },
       { t: ", " },
-      { t: "LASIK", b: true },
-      { t: ", and " },
-      { t: "Dry Eye", b: true },
-      { t: " care." },
+      { t: "appointment booking", b: true },
+      { t: ", reminders, consent requests, billing follow-ups, and " },
+      { t: "human handoff", b: true },
+      { t: " on WhatsApp." },
     ] as Seg[],
-    ctaPrimary: "Start 14-Day Free Trial",
+    ctaPrimary: "Request a Clinic Pilot",
     ctaSecondary: "Explore Live Portal",
-    trust1: "DHA & HIPAA Compliant",
-    trust2: "WhatsApp Business API",
+    trust1: "Privacy Controls & Audit Logs",
+    trust2: "Official WhatsApp Business Platform",
     statsAria: "Reva AI quick metrics",
     stats: [
-      { value: 28, prefix: "<", suffix: "s", label: "Avg. response time" },
-      { value: 98, prefix: "", suffix: "%", label: "Missed-call recovery" },
-      { value: 24, prefix: "", suffix: "/7", label: "Patient coverage" },
+      { value: 1, prefix: "", suffix: "", label: "Shared reception inbox" },
+      { value: 24, prefix: "", suffix: "/7", label: "Configured automation" },
+      { value: 2, prefix: "", suffix: "", label: "English & Arabic demo" },
     ] as { value: number; prefix: string; suffix: string; label: string }[],
   },
 
@@ -69,7 +69,7 @@ const en = {
     inMsg: "Hi, I wanted to book a LASIK consultation.",
     inTime: "4:01 PM",
     outMsg:
-      "Hello! Welcome to Aloka Eye Clinic. I have an opening this Thursday at 4:00 PM with Dr. Sharma. Shall I confirm?",
+      "Hello! Welcome to Demo Clinic. I have an opening this Thursday at 4:00 PM. Shall I confirm it?",
     outTime: "4:02 PM",
     typingAria: "Reva AI is typing",
     message: "Message",
@@ -84,25 +84,25 @@ const en = {
   features: {
     eyebrow: "Core Operations",
     h2: "Everything Your Clinic Front Desk Needs",
-    sub: "Stop losing revenue to missed calls and no-shows. Reva handles the busywork so your team can focus on patient care.",
+    sub: "Reduce repetitive WhatsApp work while keeping the receptionist in control of patient communication.",
     items: [
       {
-        title: "Missed-Call Recovery",
-        text: "When staff can\u2019t answer, Reva instantly texts the patient on WhatsApp, recovers the intent, and books the appointment automatically.",
+        title: "WhatsApp Enquiry Intake",
+        text: "Reva acknowledges new enquiries, collects booking details, and puts exceptions into the shared reception queue.",
       },
       {
         title: "Smart No-Show Prevention",
         text: "Automated 24-hour and 1-hour reminders. Patients confirm, reschedule, or cancel with one tap.",
       },
       {
-        title: "AI Patient Briefs",
-        text: "Before the doctor walks in, Reva summarizes patient history, symptoms, and eligibility (e.g., LASIK consultation notes) right on the dashboard.",
+        title: "Receptionist Handoff",
+        text: "Clinical questions, billing disputes, and uncertain requests are handed to reception with the conversation context attached.",
       },
     ],
     stats: [
-      { value: 40, suffix: "%", label: "Reduction in No-Shows" },
-      { value: 3, suffix: "+", label: "Hours Saved Daily Per Clinic" },
-      { value: 98, suffix: "%", label: "Missed-Call Recovery Rate" },
+      { value: 1, suffix: "", label: "Shared Reception Inbox" },
+      { value: 3, suffix: "", label: "Appointment Actions" },
+      { value: 2, suffix: "", label: "Supported Demo Languages" },
     ],
   },
 
@@ -146,27 +146,27 @@ const en = {
 
   implementation: {
     eyebrow: "Implementation",
-    h2: "Operational in 48 Hours. No IT Headaches.",
-    sub: "We handle the setup. Your clinic handles the patients.",
+    h2: "Pilot in Phases, Then Measure It.",
+    sub: "Configuration, testing, receptionist training, and approval happen before production use.",
     stepLabel: (n: number) => `STEP ${n}`,
     steps: [
       {
         title: "Connect WhatsApp Business",
-        text: "We provision your official API access.",
+        text: "Complete Meta business, number, and template setup for the official platform.",
       },
       {
         title: "Map Your Workflows",
         text: "We configure your doctors, procedures, and automation rules.",
       },
       {
-        title: "Recover Lost Revenue",
-        text: "Go live and start capturing missed patient opportunities.",
+        title: "Run a Measured Pilot",
+        text: "Compare response workload, booking completion, handoffs, and appointment attendance against the baseline.",
       },
     ],
-    ctaH: "Do the Math on Your Clinic",
-    ctaP: "Find out how much revenue you are losing to missed calls and no-shows.",
-    ctaBtn: "Calculate Your ROI",
-    ctaNote: "Interactive \u00b7 Takes 30 seconds \u00b7 No sign-up required",
+    ctaH: "Start with Your Reception Workflow",
+    ctaP: "Map the messages, booking rules, handoffs, consent, and billing follow-ups your team actually uses.",
+    ctaBtn: "Review the Pilot Scope",
+    ctaNote: "Illustrative calculator \u00b7 Replace assumptions with your clinic's baseline",
   },
 
   portal: {
@@ -178,8 +178,8 @@ const en = {
     tabRecovery: "Missed-Call Recovery",
     tabBriefs: "Patient Briefs",
     tabNoshow: "No-Show Prevention",
-    clinicName: "Aloka Eye Clinic",
-    clinicSub: "Jumeirah \u00b7 Dubai",
+    clinicName: "Demo Clinic",
+    clinicSub: "Illustrative UAE workflow",
     agentTitle: "Reva Agent",
     agentStatus: "24/7 active \u00b7 3 workflows",
     statMissed: "Missed today",
@@ -299,25 +299,25 @@ const en = {
   },
 
   security: {
-    eyebrow: "Security & Compliance",
+    eyebrow: "Security & Readiness",
     h2: "Patient Data, Protected by Design",
-    sub: "Built for UAE healthcare regulation from day one \u2014 so your team can automate with total confidence.",
+    sub: "Built with practical safeguards for a clinic pilot. Production use still requires clinic-specific legal, privacy, hosting, and regulator review.",
     items: [
       {
-        title: "DHA-Ready Compliance",
-        text: "Aligned with Dubai Health Authority requirements for digital health records.",
+        title: "Clinic Compliance Review",
+        text: "A documented pre-launch checklist for the clinic's regulator, privacy, and retention requirements.",
       },
       {
-        title: "HIPAA-Aligned Safeguards",
-        text: "Administrative, physical, and technical safeguards modelled on HIPAA.",
+        title: "Operational Safeguards",
+        text: "Role-based access, consent evidence, webhook verification, and auditable actions.",
       },
       {
-        title: "UAE Data Residency",
-        text: "Patient data stored in-region, never leaving the UAE.",
+        title: "Hosting Choice Before Launch",
+        text: "Hosting region, subprocessors, retention, and backup locations are documented before production use.",
       },
       {
-        title: "End-to-End Encryption",
-        text: "Every WhatsApp message encrypted in transit and at rest.",
+        title: "Protected Data Flows",
+        text: "HTTPS, signed webhook verification, restricted credentials, and database access controls.",
       },
       {
         title: "Role-Based Access Control",
@@ -370,10 +370,10 @@ const en = {
     hospitalCta: "Book a Consultation",
     hospitalNote: "Response within one business day",
     footnote:
-      "All plans include WhatsApp Business API provisioning, guided onboarding, and DHA & HIPAA compliant data handling.",
-    guaranteeBold: "30-Day Results Guarantee.",
+      "Pilot scope, Meta fees, integrations, hosting, and privacy requirements are confirmed with each clinic before launch.",
+    guaranteeBold: "Pilot with measurable goals.",
     guaranteeRest:
-      " If Reva hasn’t recovered at least its subscription in recovered revenue during your first 30 days, your next month is on us.",
+      " We agree baseline metrics with the clinic, measure the pilot, and continue only when the workflow creates clear operational value.",
     compareToggle: "Compare all features",
     compareToggleHide: "Hide comparison",
     compareAria: "Toggle full feature comparison",
@@ -402,7 +402,7 @@ const en = {
       {
         name: "Integrations",
         rows: [
-          { label: "WhatsApp Business API (verified, green-badge)", pro: "yes", hospital: "yes" },
+          { label: "Official WhatsApp Business Platform setup", pro: "yes", hospital: "yes" },
           { label: "PMS / HIS / EMR integration", pro: "no", hospital: "yes" },
           { label: "API access & webhooks", pro: "no", hospital: "yes" },
         ],
@@ -417,9 +417,9 @@ const en = {
       {
         name: "Compliance & support",
         rows: [
-          { label: "DHA & HIPAA compliance", pro: "yes", hospital: "yes" },
-          { label: "UAE data residency + audit trails", pro: "yes", hospital: "yes" },
-          { label: "48-hour guided onboarding", pro: "yes", hospital: "yes" },
+          { label: "Privacy and compliance launch checklist", pro: "yes", hospital: "yes" },
+          { label: "Role-based access + audit trails", pro: "yes", hospital: "yes" },
+          { label: "Guided pilot onboarding", pro: "yes", hospital: "yes" },
           { label: "Dedicated account manager", pro: "no", hospital: "yes" },
           { label: "Priority SLA support", pro: "Standard", hospital: "Priority" },
         ],
@@ -469,28 +469,28 @@ const en = {
   },
 
   social: {
-    eyebrow: "Launch Partner & Clinical Pilot",
-    h2: "Inaugural Launch Partner · Aloka Eye Clinic, Dubai",
-    sub: "Reva AI is currently integrating its clinical patient operations layer with Aloka Eye Clinic & Day Surgery Center, purpose-built for UAE healthcare workflows.",
-    verified: "Clinical Pilot Integration Partner",
-    badgeLabel: "Integration in Progress · Dubai Healthcare City (DHCC)",
-    partnerTitle: "Aloka Eye Clinic & Day Surgery Center",
-    partnerLocation: "Dubai Healthcare City (DHCC), Dubai, UAE",
+    eyebrow: "Clinic Pilot Workflow",
+    h2: "A Practical Receptionist-Assisted Pilot",
+    sub: "Start with one clinic, one official WhatsApp number, approved workflows, and measurable receptionist outcomes.",
+    verified: "Illustrative Pilot Workflow",
+    badgeLabel: "Demo Data · Not a Customer Claim",
+    partnerTitle: "Example UAE Clinic",
+    partnerLocation: "Illustrative workflow for a private clinic",
     partnerQuote:
-      "We are partnering with Reva AI to automate our WhatsApp reception, eliminate lost inquiries from peak surgical hours, and deliver instant 24/7 bilingual booking for our ophthalmology and LASIK patients. Pre-consultation AI briefs allow our doctors to enter the room fully prepared.",
-    partnerLeadName: "Dr. Priya Sharma",
-    partnerLeadRole: "Medical Director & Lead Refractive Surgeon · Aloka Eye Clinic, Dubai",
-    partnerLeadInitials: "PS",
+      "The pilot goal is simple: reduce repetitive WhatsApp work, make appointment status visible, and give receptionists a clean handoff whenever automation should stop.",
+    partnerLeadName: "Reception Workflow Demo",
+    partnerLeadRole: "Illustrative scenario — results must be measured during a paid pilot",
+    partnerLeadInitials: "RW",
     pilotCohortTitle: "UAE Healthcare Early Access Program",
     pilotCohortBody:
-      "We are onboarding a limited cohort of 5 specialist clinics in Dubai and Abu Dhabi for our launch phase. Early pilot partners receive dedicated workflow engineering and white-glove DHA compliance setup.",
+      "We recommend a limited 30–60 day pilot with agreed baseline metrics, approved WhatsApp templates, receptionist training, and a documented production-readiness review.",
     pilotCta: "Book a 20-Minute Walkthrough",
     metricsTitle: "Target Operational Impact · Pilot Projections",
     metrics: [
-      { value: 98, suffix: "%", label: "Projected missed-call recovery rate" },
-      { value: 40, suffix: "%", label: "Projected no-show reduction" },
-      { value: 30, prefix: "< ", suffix: "s", label: "Projected WhatsApp response time" },
-      { value: 100, suffix: "%", label: "DHA & UAE data residency compliant" },
+      { value: 30, suffix: "–60", label: "Recommended pilot days" },
+      { value: 1, suffix: "", label: "Reception team workflow" },
+      { value: 2, suffix: "", label: "Languages in the demo" },
+      { value: 4, suffix: "", label: "Core pilot measures" },
     ] as Array<{
       value: number;
       prefix?: string;
@@ -499,7 +499,7 @@ const en = {
       label: string;
     }>,
     metricsNote:
-      "Engineered in collaboration with Aloka Eye Clinic · Clinical deployment phase 2026.",
+      "Pilot targets are agreed with the clinic; this demo does not claim measured customer results.",
   },
 
   faq: {
@@ -532,12 +532,12 @@ const en = {
     faqs: [
       {
         q: "Is Reva compliant with UAE healthcare regulations?",
-        a: "Yes. Reva is built to be DHA & HIPAA compliant end to end \u2014 patient data is encrypted in transit and at rest, hosted with UAE data residency, and access is role-based with full audit trails. We sign a clinic-specific data processing agreement before go-live.",
+        a: "Reva includes role-based access, audit logs, consent records, and security controls. Each clinic must complete its own legal, privacy, hosting, and regulator review before production use.",
         cat: "compliance",
       },
       {
         q: "How does Reva connect to our clinic's WhatsApp?",
-        a: "We provision an official WhatsApp Business API number for Aloka (or migrate your existing one). This is the verified, green-badge channel \u2014 not an unofficial automation tool. Your clinic keeps full ownership of the number and its conversation history.",
+        a: "Reva connects through the official WhatsApp Business Platform after the clinic completes Meta business and number setup. Number ownership and migration details are confirmed during onboarding.",
         cat: "setup",
       },
       {
@@ -552,7 +552,7 @@ const en = {
       },
       {
         q: "How long does setup really take?",
-        a: "48 hours. Day one: we provision your WhatsApp Business API access and verify your number. Day two: we map your doctors, procedures, and automation rules with a one-hour call \u2014 then you're live. No IT team required from your side; we handle everything.",
+        a: "Timing depends on Meta approval, clinic data, approved templates, and any calendar integration. A limited pilot is configured first and starts only after testing and clinic approval.",
         cat: "setup",
       },
       {
@@ -566,30 +566,21 @@ const en = {
   footer: {
     tagline:
       "The AI patient operations layer for UAE clinics. Recovered calls, fewer no-shows, calmer front desks.",
-    badge1: "DHA & HIPAA Compliant",
+    badge1: "Privacy Controls & Audit Logs",
     badge2: "Built on WhatsApp Business API",
     product: "Product",
     company: "Company",
-    productLinks: [
-      "Features",
-      "How it Works",
-      "Live Portal",
-      "Try the AI Agent",
-      "Before & After",
-      "A Day with Reva",
-      "Pricing",
-      "FAQ",
-    ],
+    productLinks: ["Features", "How it Works", "Try the AI Agent", "Security Readiness", "FAQ"],
     companyLinks: [
       "Security & Compliance",
       "Privacy Policy",
-      "DHA Compliance",
+      "Production Readiness",
       "Talk to Our Team",
     ],
     ctaH: "Ready to calm your front desk?",
     ctaP:
       "See how much revenue Reva AI can recover for your clinic \u2014 in under two minutes.",
-    ctaBtn: "Start 14-Day Free Trial",
+    ctaBtn: "Try the Demo",
     copyright: "\u00a9 2026 Reva AI. All rights reserved.",
     made: "Made for healthcare providers in the United Arab Emirates",
     productAria: "Footer \u2014 product",
@@ -608,7 +599,7 @@ const en = {
     s2Hint: "For reference: a LASIK consultation at Aloka averages AED 450\u2013600.",
     s3Label: "Recovery rate",
     s3Format: (v: number) => `${v}%`,
-    s3Hint: "Reva recovers up to 98% of missed calls \u2014 we default to a conservative 40%.",
+    s3Hint: "Choose a conservative test assumption, then replace it with measured pilot performance.",
     resultLabel: "Recovered revenue",
     perMonth: "/ month",
     visitsLabel: "Recovered visits",
@@ -639,12 +630,12 @@ const en = {
     fEmail: "Work email",
     emailPh: "you@clinic.ae",
     fClinic: "Clinic name",
-    clinicPh: "Aloka Eye Clinic",
+    clinicPh: "Your Clinic Name",
     fPhone: "Phone",
     optional: "(optional)",
     phonePh: "+971 50 000 0000",
     submitting: "Submitting\u2026",
-    reassurance: "DHA & HIPAA compliant \u00b7 Your data never leaves the UAE",
+    reassurance: "Pilot request only \u00b7 Production terms are confirmed before launch",
     successTitle: "You\u2019re on the list",
     trialWord: "14-day free trial",
     consultWord: "consultation",
@@ -658,7 +649,7 @@ const en = {
       { t: clinic, b: true },
       { t: "." },
     ],
-    successBadge: "DHA & HIPAA compliant onboarding",
+    successBadge: "Pilot onboarding request received",
     done: "Done",
     toastPro: "Trial request received",
     toastConsult: "Consultation request received",
@@ -701,23 +692,23 @@ const en = {
 
   mobileCta: {
     line: "Reva AI for",
-    clinic: "Aloka Eye Clinic",
+    clinic: "Demo Clinic",
     cta: "Start Free Trial",
   },
 
   chat: {
     eyebrow: "Try It Yourself",
     h2: "Chat with Reva AI, Right Now",
-    sub: "This is a live simulation of the exact conversations Reva handles for Aloka every day — bookings, pricing questions, reschedules, and after-hours enquiries. No staff required.",
+    sub: "This illustrative demo shows booking, rescheduling, clinic information, and safe handoff. All clinic facts must be configured and approved before use.",
     liveChip: "Live demo",
     repliesIn: "AI Agent \u00b7 typically replies in seconds",
     resetAria: "Reset conversation",
-    demoNote: "Demo \u2014 the real Reva is connected to your clinic\u2019s calendar",
+    demoNote: "Illustrative demo \u2014 no real clinic or patient data",
     inputPh: "Type a message\u2026",
     sendAria: "Send message",
     typingAria: "Reva AI is typing",
     greeting:
-      "Hello! This is Reva, Aloka Eye Clinic\u2019s AI assistant. I can book consultations, share pricing, or answer questions about our doctors. How can I help you today?",
+      "Hello! This is Reva for Demo Clinic. I can help with appointments and clinic-approved information, or connect you with reception. How can I help today?",
     quickAria: "Suggested messages",
     quick: [
       "Book a LASIK consultation",
@@ -735,17 +726,17 @@ const en = {
     responses: {
       book: "Of course. I have an opening this Thursday at 4:00 PM with Dr. Sharma for a LASIK consultation, or Saturday at 11:00 AM if you prefer a weekend. Which suits you?",
       price:
-        "Happy to share: a comprehensive eye exam is AED 350, a LASIK consultation is AED 500, and a cataract evaluation is AED 600. If you\u2019re insured, we handle the pre-approval for you. Would you like to book?",
+        "Prices depend on the clinic and service. I can share the clinic-approved price list or connect you with reception for confirmation.",
       reschedule:
         "No problem at all. I can move your appointment to Thursday at 4:00 PM or Saturday at 11:00 AM \u2014 just tap the slot that works, and I\u2019ll update your booking instantly.",
       insurance:
-        "Yes \u2014 we work with all major DHA-approved insurers, including Daman, AXA, Cigna, and MetLife. Share your card photo here and I\u2019ll verify your coverage and start the pre-approval before your visit.",
+        "Insurance coverage depends on your clinic and plan. I can share clinic-approved information or hand this conversation to reception for verification. Please avoid sending sensitive documents until the clinic confirms the approved process.",
       hours:
-        "We\u2019re open Saturday to Thursday, 9:00 AM \u2013 8:00 PM, and closed on Fridays. I\u2019m here on WhatsApp around the clock though \u2014 leave a message any time and I\u2019ll arrange everything.",
+        "I can share the clinic-approved opening hours once they are configured. Outside reception hours, I can collect your request for follow-up.",
       doctor:
-        "Dr. Meera Sharma is our lead refractive surgeon \u2014 12 years of experience in cornea, cataract, and LASIK, with over 9,000 procedures performed. She consults at our Jumeirah clinic. Shall I book you with her?",
+        "I can show the clinic-approved practitioner list and availability. Would you prefer a specific practitioner or the first available appointment?",
       location:
-        "We\u2019re on Jumeirah Beach Road, Dubai \u2014 free valet parking at the main entrance. I\u2019ll send a pin and directions to your WhatsApp once your appointment is confirmed.",
+        "I can share the clinic-approved map pin and directions once they are configured. This demo does not use a real clinic address.",
       human:
         "Absolutely. I\u2019m connecting you with our front desk team \u2014 they\u2019ll have our full conversation in front of them, so you won\u2019t need to repeat anything. During clinic hours they typically reply within a minute.",
       fallback:
@@ -779,11 +770,11 @@ const en = {
     afterLabel: "With Reva AI",
     afterTitle: "The Reva-assisted front desk",
     after: [
-      { stat: "98% ", text: "of missed calls recovered — most within 5 minutes" },
-      { stat: "24/7 ", text: "WhatsApp coverage — every message answered in seconds" },
-      { stat: "40% ", text: "fewer no-shows with smart reminders & easy rescheduling" },
-      { stat: "", text: "AI briefs hand doctors patient context before the knock" },
-      { stat: "", text: "Weekends covered — Monday starts calm, booked, and briefed" },
+      { stat: "", text: "New WhatsApp enquiries enter one shared reception queue" },
+      { stat: "24/7 ", text: "configured acknowledgement and approved self-service flows" },
+      { stat: "", text: "reminders and easy rescheduling support appointment attendance" },
+      { stat: "", text: "human handoff keeps clinical and exceptional questions with staff" },
+      { stat: "", text: "the dashboard shows what is pending, handled, or needs attention" },
     ],
     stripBold: "Same team. Same clinic. Different day.",
     stripRest:
@@ -831,7 +822,7 @@ const en = {
       {
         time: "3:00 AM · Friday",
         title: "Weekend, fully covered",
-        text: "The clinic is closed until Saturday morning — the WhatsApp channel never is. Every Friday message gets an instant, DHA-conscious reply.",
+        text: "The clinic is closed, but an approved acknowledgement can collect the enquiry and place it in the reception queue for follow-up.",
         during: false,
       },
     ],
@@ -866,10 +857,10 @@ const ar: Dict = {
   nav: {
     features: "المزايا",
     howItWorks: "كيف يعمل",
-    pricing: "الأسعار",
-    login: "تسجيل الدخول",
-    trial: "ابدأ التجربة المجانية",
-    trialMobile: "ابدأ تجربة 14 يومًا مجانًا",
+    pricing: "جرّب العرض",
+    login: "عرض لوحة التحكم",
+    trial: "اطلب تجربة للعيادة",
+    trialMobile: "اطلب تجربة للعيادة",
     navAria: "التنقل الرئيسي",
     openMenu: "فتح القائمة",
     closeMenu: "إغلاق القائمة",
@@ -878,27 +869,27 @@ const ar: Dict = {
   },
 
   hero: {
-    eyebrow: "طبقة عمليات الذكاء الاصطناعي لعيادات الإمارات",
-    h1a: "لن يفوتك مريض بعد اليوم.",
-    h1b: "أتمِتة كاملة لمكتب استقبال عيادتك.",
+    eyebrow: "مساندة موظف الاستقبال عبر WhatsApp لعيادات الإمارات",
+    h1a: "امنح كل استفسار خطوة تالية واضحة.",
+    h1b: "ساعد فريق الاستقبال على WhatsApp.",
     p: [
-      { t: "تتكامل Reva AI مع WhatsApp لاستعادة المكالمات الفائتة، وتقليل حالات عدم الحضور، وإدارة رحلات المرضى لإجراءات مثل " },
-      { t: "الساد", b: true },
+      { t: "يعمل Reva إلى جانب موظفي الاستقبال للتعامل مع " },
+      { t: "الاستفسارات", b: true },
       { t: "، و" },
-      { t: "LASIK", b: true },
-      { t: "، ورعاية " },
-      { t: "جفاف العين", b: true },
-      { t: "." },
+      { t: "حجز المواعيد", b: true },
+      { t: "، والتذكيرات، وطلبات الموافقة، ومتابعة الفواتير، و" },
+      { t: "التحويل إلى موظف", b: true },
+      { t: " عبر WhatsApp." },
     ],
-    ctaPrimary: "ابدأ تجربة 14 يومًا مجانًا",
+    ctaPrimary: "اطلب تجربة للعيادة",
     ctaSecondary: "استكشف البوابة الحيّة",
-    trust1: "متوافق مع معايير DHA و HIPAA",
-    trust2: "WhatsApp Business API",
+    trust1: "ضوابط خصوصية ومسارات تدقيق",
+    trust2: "منصة WhatsApp Business الرسمية",
     statsAria: "مقاييس سريعة لـ Reva AI",
     stats: [
-      { value: 28, prefix: "<", suffix: "ث", label: "متوسط زمن الاستجابة" },
-      { value: 98, prefix: "", suffix: "%", label: "استعادة المكالمات الفائتة" },
-      { value: 24, prefix: "", suffix: "/7", label: "تغطية المرضى" },
+      { value: 1, prefix: "", suffix: "", label: "صندوق استقبال مشترك" },
+      { value: 24, prefix: "", suffix: "/7", label: "أتمتة مضبوطة" },
+      { value: 2, prefix: "", suffix: "", label: "عرض بالإنجليزية والعربية" },
     ] as { value: number; prefix: string; suffix: string; label: string }[],
   },
 
@@ -910,7 +901,7 @@ const ar: Dict = {
     inMsg: "مرحبًا، أودّ حجز استشارة LASIK.",
     inTime: "4:01 م",
     outMsg:
-      "أهلًا بك في Aloka Eye Clinic! لديّ موعد متاح يوم الخميس الساعة 4:00 م مع د. شارما. هل أؤكّده لك؟",
+      "أهلًا بك في العيادة التجريبية! لديّ موعد متاح يوم الخميس الساعة 4:00 م. هل أؤكّده لك؟",
     outTime: "4:02 م",
     typingAria: "Reva AI يكتب الآن",
     message: "رسالة",
@@ -925,25 +916,25 @@ const ar: Dict = {
   features: {
     eyebrow: "العمليات الأساسية",
     h2: "كل ما يحتاجه مكتب استقبال عيادتك",
-    sub: "توقّف عن خسارة الإيرادات بسبب المكالمات الفائتة وحالات عدم الحضور. يتولّى Reva الأعمال الروتينية ليتفرّغ فريقك لرعاية المرضى.",
+    sub: "قلّل أعمال WhatsApp المتكررة مع بقاء موظف الاستقبال متحكماً في تواصل المرضى.",
     items: [
       {
-        title: "استعادة المكالمات الفائتة",
-        text: "عندما يتعذّر على موظفيك الرد، يراسل Reva المريض فورًا عبر WhatsApp، ويفهم احتياجه، ويحجز الموعد تلقائيًا.",
+        title: "استقبال استفسارات WhatsApp",
+        text: "يستلم Reva الاستفسارات الجديدة ويجمع تفاصيل الحجز ويضع الحالات الاستثنائية في قائمة الاستقبال المشتركة.",
       },
       {
         title: "منع ذكي لحالات عدم الحضور",
         text: "تذكيرات تلقائية قبل 24 ساعة وقبل ساعة واحدة. يؤكّد المرضى موعدهم أو يعيدون جدولته أو يلغونه بلمسة واحدة.",
       },
       {
-        title: "ملخّصات مرضى بالذكاء الاصطناعي",
-        text: "قبل دخول الطبيب، يلخّص Reva تاريخ المريض وأعراضه وأهليته (مثل ملاحظات استشارة LASIK) مباشرةً على لوحة التحكم.",
+        title: "تحويل إلى موظف الاستقبال",
+        text: "تُحوّل الأسئلة السريرية ونزاعات الفواتير والطلبات غير الواضحة إلى الاستقبال مع سياق المحادثة.",
       },
     ],
     stats: [
-      { value: 40, suffix: "%", label: "انخفاض في حالات عدم الحضور" },
-      { value: 3, suffix: "+", label: "ساعات موفّرة يوميًا لكل عيادة" },
-      { value: 98, suffix: "%", label: "نسبة استعادة المكالمات الفائتة" },
+      { value: 1, suffix: "", label: "صندوق استقبال مشترك" },
+      { value: 3, suffix: "", label: "إجراءات للمواعيد" },
+      { value: 2, suffix: "", label: "لغتان في العرض" },
     ],
   },
 
@@ -986,27 +977,27 @@ const ar: Dict = {
 
   implementation: {
     eyebrow: "التنفيذ",
-    h2: "جاهز للتشغيل خلال 48 ساعة. دون أي صداع تقني.",
-    sub: "نتولّى نحن الإعداد، وتتولّى عيادتك المرضى.",
+    h2: "تجربة على مراحل ثم قياس النتائج.",
+    sub: "يتم الإعداد والاختبار وتدريب الاستقبال والموافقة قبل الإنتاج.",
     stepLabel: (n: number) => `الخطوة ${n}`,
     steps: [
       {
         title: "اربط WhatsApp Business",
-        text: "نوفّر لك وصول API الرسمي.",
+        text: "أكمل إعداد نشاط Meta والرقم والقوالب على المنصة الرسمية.",
       },
       {
         title: "ارسم مسارات عملك",
         text: "نضبط أطباءك وإجراءاتك وقواعد الأتمتة لديك.",
       },
       {
-        title: "استعد الإيرادات المفقودة",
-        text: "ابدأ التشغيل والتقط فرص المرضى الفائتة.",
+        title: "نفّذ تجربة قابلة للقياس",
+        text: "قارن عبء الرد وإتمام الحجوزات والتحويلات وحضور المواعيد بخط الأساس.",
       },
     ],
-    ctaH: "احسبها لعيادتك",
-    ctaP: "اكتشف حجم الإيرادات التي تخسرها بسبب المكالمات الفائتة وحالات عدم الحضور.",
-    ctaBtn: "احسب العائد على الاستثمار",
-    ctaNote: "تفاعلي · يستغرق 30 ثانية · لا يتطلب تسجيلًا",
+    ctaH: "ابدأ بمسار الاستقبال لديك",
+    ctaP: "ارسم الرسائل وقواعد الحجز والتحويلات والموافقة ومتابعات الفواتير التي يستخدمها فريقك فعلاً.",
+    ctaBtn: "راجع نطاق التجربة",
+    ctaNote: "حاسبة توضيحية · استبدل الافتراضات بخط أساس عيادتك",
   },
 
   portal: {
@@ -1018,8 +1009,8 @@ const ar: Dict = {
     tabRecovery: "استعادة المكالمات الفائتة",
     tabBriefs: "ملخّصات المرضى",
     tabNoshow: "منع عدم الحضور",
-    clinicName: "Aloka Eye Clinic",
-    clinicSub: "جميرا · دبي",
+    clinicName: "عيادة تجريبية",
+    clinicSub: "مسار إماراتي توضيحي",
     agentTitle: "وكيل Reva",
     agentStatus: "نشط على مدار الساعة · 3 مسارات عمل",
     statMissed: "فائتة اليوم",
@@ -1144,20 +1135,20 @@ const ar: Dict = {
     sub: "مبنيّ لأنظمة الرعاية الصحية في الإمارات منذ اليوم الأول — ليتيح لفريقك الأتمتة بثقة تامة.",
     items: [
       {
-        title: "امتثال جاهز لمعايير DHA",
-        text: "متوافق مع متطلبات هيئة الصحة بدبي للسجلات الصحية الرقمية.",
+        title: "مراجعة امتثال العيادة",
+        text: "قائمة تحقق موثقة لمتطلبات الجهة المنظمة والخصوصية والاحتفاظ قبل التشغيل.",
       },
       {
-        title: "ضمانات على غرار HIPAA",
-        text: "ضمانات إدارية ومادية وتقنية مصمّمة على غرار HIPAA.",
+        title: "ضوابط تشغيلية",
+        text: "صلاحيات حسب الدور، وإثبات الموافقة، والتحقق من webhooks، وسجل للإجراءات.",
       },
       {
-        title: "إقامة البيانات داخل الإمارات",
-        text: "تُخزَّن بيانات المرضى داخل الدولة ولا تغادر الإمارات أبدًا.",
+        title: "اختيار الاستضافة قبل التشغيل",
+        text: "يتم توثيق منطقة الاستضافة والمعالجين الفرعيين والاحتفاظ والنسخ الاحتياطية قبل الإنتاج.",
       },
       {
-        title: "تشفير من الطرف إلى الطرف",
-        text: "كل رسالة WhatsApp مشفّرة أثناء النقل وفي حالة السكون.",
+        title: "تدفقات بيانات محمية",
+        text: "HTTPS والتحقق من توقيع webhooks وتقييد بيانات الاعتماد وضوابط قاعدة البيانات.",
       },
       {
         title: "تحكّم بالوصول حسب الدور",
@@ -1210,10 +1201,10 @@ const ar: Dict = {
     hospitalCta: "احجز استشارة",
     hospitalNote: "الردّ خلال يوم عمل واحد",
     footnote:
-      "تشمل جميع الباقات تفعيل WhatsApp Business API، وتهيئة موجّهة، ومعالجة بيانات متوافقة مع معايير DHA و HIPAA.",
-    guaranteeBold: "ضمان النتائج لـ 30 يومًا.",
+      "يتم تأكيد نطاق التجربة ورسوم Meta والتكاملات والاستضافة ومتطلبات الخصوصية قبل التشغيل.",
+    guaranteeBold: "تجربة بأهداف قابلة للقياس.",
     guaranteeRest:
-      " إذا لم يستعد Reva قيمة اشتراكه على الأقل من الإيرادات المستردة خلال أول 30 يومًا، فالشهر التالي على حسابنا.",
+      " نتفق مع العيادة على خط أساس ونقيس التجربة ونستمر فقط عندما يقدم المسار قيمة تشغيلية واضحة.",
     compareToggle: "قارن جميع المزايا",
     compareToggleHide: "إخفاء المقارنة",
     compareAria: "تبديل مقارنة المزايا الكاملة",
@@ -1257,9 +1248,9 @@ const ar: Dict = {
       {
         name: "الامتثال والدعم",
         rows: [
-          { label: "امتثال DHA و HIPAA", pro: "yes", hospital: "yes" },
-          { label: "إقامة بيانات داخل الإمارات + مسارات تدقيق", pro: "yes", hospital: "yes" },
-          { label: "تهيئة موجّهة خلال 48 ساعة", pro: "yes", hospital: "yes" },
+          { label: "قائمة تحقق للخصوصية والامتثال", pro: "yes", hospital: "yes" },
+          { label: "صلاحيات حسب الدور ومسارات تدقيق", pro: "yes", hospital: "yes" },
+          { label: "تهيئة موجّهة للتجربة", pro: "yes", hospital: "yes" },
           { label: "مدير حساب مخصّص", pro: "no", hospital: "yes" },
           { label: "دعم أولوية SLA", pro: "Standard", hospital: "Priority" },
         ],
@@ -1309,31 +1300,31 @@ const ar: Dict = {
   },
 
   social: {
-    eyebrow: "الشريك الطبي للإطلاق والبرنامج التجريبي",
-    h2: "الشريك الطبي للإطلاق · عيادة ألوكا للعيون، دبي",
-    sub: "تعمل ريفا للذكاء الاصطناعي حالياً على تنفيذ التكامل السريري الأول بالتعاون مع عيادة ألوكا للعيون ومركز جراحة اليوم الواحد في دبي.",
-    verified: "شريك الإطلاق والبرنامج التجريبي الأول",
-    badgeLabel: "قيد التكامل السريري · مدينة دبي للرعاية الصحية (DHCC)",
-    partnerTitle: "عيادة ألوكا للعيون ومركز جراحة اليوم الواحد",
-    partnerLocation: "مدينة دبي للرعاية الصحية (DHCC)، دبي، الإمارات",
+    eyebrow: "مسار تجربة للعيادة",
+    h2: "تجربة عملية بمساندة موظف الاستقبال",
+    sub: "ابدأ بعيادة واحدة ورقم WhatsApp رسمي ومسارات معتمدة ونتائج قابلة للقياس لفريق الاستقبال.",
+    verified: "مسار توضيحي للتجربة",
+    badgeLabel: "بيانات عرض · ليست ادعاء عميل",
+    partnerTitle: "عيادة إماراتية افتراضية",
+    partnerLocation: "مسار توضيحي لعيادة خاصة",
     partnerQuote:
-      "نتعاون مع ريفا للذكاء الاصطناعي لأتمتة مكتب الاستقبال عبر واتساب، واستعادة المكالمات الفائتة أثناء ساعات العمليات، وتوفير حجز فوري وثنائي اللغة لمرضى العيون والليزك على مدار 24/7. الملخصات الذكية المسبقة تتيح لأطبائنا التفرغ التام للرعاية السريرية.",
-    partnerLeadName: "د. بريا شارما",
-    partnerLeadRole: "المديرة الطبية واستشارية جراحة القرنية والليزك · عيادة ألوكا للعيون، دبي",
-    partnerLeadInitials: "PS",
+      "هدف التجربة بسيط: تقليل أعمال WhatsApp المتكررة، وإظهار حالة المواعيد، وتحويل واضح لموظف الاستقبال عندما يجب أن تتوقف الأتمتة.",
+    partnerLeadName: "عرض مسار الاستقبال",
+    partnerLeadRole: "سيناريو توضيحي — تقاس النتائج أثناء تجربة مدفوعة",
+    partnerLeadInitials: "RW",
     pilotCohortTitle: "برنامج الوصول المبكر لعيادات ومراكز الإمارات",
     pilotCohortBody:
-      "نستقبل حالياً دفعة تجريبية محدودة تضم 5 مراكز طبية تخصصية مختارة في دبي وأبوظبي. يحصل شركاء الإطلاق المبكر على تخصيص كامل لمسارات العمل وإعداد مباشر للتوافق مع معايير هيئة الصحة بدبي.",
+      "نوصي بتجربة محدودة من 30 إلى 60 يوماً مع مقاييس أساسية وقوالب WhatsApp معتمدة وتدريب للاستقبال ومراجعة جاهزية للإنتاج.",
     pilotCta: "احجز جولة تعريفية مدتها 20 دقيقة",
     metricsTitle: "الأثر التشغيلي المستهدف · تقديرات مرحلة الإطلاق",
     metrics: [
-      { value: 98, suffix: "%", label: "نسبة استعادة المكالمات الفائتة المتوقعة" },
-      { value: 40, suffix: "%", label: "انخفاض حالات عدم الحضور المتوقع" },
-      { value: 30, prefix: "< ", suffix: "ثانية", label: "زمن الاستجابة التلقائي عبر واتساب" },
-      { value: 100, suffix: "%", label: "توافق تام مع هيئة الصحة بدبي DHA واستضافة البيانات بالدولة" },
+      { value: 30, suffix: "–60", label: "أيام التجربة الموصى بها" },
+      { value: 1, suffix: "", label: "مسار لفريق الاستقبال" },
+      { value: 2, suffix: "", label: "لغتان في العرض" },
+      { value: 4, suffix: "", label: "مقاييس أساسية للتجربة" },
     ],
     metricsNote:
-      "تم التطوير بالتعاون مع عيادة ألوكا للعيون · مرحلة الإطلاق والتشغيل التجريبي 2026.",
+      "تتفق العيادة على أهداف التجربة؛ لا يدعي هذا العرض نتائج عملاء مقاسة.",
   },
 
   faq: {
@@ -1366,12 +1357,12 @@ const ar: Dict = {
     faqs: [
       {
         q: "هل يتوافق Reva مع أنظمة الرعاية الصحية في الإمارات؟",
-        a: "نعم. صُمِّم Reva ليكون متوافقًا مع معايير DHA و HIPAA من البداية إلى النهاية — بيانات المرضى مشفّرة أثناء النقل وفي حالة السكون، ومستضافة داخل الإمارات، والوصول قائم على الأدوار مع مسارات تدقيق كاملة. نوقّع اتفاقية معالجة بيانات خاصة بعيادتك قبل التشغيل.",
+        a: "يتضمن Reva صلاحيات حسب الدور ومسارات تدقيق وسجلات موافقة وضوابط أمان. على كل عيادة إتمام مراجعتها القانونية ومراجعة الخصوصية والاستضافة والجهة المنظمة قبل الإنتاج.",
         cat: "compliance",
       },
       {
         q: "كيف يتصل Reva بـ WhatsApp الخاص بعيادتنا؟",
-        a: "نوفّر رقم WhatsApp Business API رسميًا لـ Aloka (أو ننقل رقمك الحالي). هذه القناة الموثّقة ذات الشارة الخضراء — وليست أداة أتمتة غير رسمية. تحتفظ عيادتك بالملكية الكاملة للرقم وسجل محادثاته.",
+        a: "يتصل Reva عبر منصة WhatsApp Business الرسمية بعد إتمام العيادة إعداد Meta والرقم. يتم تأكيد الملكية وأي نقل للرقم أثناء التهيئة.",
         cat: "setup",
       },
       {
@@ -1386,7 +1377,7 @@ const ar: Dict = {
       },
       {
         q: "كم يستغرق الإعداد فعلًا؟",
-        a: "48 ساعة. اليوم الأول: نوفّر وصول WhatsApp Business API ونتحقق من رقمك. اليوم الثاني: نرسم أطباءك وإجراءاتك وقواعد الأتمتة في مكالمة مدتها ساعة — ثم تبدأ التشغيل. لا حاجة لفريق تقنية من جانبك؛ نتولّى كل شيء.",
+        a: "تعتمد المدة على موافقة Meta وبيانات العيادة والقوالب المعتمدة وأي تكامل للتقويم. نبدأ بتجربة محدودة بعد الاختبار وموافقة العيادة.",
         cat: "setup",
       },
       {
@@ -1400,29 +1391,20 @@ const ar: Dict = {
   footer: {
     tagline:
       "طبقة عمليات المرضى الذكية لعيادات الإمارات. مكالمات مستعادة، عدم حضور أقل، ومكاتب استقبال أهدأ.",
-    badge1: "متوافق مع معايير DHA و HIPAA",
+    badge1: "ضوابط خصوصية ومسارات تدقيق",
     badge2: "مبنيّ على WhatsApp Business API",
     product: "المنتج",
     company: "الشركة",
-    productLinks: [
-      "المزايا",
-      "كيف يعمل",
-      "البوابة الحيّة",
-      "جرّب وكيل الذكاء الاصطناعي",
-      "قبل وبعد",
-      "يوم مع Reva",
-      "الأسعار",
-      "الأسئلة الشائعة",
-    ],
+    productLinks: ["المزايا", "كيف يعمل", "جرّب وكيل الذكاء الاصطناعي", "جاهزية الأمان", "الأسئلة الشائعة"],
     companyLinks: [
       "الأمن والامتثال",
       "سياسة الخصوصية",
-      "امتثال DHA",
+      "جاهزية الإنتاج",
       "تحدّث إلى فريقنا",
     ],
     ctaH: "هل أنت مستعد لمكتب استقبال أهدأ؟",
     ctaP: "اكتشف حجم الإيرادات التي يمكن لـ Reva AI استعادتها لعيادتك — في أقل من دقيقتين.",
-    ctaBtn: "ابدأ تجربة 14 يومًا مجانًا",
+    ctaBtn: "جرّب العرض",
     copyright: "© 2026 Reva AI. جميع الحقوق محفوظة.",
     made: "صُنع لمقدمي الرعاية الصحية في دولة الإمارات العربية المتحدة",
     productAria: "تذييل — المنتج",
@@ -1441,7 +1423,7 @@ const ar: Dict = {
     s2Hint: "للمرجعية: متوسط استشارة LASIK في Aloka يتراوح بين AED 450–600.",
     s3Label: "نسبة الاستعادة",
     s3Format: (v: number) => `${v}%`,
-    s3Hint: "يستعيد Reva ما يصل إلى 98% من المكالمات الفائتة — نعتمد افتراضيًا نسبة متحفّظة قدرها 40%.",
+    s3Hint: "اختر افتراضاً متحفظاً للاختبار ثم استبدله بأداء التجربة المقاس.",
     resultLabel: "الإيرادات المستعادة",
     perMonth: "/ شهريًا",
     visitsLabel: "زيارات مستعادة",
@@ -1472,12 +1454,12 @@ const ar: Dict = {
     fEmail: "البريد الإلكتروني للعمل",
     emailPh: "you@clinic.ae",
     fClinic: "اسم العيادة",
-    clinicPh: "Aloka Eye Clinic",
+    clinicPh: "اسم عيادتك",
     fPhone: "الهاتف",
     optional: "(اختياري)",
     phonePh: "+971 50 000 0000",
     submitting: "جارٍ الإرسال…",
-    reassurance: "متوافق مع معايير DHA و HIPAA · بياناتك لا تغادر الإمارات أبدًا",
+    reassurance: "طلب تجربة فقط · تؤكد شروط الإنتاج قبل التشغيل",
     successTitle: "تمت إضافتك إلى القائمة",
     trialWord: "تجربة مجانية لمدة 14 يومًا",
     consultWord: "استشارة",
@@ -1491,7 +1473,7 @@ const ar: Dict = {
       { t: clinic, b: true },
       { t: "." },
     ],
-    successBadge: "تهيئة متوافقة مع معايير DHA و HIPAA",
+    successBadge: "تم استلام طلب تهيئة التجربة",
     done: "تم",
     toastPro: "تم استلام طلب التجربة",
     toastConsult: "تم استلام طلب الاستشارة",
@@ -1534,23 +1516,23 @@ const ar: Dict = {
 
   mobileCta: {
     line: "Reva AI لـ",
-    clinic: "Aloka Eye Clinic",
+    clinic: "عيادة تجريبية",
     cta: "ابدأ التجربة المجانية",
   },
 
   chat: {
     eyebrow: "جرّبه بنفسك",
     h2: "تحدّث مع Reva AI الآن",
-    sub: "هذه محاكاة حيّة للمحادثات التي يتولّاها Reva يوميًا لصالح Aloka — الحجوزات، وأسئلة الأسعار، وإعادة الجدولة، واستفسارات ما بعد الدوام. دون أي تدخّل من الموظفين.",
+    sub: "يعرض هذا المثال التوضيحي الحجز وإعادة الجدولة ومعلومات العيادة والتحويل الآمن. يجب ضبط كل معلومات العيادة واعتمادها قبل الاستخدام.",
     liveChip: "عرض حيّ",
     repliesIn: "وكيل ذكاء اصطناعي · يردّ عادة خلال ثوانٍ",
     resetAria: "إعادة المحادثة",
-    demoNote: "عرض تجريبي — ربطنا Reva الحقيقي بتقويم عيادتك",
+    demoNote: "عرض توضيحي — بلا بيانات عيادة أو مرضى حقيقية",
     inputPh: "اكتب رسالة…",
     sendAria: "إرسال الرسالة",
     typingAria: "Reva AI يكتب الآن",
     greeting:
-      "مرحبًا! أنا Reva، مساعد Aloka Eye Clinic الذكي. أستطيع حجز الاستشارات، ومشاركة الأسعار، أو الإجابة عن أسئلتك عن أطبائنا. كيف أستطيع مساعدتك اليوم؟",
+      "مرحبًا! أنا Reva للعيادة التجريبية. أستطيع المساعدة في المواعيد والمعلومات المعتمدة أو تحويلك إلى الاستقبال. كيف أساعدك؟",
     quickAria: "رسائل مقترحة",
     quick: [
       "أريد حجز استشارة LASIK",
@@ -1568,17 +1550,17 @@ const ar: Dict = {
     responses: {
       book: "بالتأكيد. لدينا موعد متاح هذا الخميس الساعة 4:00 مساءً مع الدكتورة شارما لاستشارة LASIK، أو السبت الساعة 11:00 صباحًا إن كنت تفضّل نهاية الأسبوع. أيهما يناسبك؟",
       price:
-        "يسعدني الإفادة: فحص العين الشامل بـ 350 AED، واستشارة LASIK بـ 500 AED، وتقييم الساد (الكتاركت) بـ 600 AED. وإذا كان لديك تأمين، نتولّى الموافقة المسبقة نيابةً عنك. هل ترغب في الحجز؟",
+        "تعتمد الأسعار على العيادة والخدمة. يمكنني مشاركة قائمة الأسعار المعتمدة أو تحويلك إلى الاستقبال للتأكيد.",
       reschedule:
         "لا مشكلة على الإطلاق. أستطيع نقل موعدك إلى الخميس الساعة 4:00 مساءً أو السبت الساعة 11:00 صباحًا — اختر الموعد المناسب وسأحدّث حجزك فورًا.",
       insurance:
-        "نعم — نتعامل مع كبرى شركات التأمين المعتمدة من DHA، بما فيها Daman و AXA و Cigna و MetLife. أرسل صورة بطاقتك هنا وسأتحقق من تغطيتك وأبدأ الموافقة المسبقة قبل زيارتك.",
+        "تعتمد التغطية التأمينية على العيادة وخطتك. يمكنني مشاركة المعلومات التي تعتمدها العيادة أو تحويل المحادثة إلى الاستقبال للتحقق. تجنب إرسال مستندات حساسة حتى تؤكد العيادة الإجراء المعتمد.",
       hours:
-        "نعمل من السبت إلى الخميس، من 9:00 صباحًا حتى 8:00 مساءً، ونغلق أيام الجمعة. أما أنا فموجود على WhatsApp على مدار الساعة — اترك رسالتك في أي وقت وسأتولّى كل الترتيبات.",
+        "يمكنني مشاركة ساعات العمل التي تعتمدها العيادة بعد ضبطها. خارج ساعات الاستقبال، أجمع طلبك للمتابعة.",
       doctor:
-        "الدكتورة ميرا شارما هي جرّاحةنا الرئيسية لجراحات تصحيح الإبصار — خبرة 12 عامًا في القرنية والساد و LASIK، وأكثر من 9,000 عملية. تستقبل مرضاها في عيادتنا بجميرا. هل أحجز لك معها؟",
+        "يمكنني عرض قائمة الممارسين والمواعيد التي تعتمدها العيادة. هل تفضل ممارساً محدداً أم أول موعد متاح؟",
       location:
-        "نحن على شارع جميرا بيتش، دبي — خدمة صفّ سيارات مجانية عند المدخل الرئيسي. سأرسل لك الموقع والاتجاهات عبر WhatsApp فور تأكيد موعدك.",
+        "يمكنني مشاركة دبوس الموقع والاتجاهات المعتمدة بعد ضبطها. لا يستخدم هذا العرض عنوان عيادة حقيقية.",
       human:
         "بكل تأكيد. سأوصلك الآن بفريق الاستقبال — ستكون محادثتنا كاملة أمامهم، فلن تحتاج إلى تكرار أي شيء. خلال أوقات الدوام يردّ الفريق عادة خلال دقيقة واحدة.",
       fallback:
@@ -1664,7 +1646,7 @@ const ar: Dict = {
       {
         time: "3:00 فجرًا · الجمعة",
         title: "نهاية الأسبوع، مغطاة بالكامل",
-        text: "العيادة مغلقة حتى صباح السبت — لكن قناة WhatsApp لا تُغلق أبدًا. كل رسالة جمعة يقابلها ردّ فوري يراعي معايير DHA.",
+        text: "العيادة مغلقة، لكن يمكن لرسالة معتمدة استلام الاستفسار ووضعه في قائمة الاستقبال للمتابعة.",
         during: false,
       },
     ],

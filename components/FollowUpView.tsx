@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Clock,
   AlertCircle,
@@ -10,6 +10,7 @@ import {
   Send,
   CheckCircle2
 } from "lucide-react";
+import { getAutomationRules, getFollowUps, updateAutomationRule, updateFollowUp } from "@/lib/api";
 
 interface FollowUpViewProps {
   addToast: (msg: string, type: "success" | "info" | "warn") => void;
@@ -48,8 +49,8 @@ const DEFAULT_RULES: Rule[] = [
   },
   {
     id: "r2",
-    name: "Prescription Reminder",
-    description: "Reminds patient to take medication on time",
+    name: "Appointment Reminder",
+    description: "Confirms the upcoming appointment and offers rescheduling",
     delay: "12 hrs",
     enabled: true,
     icon: <AlertCircle size={16} />,
@@ -87,7 +88,7 @@ const DEFAULT_TEMPLATES: Template[] = [
   },
   {
     ruleId: "r2",
-    body: "Hello {name}, this is a gentle reminder from Dr. Sharma's Clinic to take your prescribed doses today. View your digital Rx here: {rx_link}",
+    body: "Hello {name}, this is a reminder about your appointment with Dr. {doctor} on {date}. Reply CONFIRM or use this link to reschedule: {booking_link}",
   },
   {
     ruleId: "r3",
@@ -105,30 +106,85 @@ const DEFAULT_TEMPLATES: Template[] = [
 
 const INITIAL_QUEUE: QueueItem[] = [
   { id: "q1", patient: "Priya Sharma", rule: "Post-Visit Thank You", dueTime: "12:30 PM", status: "Pending" },
-  { id: "q2", patient: "Rahul Gupta", rule: "Prescription Reminder", dueTime: "2:00 PM", status: "Pending" },
+  { id: "q2", patient: "Rahul Gupta", rule: "Appointment Reminder", dueTime: "2:00 PM", status: "Pending" },
   { id: "q3", patient: "Ananya Nair", rule: "Review Request", dueTime: "3:15 PM", status: "Pending" },
   { id: "q4", patient: "Vikram Patel", rule: "No-Show Re-engagement", dueTime: "4:00 PM", status: "Pending" },
   { id: "q5", patient: "Sunita Rao", rule: "Post-Visit Thank You", dueTime: "4:45 PM", status: "Confirmed" },
 ];
 
-const VARIABLES = ["{name}", "{doctor}", "{date}", "{rating_link}", "{rx_link}", "{booking_link}"];
+const VARIABLES = ["{name}", "{doctor}", "{date}", "{rating_link}", "{booking_link}"];
+const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
+
+function delayLabel(minutes: number) {
+  if (minutes % 1440 === 0) return `${minutes / 1440} day${minutes === 1440 ? "" : "s"}`;
+  if (minutes % 60 === 0) return `${minutes / 60} hr${minutes === 60 ? "" : "s"}`;
+  return `${minutes} min`;
+}
 
 export default function FollowUpView({ addToast }: FollowUpViewProps) {
-  const [rules, setRules] = useState<Rule[]>(DEFAULT_RULES);
-  const [templates, setTemplates] = useState<Template[]>(DEFAULT_TEMPLATES);
-  const [activeTab, setActiveTab] = useState<string>("r1");
-  const [queue, setQueue] = useState<QueueItem[]>(INITIAL_QUEUE);
+  const [rules, setRules] = useState<Rule[]>(isDemoMode ? DEFAULT_RULES : []);
+  const [templates, setTemplates] = useState<Template[]>(isDemoMode ? DEFAULT_TEMPLATES : []);
+  const [activeTab, setActiveTab] = useState<string>(isDemoMode ? "r1" : "");
+  const [queue, setQueue] = useState<QueueItem[]>(isDemoMode ? INITIAL_QUEUE : []);
+
+  const loadAutomation = async () => {
+    if (isDemoMode) return;
+    const [workspace, followUps] = await Promise.all([getAutomationRules(), getFollowUps()]);
+    const mappedRules: Rule[] = workspace.rules.map(rule => ({
+      id: rule.id,
+      name: rule.name,
+      description: rule.trigger_type === "after_no_show" ? "After a recorded no-show" : "After a completed appointment",
+      delay: delayLabel(rule.delay_minutes),
+      enabled: rule.enabled,
+      icon: rule.trigger_type === "after_no_show" ? <Users size={16} /> : <Clock size={16} />,
+    }));
+    setRules(mappedRules);
+    setTemplates(workspace.rules.map(rule => ({
+      ruleId: rule.id,
+      body: rule.template
+        ? `${rule.template.template_name} (${rule.template.language_code}) — ${rule.template.status}`
+        : "No WhatsApp template linked",
+    })));
+    if (mappedRules[0] && !mappedRules.some(rule => rule.id === activeTab)) setActiveTab(mappedRules[0].id);
+    setQueue(followUps.map(item => ({
+      id: item.id,
+      patient: item.patient?.name ?? "Patient",
+      rule: item.rule_type.replaceAll("_", " "),
+      dueTime: new Date(item.scheduled_at).toLocaleString("en-AE", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }),
+      status: item.status === "Sent" ? "Confirmed" : "Pending",
+    })));
+  };
+
+  useEffect(() => {
+    // Initial server synchronization for automation rules and the dispatch queue.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadAutomation().catch(error => addToast(error instanceof Error ? error.message : "Could not load automations", "warn"));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const activeRule = rules.find((r) => r.id === activeTab) || rules[0];
   const activeTemplate = templates.find((t) => t.ruleId === activeTab) || templates[0];
 
   const updateTemplateBody = (body: string) => {
+    if (!isDemoMode) return;
     setTemplates((prev) =>
       prev.map((t) => (t.ruleId === activeTab ? { ...t, body } : t))
     );
   };
 
-  const toggleRuleEnabled = (id: string) => {
+  const toggleRuleEnabled = async (id: string) => {
+    const rule = rules.find(item => item.id === id);
+    if (!rule) return;
+    if (!isDemoMode) {
+      try {
+        await updateAutomationRule(id, { enabled: !rule.enabled });
+        await loadAutomation();
+        addToast("Automation rule updated ✓", "info");
+      } catch (error) {
+        addToast(error instanceof Error ? error.message : "Could not update rule", "warn");
+      }
+      return;
+    }
     setRules((prev) =>
       prev.map((r) => (r.id === id ? { ...r, enabled: !r.enabled } : r))
     );
@@ -140,29 +196,42 @@ export default function FollowUpView({ addToast }: FollowUpViewProps) {
   };
 
   const handleSave = () => {
+    if (!isDemoMode) {
+      addToast("Message wording is managed in Meta using the linked approved template", "info");
+      return;
+    }
     addToast("WhatsApp follow-up template saved ✓", "success");
   };
 
-  const triggerManualDispatch = (item: QueueItem) => {
+  const triggerManualDispatch = async (item: QueueItem) => {
+    if (!isDemoMode) {
+      try {
+        await updateFollowUp(item.id, { status: "Sent" });
+        await loadAutomation();
+        addToast(`WhatsApp follow-up queued for ${item.patient}`, "success");
+      } catch (error) {
+        addToast(error instanceof Error ? error.message : "Could not queue follow-up", "warn");
+      }
+      return;
+    }
     setQueue((prev) => prev.map((q) => (q.id === item.id ? { ...q, status: "Confirmed" } : q)));
     addToast(`Automated WhatsApp dispatched to ${item.patient} ✓`, "success");
   };
 
-  const previewText = activeTemplate.body
+  const previewText = (activeTemplate?.body ?? "Select a configured automation rule")
     .replace("{name}", "Priya")
     .replace("{doctor}", "Sharma")
     .replace("{date}", "Today")
     .replace("{rating_link}", "https://reva.ae/r/827")
-    .replace("{rx_link}", "https://reva.ae/rx/912")
     .replace("{booking_link}", "https://reva.ae/book");
 
   return (
     <div className="space-y-8 max-w-[1200px] mx-auto">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-2xl font-bold text-[#0F172A] tracking-tight">Automated Follow-ups & Retention</h2>
           <p className="text-sm text-slate-500 mt-0.5">
-            Event-driven WhatsApp sequences for post-consultation care, digital Rx reminders, and Google reviews.
+            Approved WhatsApp sequences for appointment follow-up and no-show re-engagement.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -210,23 +279,24 @@ export default function FollowUpView({ addToast }: FollowUpViewProps) {
           <div className="bg-white border border-[#CCD5DF] rounded-xl p-6 shadow-xs space-y-4">
             <div className="flex items-center justify-between border-b border-[#CCD5DF] pb-4">
               <div>
-                <h3 className="text-base font-bold text-[#0F172A]">{activeRule.name}</h3>
-                <p className="text-xs text-slate-500">{activeRule.description}</p>
+                <h3 className="text-base font-bold text-[#0F172A]">{activeRule?.name ?? "No automation rule configured"}</h3>
+                <p className="text-xs text-slate-500">{activeRule?.description ?? "Create a rule after an approved Meta template is available."}</p>
               </div>
 
               <div className="flex items-center gap-3">
                 <span className="text-xs font-bold text-slate-600">
-                  {activeRule.enabled ? "Rule Enabled" : "Rule Paused"}
+                  {activeRule?.enabled ? "Rule Enabled" : "Rule Paused"}
                 </span>
                 <button
-                  onClick={() => toggleRuleEnabled(activeRule.id)}
+                  onClick={() => activeRule && toggleRuleEnabled(activeRule.id)}
+                  disabled={!activeRule}
                   className={`w-10 h-5 rounded-full p-0.5 transition-colors ${
-                    activeRule.enabled ? "bg-[#00685f]" : "bg-slate-300"
+                    activeRule?.enabled ? "bg-[#00685f]" : "bg-slate-300"
                   }`}
                 >
                   <div
                     className={`w-4 h-4 rounded-full bg-white transition-transform ${
-                      activeRule.enabled ? "translate-x-5" : "translate-x-0"
+                      activeRule?.enabled ? "translate-x-5" : "translate-x-0"
                     }`}
                   />
                 </button>
@@ -238,8 +308,9 @@ export default function FollowUpView({ addToast }: FollowUpViewProps) {
                 WhatsApp Message Template
               </label>
               <textarea
-                value={activeTemplate.body}
+                value={activeTemplate?.body ?? ""}
                 onChange={(e) => updateTemplateBody(e.target.value)}
+                readOnly={!isDemoMode}
                 rows={4}
                 className="w-full p-3.5 bg-[#F8FAFC] border border-[#CCD5DF] rounded-xl text-xs text-[#0F172A] focus:outline-none focus:border-[#00685f] leading-relaxed"
               />
@@ -249,7 +320,7 @@ export default function FollowUpView({ addToast }: FollowUpViewProps) {
             <div>
               <span className="text-[11px] font-bold text-slate-500 block mb-1.5">Insert Dynamic Tags:</span>
               <div className="flex flex-wrap gap-1.5">
-                {VARIABLES.map((v) => (
+                {(isDemoMode ? VARIABLES : []).map((v) => (
                   <button
                     key={v}
                     onClick={() => insertVariable(v)}
@@ -263,12 +334,12 @@ export default function FollowUpView({ addToast }: FollowUpViewProps) {
 
             <div className="flex items-center justify-between pt-4 border-t border-[#CCD5DF]">
               <span className="text-xs text-slate-400">
-                Character count: {activeTemplate.body.length} / 1024
+                {isDemoMode ? `Character count: ${activeTemplate?.body.length ?? 0} / 1024` : "Template content and approval are managed in Meta Business Manager"}
               </span>
               <div className="flex gap-2">
                 <button
                   onClick={() => updateTemplateBody(DEFAULT_TEMPLATES.find((t) => t.ruleId === activeTab)?.body || "")}
-                  className="px-3 py-2 text-xs font-bold text-slate-600 hover:text-slate-900"
+                  className={`${isDemoMode ? "" : "hidden"} px-3 py-2 text-xs font-bold text-slate-600 hover:text-slate-900`}
                 >
                   Reset Default
                 </button>
@@ -286,18 +357,18 @@ export default function FollowUpView({ addToast }: FollowUpViewProps) {
           <div className="grid grid-cols-3 gap-4">
             <div className="bg-white border border-[#CCD5DF] rounded-xl p-4 shadow-xs">
               <span className="text-xs font-bold text-slate-400 block mb-1">Messages Sent</span>
-              <p className="text-xl font-bold text-[#0F172A]">1,420</p>
-              <span className="text-[11px] font-semibold text-emerald-700">+12% this month</span>
+              <p className="text-xl font-bold text-[#0F172A]">{isDemoMode ? "1,420" : queue.filter(item => item.status === "Confirmed").length}</p>
+              <span className="text-[11px] font-semibold text-slate-500">Recorded dispatches</span>
             </div>
             <div className="bg-white border border-[#CCD5DF] rounded-xl p-4 shadow-xs">
               <span className="text-xs font-bold text-slate-400 block mb-1">Read Rate</span>
-              <p className="text-xl font-bold text-[#0F172A]">94.8%</p>
-              <span className="text-[11px] font-semibold text-[#00685f]">Industry lead</span>
+              <p className="text-xl font-bold text-[#0F172A]">{isDemoMode ? "94.8%" : "—"}</p>
+              <span className="text-[11px] font-semibold text-[#00685f]">From WhatsApp delivery events</span>
             </div>
             <div className="bg-white border border-[#CCD5DF] rounded-xl p-4 shadow-xs">
               <span className="text-xs font-bold text-slate-400 block mb-1">Retention Bookings</span>
-              <p className="text-xl font-bold text-[#0F172A]">38.2%</p>
-              <span className="text-[11px] font-semibold text-emerald-700">542 rebookings</span>
+              <p className="text-xl font-bold text-[#0F172A]">{isDemoMode ? "38.2%" : "—"}</p>
+              <span className="text-[11px] font-semibold text-slate-500">Not inferred without attribution</span>
             </div>
           </div>
         </div>
@@ -314,7 +385,7 @@ export default function FollowUpView({ addToast }: FollowUpViewProps) {
                   DS
                 </div>
                 <div>
-                  <p className="text-xs font-bold leading-tight">Dr. Sharma's Clinic</p>
+                  <p className="text-xs font-bold leading-tight">Dr. Sharma&apos;s Clinic</p>
                   <p className="text-[10px] text-emerald-100">Official WhatsApp Business</p>
                 </div>
               </div>

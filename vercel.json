@@ -1,6 +1,10 @@
 {
   "crons": [
     {
+      "path": "/api/jobs/process",
+      "schedule": "*/5 * * * *"
+    },
+    {
       "path": "/api/reminders",
       "schedule": "*/30 * * * *"
     }

@@ -12,6 +12,7 @@
 
 # testing
 /coverage
+/.playwright-cli/
 
 # next.js
 /.next/
@@ -32,6 +33,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # vercel
 .vercel
@@ -42,6 +44,10 @@ next-env.d.ts
 
 # graphify
 graphify-out/cache/
+graphify-out/.graphify_python
+graphify-out/.vocab.txt
+graphify-out/reflections/
+graphify-out/.graphify_learning.json
 
 # temp design system & workspace archives
 workspace-*
