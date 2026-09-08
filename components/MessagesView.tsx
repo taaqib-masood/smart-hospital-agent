@@ -22,6 +22,7 @@ import {
 import { useDashboard } from "@/lib/dashboard-context";
 import { sendMessage, markConversationRead, getMessages, setConversationAutomation } from "@/lib/api";
 import type { RevaMessage } from "@/lib/supabase/types";
+import { usePortalLanguage } from "@/lib/i18n/portal";
 
 interface MessagesViewProps {
   addToast: (msg: string, type: "success" | "info" | "warn") => void;
@@ -282,7 +283,9 @@ const QUICK_REPLIES = [
 ];
 
 export default function MessagesView({ addToast }: MessagesViewProps) {
+  const { locale, t } = usePortalLanguage();
   const { clinic, conversations: realConvos, refresh } = useDashboard();
+  const demoMode = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
   const [contacts, setContacts] = useState<WhatsAppContact[]>(DEFAULT_CONTACTS);
   const [activeContactId, setActiveContactId] = useState<string>("c1");
   const [takenOverIds, setTakenOverIds] = useState<Record<string, boolean>>({});
@@ -310,7 +313,7 @@ export default function MessagesView({ addToast }: MessagesViewProps) {
         avatarColor: "bg-[#00685f]",
         initials: name.split(/\s+/).slice(0, 2).map(part => part[0]?.toUpperCase()).join("") || "WA",
         lastMessage: conversation.last_message || "No messages yet",
-        lastMessageTime: new Date(conversation.last_message_at).toLocaleTimeString("en-AE", { hour: "2-digit", minute: "2-digit" }),
+        lastMessageTime: new Date(conversation.last_message_at).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" }),
         unreadCount: conversation.unread_count,
         isOnline: false,
         statusText: conversation.is_bot_active ? "automation active" : "with receptionist",
@@ -334,7 +337,7 @@ export default function MessagesView({ addToast }: MessagesViewProps) {
           id: message.id,
           from: message.direction === "inbound" ? "patient" : "reva",
           text: message.content,
-          time: new Date(message.sent_at).toLocaleTimeString("en-AE", { hour: "2-digit", minute: "2-digit" }),
+          time: new Date(message.sent_at).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" }),
           type: "text",
         })),
       } : contact));
@@ -371,7 +374,7 @@ export default function MessagesView({ addToast }: MessagesViewProps) {
       id: `msg-${++localMessageId.current}`,
       from: "reva",
       text: msg,
-      time: new Date().toLocaleTimeString("en-AE", { hour: "2-digit", minute: "2-digit" }),
+      time: new Date().toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" }),
       type: "text",
     };
 
@@ -412,7 +415,7 @@ export default function MessagesView({ addToast }: MessagesViewProps) {
           id: `reply-${++localMessageId.current}`,
           from: "patient",
           text: "Thank you! I will wait for the receptionist to confirm.",
-          time: new Date().toLocaleTimeString("en-AE", { hour: "2-digit", minute: "2-digit" }),
+      time: new Date().toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" }),
           type: "text",
         };
         setContacts((prev) =>
@@ -437,7 +440,7 @@ export default function MessagesView({ addToast }: MessagesViewProps) {
         id: `esc-${++localMessageId.current}`,
         from: "reva",
         text: "📌 [Staff Escalation]: A receptionist callback has been requested for this conversation.",
-        time: new Date().toLocaleTimeString("en-AE", { hour: "2-digit", minute: "2-digit" }),
+      time: new Date().toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" }),
         type: "text",
       };
       setContacts((prev) =>
@@ -480,9 +483,9 @@ export default function MessagesView({ addToast }: MessagesViewProps) {
               DS
             </div>
             <div>
-              <p className="font-bold text-xs text-[#0F172A] leading-tight">Dr. Sharma&apos;s Clinic</p>
-              <p className="text-[10px] text-emerald-700 font-bold flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" /> WhatsApp Business Active
+              <p className="font-bold text-xs text-[#0F172A] leading-tight">{clinic?.name ?? (demoMode ? "Demo Clinic" : t("Clinic Inbox"))}</p>
+              <p className={`text-[10px] font-bold flex items-center gap-1 ${demoMode ? "text-slate-500" : clinic?.whatsapp_phone_id ? "text-emerald-700" : "text-amber-700"}`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${demoMode ? "bg-slate-400" : clinic?.whatsapp_phone_id ? "bg-emerald-600 animate-pulse" : "bg-amber-500"}`} /> {t(demoMode ? "Demo conversation data" : clinic?.whatsapp_phone_id ? "WhatsApp Business connected" : "WhatsApp setup required")}
               </p>
             </div>
           </div>
@@ -491,7 +494,7 @@ export default function MessagesView({ addToast }: MessagesViewProps) {
             <button
               onClick={() => addToast("Starting new WhatsApp conversation", "info")}
               className="p-1.5 rounded-lg hover:bg-slate-200 hover:text-slate-700 transition-colors"
-              title="New Chat"
+              title={t("New Chat")}
             >
               <Plus size={16} />
             </button>
@@ -506,7 +509,7 @@ export default function MessagesView({ addToast }: MessagesViewProps) {
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search chats or mobile..."
+              placeholder={t("Search chats or mobile...")}
               className="w-full pl-8 pr-3 py-1.5 bg-[#F8FAFC] border border-[#CCD5DF] rounded-lg text-xs text-[#0F172A] focus:outline-none focus:border-[#00685f] transition-all"
             />
           </div>
@@ -617,7 +620,7 @@ export default function MessagesView({ addToast }: MessagesViewProps) {
               <div className="flex items-center gap-2">
                 <h3 className="hidden font-bold text-xs text-[#0F172A] leading-tight lg:block">{activeContact.name}</h3>
                 <label className="lg:hidden">
-                  <span className="sr-only">Select conversation</span>
+                  <span className="sr-only">{t("Select conversation")}</span>
                   <select
                     value={activeContactId}
                     onChange={(event) => setActiveContactId(event.target.value)}
@@ -671,19 +674,19 @@ export default function MessagesView({ addToast }: MessagesViewProps) {
             >
               {takenOverIds[activeContact.id] ? (
                 <>
-                  <Sparkles size={13} /> <span className="hidden sm:inline">Resume AI</span>
+                  <Sparkles size={13} /> <span className="hidden sm:inline">{t("Resume AI")}</span>
                 </>
               ) : (
                 <>
-                  <User size={13} /> <span className="hidden sm:inline">Take over</span>
+                  <User size={13} /> <span className="hidden sm:inline">{t("Take over")}</span>
                 </>
               )}
             </button>
 
             <div className="h-4 w-px bg-slate-200 mx-0.5" />
 
-            <motion.button whileTap={{ scale: 0.9 }} onClick={() => addToast("Voice calling is awaiting the clinic-approved carrier and provider setup", "info")} className="hidden p-2 rounded-lg hover:bg-slate-200 hover:text-slate-700 transition-colors sm:block" title="Voice calling setup required" aria-label="Voice calling setup required"><Phone size={15} /></motion.button>
-            <motion.button whileTap={{ scale: 0.9 }} onClick={() => setShowDossier(!showDossier)} className={`hidden p-2 rounded-lg transition-colors xl:block ${showDossier ? "bg-[#00685f]/15 text-[#00685f]" : "hover:bg-slate-200 hover:text-slate-700"}`} title="Toggle Reception Context"><User size={16} /></motion.button>
+            <motion.button whileTap={{ scale: 0.9 }} onClick={() => addToast("Voice calling is awaiting the clinic-approved carrier and provider setup", "info")} className="hidden p-2 rounded-lg hover:bg-slate-200 hover:text-slate-700 transition-colors sm:block" title={t("Voice calling setup required")} aria-label={t("Voice calling setup required")}><Phone size={15} /></motion.button>
+            <motion.button whileTap={{ scale: 0.9 }} onClick={() => setShowDossier(!showDossier)} className={`hidden p-2 rounded-lg transition-colors xl:block ${showDossier ? "bg-[#00685f]/15 text-[#00685f]" : "hover:bg-slate-200 hover:text-slate-700"}`} title={t("Toggle Reception Context")}><User size={16} /></motion.button>
           </div>
         </div>
 
@@ -692,7 +695,7 @@ export default function MessagesView({ addToast }: MessagesViewProps) {
           <div className="bg-teal-50 border-b border-teal-200 px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 text-xs z-10">
             <div className="flex items-center gap-2 text-teal-900 font-semibold">
               <span className="w-2 h-2 rounded-full bg-teal-500 animate-ping" />
-              <span>Receptionist Takeover Active • Reva AI auto-responses paused for this patient.</span>
+              <span>{t("Receptionist Takeover Active • Reva AI auto-responses paused for this patient.")}</span>
             </div>
 
             <div className="flex items-center gap-2">
@@ -771,7 +774,7 @@ export default function MessagesView({ addToast }: MessagesViewProps) {
                   {/* Interactive Booking Card */}
                   {m.type === "booking_card" && m.meta?.slots && (
                     <div className="mt-2.5 pt-2 border-t border-emerald-300/50 space-y-2">
-                      <p className="text-[11px] font-bold text-[#00685f]">Available Slots with Dr. Sharma:</p>
+                      <p className="text-[11px] font-bold text-[#00685f]">{t("Available Slots with Dr. Sharma:")}</p>
                       <div className="flex flex-wrap gap-1.5">
                         {m.meta.slots.map((slot) => (
                           <button
@@ -838,7 +841,7 @@ export default function MessagesView({ addToast }: MessagesViewProps) {
               className="flex justify-start"
             >
               <div className="bg-white border border-[#CCD5DF] rounded-2xl rounded-tl-none px-4 py-2.5 flex items-center gap-2 shadow-xs">
-                <span className="text-[11px] font-bold text-[#00685f]">Reva AI is typing</span>
+                <span className="text-[11px] font-bold text-[#00685f]">{t("Reva AI is typing")}</span>
                 <div className="flex gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-[#00685f] animate-bounce" style={{ animationDelay: "0ms" }} />
                   <span className="w-1.5 h-1.5 rounded-full bg-[#00685f] animate-bounce" style={{ animationDelay: "150ms" }} />
@@ -854,7 +857,7 @@ export default function MessagesView({ addToast }: MessagesViewProps) {
 
         {/* Quick Action Preset Chips Bar */}
         <div className="px-4 py-2 bg-[#F8FAFC] border-t border-[#CCD5DF] flex items-center gap-1.5 overflow-x-auto text-[11px]">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 shrink-0">Quick Action:</span>
+          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 shrink-0">{t("Quick Action:")}</span>
           {QUICK_REPLIES.map((chip) => (
             <motion.button
               whileHover={{ scale: 1.02 }}
@@ -926,7 +929,7 @@ export default function MessagesView({ addToast }: MessagesViewProps) {
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
-            placeholder="Type a WhatsApp message..."
+            placeholder={t("Type a WhatsApp message...")}
             className="flex-1 px-4 py-2.5 bg-white border border-[#CCD5DF] rounded-xl text-xs text-[#0F172A] focus:outline-none focus:border-[#00685f] shadow-2xs transition-colors"
           />
 
@@ -942,7 +945,7 @@ export default function MessagesView({ addToast }: MessagesViewProps) {
             <button
               onClick={() => addToast("Voice note recording started 🎙️", "info")}
               className="w-9 h-9 bg-white border border-[#CCD5DF] text-[#00685f] hover:bg-slate-100 flex items-center justify-center rounded-xl shadow-2xs transition-colors"
-              title="Record Voice Note"
+              title={t("Record Voice Note")}
             >
               <Mic size={16} />
             </button>
@@ -962,7 +965,7 @@ export default function MessagesView({ addToast }: MessagesViewProps) {
           >
             {/* Dossier Header */}
             <div className="p-4 border-b border-[#CCD5DF] bg-white flex items-center justify-between">
-              <h3 className="font-bold text-xs uppercase tracking-wider text-slate-500">Reception Context</h3>
+              <h3 className="font-bold text-xs uppercase tracking-wider text-slate-500">{t("Reception Context")}</h3>
               <button onClick={() => setShowDossier(false)} className="text-slate-400 hover:text-slate-600">
                 <X size={15} />
               </button>
@@ -1002,11 +1005,11 @@ export default function MessagesView({ addToast }: MessagesViewProps) {
                   Conversation Routing
                 </span>
                 <div className="flex justify-between text-slate-600 text-[11px]">
-                  <span>Automation:</span>
+                  <span>{t("Automation:")}</span>
                   <span className="font-bold text-[#0F172A]">{takenOverIds[activeContact.id] ? "Paused" : "Active"}</span>
                 </div>
                 <div className="flex justify-between text-slate-600 text-[11px]">
-                  <span>Unread:</span>
+                  <span>{t("Unread:")}</span>
                   <span className="font-bold text-[#0F172A]">{activeContact.unreadCount}</span>
                 </div>
               </div>

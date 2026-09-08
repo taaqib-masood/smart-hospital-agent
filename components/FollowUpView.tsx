@@ -11,6 +11,7 @@ import {
   CheckCircle2
 } from "lucide-react";
 import { getAutomationRules, getFollowUps, updateAutomationRule, updateFollowUp } from "@/lib/api";
+import { usePortalLanguage } from "@/lib/i18n/portal";
 
 interface FollowUpViewProps {
   addToast: (msg: string, type: "success" | "info" | "warn") => void;
@@ -122,6 +123,7 @@ function delayLabel(minutes: number) {
 }
 
 export default function FollowUpView({ addToast }: FollowUpViewProps) {
+  const { t } = usePortalLanguage();
   const [rules, setRules] = useState<Rule[]>(isDemoMode ? DEFAULT_RULES : []);
   const [templates, setTemplates] = useState<Template[]>(isDemoMode ? DEFAULT_TEMPLATES : []);
   const [activeTab, setActiveTab] = useState<string>(isDemoMode ? "r1" : "");
@@ -229,15 +231,15 @@ export default function FollowUpView({ addToast }: FollowUpViewProps) {
     <div className="space-y-8 max-w-[1200px] mx-auto">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-[#0F172A] tracking-tight">Automated Follow-ups & Retention</h2>
+          <h2 className="text-2xl font-bold text-[#0F172A] tracking-tight">{t("Automated Follow-ups & Retention")}</h2>
           <p className="text-sm text-slate-500 mt-0.5">
-            Approved WhatsApp sequences for appointment follow-up and no-show re-engagement.
+            {t("Approved WhatsApp sequences for appointment follow-up and no-show re-engagement.")}
           </p>
         </div>
         <div className="flex items-center gap-2">
           <span className="text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-full flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
-            Automation Engine Active
+            {t("Automation Engine Active")}
           </span>
         </div>
       </div>
@@ -268,7 +270,7 @@ export default function FollowUpView({ addToast }: FollowUpViewProps) {
                   </div>
                   <p className="text-xs font-bold text-[#0F172A] truncate">{rule.name}</p>
                   <span className={`text-[10px] font-bold ${rule.enabled ? "text-emerald-700" : "text-slate-400"}`}>
-                    {rule.enabled ? "Active" : "Paused"}
+                    {t(rule.enabled ? "Active" : "Paused")}
                   </span>
                 </button>
               );
@@ -318,7 +320,7 @@ export default function FollowUpView({ addToast }: FollowUpViewProps) {
 
             {/* Variable Tokens */}
             <div>
-              <span className="text-[11px] font-bold text-slate-500 block mb-1.5">Insert Dynamic Tags:</span>
+              <span className="text-[11px] font-bold text-slate-500 block mb-1.5">{t("Insert Dynamic Tags:")}</span>
               <div className="flex flex-wrap gap-1.5">
                 {(isDemoMode ? VARIABLES : []).map((v) => (
                   <button
@@ -356,19 +358,19 @@ export default function FollowUpView({ addToast }: FollowUpViewProps) {
           {/* Performance KPIs */}
           <div className="grid grid-cols-3 gap-4">
             <div className="bg-white border border-[#CCD5DF] rounded-xl p-4 shadow-xs">
-              <span className="text-xs font-bold text-slate-400 block mb-1">Messages Sent</span>
+              <span className="text-xs font-bold text-slate-400 block mb-1">{t("Messages Sent")}</span>
               <p className="text-xl font-bold text-[#0F172A]">{isDemoMode ? "1,420" : queue.filter(item => item.status === "Confirmed").length}</p>
-              <span className="text-[11px] font-semibold text-slate-500">Recorded dispatches</span>
+              <span className="text-[11px] font-semibold text-slate-500">{t("Recorded dispatches")}</span>
             </div>
             <div className="bg-white border border-[#CCD5DF] rounded-xl p-4 shadow-xs">
-              <span className="text-xs font-bold text-slate-400 block mb-1">Read Rate</span>
+              <span className="text-xs font-bold text-slate-400 block mb-1">{t("Read Rate")}</span>
               <p className="text-xl font-bold text-[#0F172A]">{isDemoMode ? "94.8%" : "—"}</p>
-              <span className="text-[11px] font-semibold text-[#00685f]">From WhatsApp delivery events</span>
+              <span className="text-[11px] font-semibold text-[#00685f]">{t("From WhatsApp delivery events")}</span>
             </div>
             <div className="bg-white border border-[#CCD5DF] rounded-xl p-4 shadow-xs">
-              <span className="text-xs font-bold text-slate-400 block mb-1">Retention Bookings</span>
+              <span className="text-xs font-bold text-slate-400 block mb-1">{t("Retention Bookings")}</span>
               <p className="text-xl font-bold text-[#0F172A]">{isDemoMode ? "38.2%" : "—"}</p>
-              <span className="text-[11px] font-semibold text-slate-500">Not inferred without attribution</span>
+              <span className="text-[11px] font-semibold text-slate-500">{t("Not inferred without attribution")}</span>
             </div>
           </div>
         </div>
@@ -377,7 +379,7 @@ export default function FollowUpView({ addToast }: FollowUpViewProps) {
         <div className="lg:col-span-4 space-y-6">
           {/* WhatsApp Preview Card */}
           <div className="bg-white border border-[#CCD5DF] rounded-xl p-5 shadow-xs space-y-3">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">Live WhatsApp Preview</h3>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">{t("Live WhatsApp Preview")}</h3>
             
             <div className="rounded-2xl border border-[#CCD5DF] overflow-hidden bg-[#e5ddd5]/30">
               <div className="bg-[#00685f] px-3.5 py-2.5 flex items-center gap-2 text-white">
@@ -386,7 +388,7 @@ export default function FollowUpView({ addToast }: FollowUpViewProps) {
                 </div>
                 <div>
                   <p className="text-xs font-bold leading-tight">Dr. Sharma&apos;s Clinic</p>
-                  <p className="text-[10px] text-emerald-100">Official WhatsApp Business</p>
+                  <p className="text-[10px] text-emerald-100">{t("Official WhatsApp Business")}</p>
                 </div>
               </div>
 
@@ -402,8 +404,8 @@ export default function FollowUpView({ addToast }: FollowUpViewProps) {
           {/* Today's Follow-up Queue */}
           <div className="bg-white border border-[#CCD5DF] rounded-xl p-5 shadow-xs space-y-3">
             <div className="flex items-center justify-between border-b border-[#CCD5DF] pb-3">
-              <h3 className="text-sm font-bold text-[#0F172A]">Scheduled Today ({queue.length})</h3>
-              <span className="text-xs font-bold text-[#00685f]">Auto-Trigger</span>
+              <h3 className="text-sm font-bold text-[#0F172A]">{t("Scheduled Today")} ({queue.length})</h3>
+              <span className="text-xs font-bold text-[#00685f]">{t("Auto-Trigger")}</span>
             </div>
 
             <div className="space-y-2.5">
@@ -426,7 +428,7 @@ export default function FollowUpView({ addToast }: FollowUpViewProps) {
                       onClick={() => triggerManualDispatch(item)}
                       className="px-2.5 py-1 bg-[#00685f] hover:bg-[#005049] text-white text-[11px] font-bold rounded shadow-xs"
                     >
-                      Send Now
+                      {t("Send Now")}
                     </button>
                   )}
                 </div>

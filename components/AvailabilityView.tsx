@@ -16,6 +16,7 @@ import {
   AlertCircle
 } from "lucide-react";
 import { createAvailabilityException, createAvailabilityRule, deleteAvailabilityException, deleteAvailabilityRule, getAvailability, type AvailabilityWorkspace } from "@/lib/api";
+import { usePortalLanguage } from "@/lib/i18n/portal";
 
 interface AvailabilityViewProps {
   addToast: (msg: string, type: "success" | "info" | "warn") => void;
@@ -68,6 +69,7 @@ function addMinutes(time: string, minutes: number) {
 }
 
 export default function AvailabilityView({ addToast }: AvailabilityViewProps) {
+  const { locale, t } = usePortalLanguage();
   const now = new Date();
   const [selectedDate, setSelectedDate] = useState(isoDate(now));
   const [visibleMonth, setVisibleMonth] = useState(new Date(now.getFullYear(), now.getMonth(), 1));
@@ -87,7 +89,7 @@ export default function AvailabilityView({ addToast }: AvailabilityViewProps) {
     setWorkingDays([...new Set(workspace.rules.filter(rule => !rule.doctor_id || rule.doctor_id === nextDoctorId).map(rule => DAYS_OF_WEEK[rule.weekday]))]);
     setSlots(workspace.slots.map(slot => ({
       time: slot.time,
-      label: new Date(`2000-01-01T${slot.time}:00`).toLocaleTimeString("en-AE", { hour: "2-digit", minute: "2-digit" }),
+      label: new Date(`2000-01-01T${slot.time}:00`).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" }),
       status: slot.status,
       patient: slot.patient ?? undefined,
       exceptionId: slot.exception_id ?? undefined,
@@ -176,7 +178,7 @@ export default function AvailabilityView({ addToast }: AvailabilityViewProps) {
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-[#0F172A] tracking-tight">Doctor Schedule & Slot Management</h2>
+          <h2 className="text-2xl font-bold text-[#0F172A] tracking-tight">{t("Doctor Schedule & Slot Management")}</h2>
           <p className="text-sm text-slate-500 mt-0.5">
             Configure consultation timings, 1-tap slot blocking, lunch hours, and sync with WhatsApp booking engine.
           </p>
@@ -204,25 +206,25 @@ export default function AvailabilityView({ addToast }: AvailabilityViewProps) {
       {/* KPI Bento Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div className="bg-white border border-[#CCD5DF] rounded-xl p-5 shadow-xs">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block mb-1">Open Slots Today</span>
+          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block mb-1">{t("Open Slots Today")}</span>
           <p className="text-2xl font-bold text-[#00685f]">{availableCount}</p>
-          <span className="text-xs text-emerald-700 font-bold">Bookable via WhatsApp</span>
+          <span className="text-xs text-emerald-700 font-bold">{t("Bookable via WhatsApp")}</span>
         </div>
 
         <div className="bg-white border border-[#CCD5DF] rounded-xl p-5 shadow-xs">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block mb-1">Booked Consultations</span>
+          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block mb-1">{t("Booked Consultations")}</span>
           <p className="text-2xl font-bold text-[#0F172A]">{bookedCount}</p>
-          <span className="text-xs text-slate-500">Scheduled patients</span>
+          <span className="text-xs text-slate-500">{t("Scheduled patients")}</span>
         </div>
 
         <div className="bg-white border border-[#CCD5DF] rounded-xl p-5 shadow-xs">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block mb-1">Blocked / Leave</span>
+          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block mb-1">{t("Blocked / Leave")}</span>
           <p className="text-2xl font-bold text-amber-700">{blockedCount}</p>
-          <span className="text-xs text-slate-500">Reserved / Surgery</span>
+          <span className="text-xs text-slate-500">{t("Reserved / Surgery")}</span>
         </div>
 
         <div className="bg-white border border-[#CCD5DF] rounded-xl p-5 shadow-xs">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block mb-1">OPD Schedule</span>
+          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block mb-1">{t("OPD Schedule")}</span>
           <p className="text-2xl font-bold text-[#0F172A]">{isDemoMode ? "09:00 - 18:00" : "Configured"}</p>
           <span className="text-xs text-[#00685f] font-semibold">{workingDays.length} active day{workingDays.length === 1 ? "" : "s"}</span>
         </div>
@@ -234,7 +236,7 @@ export default function AvailabilityView({ addToast }: AvailabilityViewProps) {
         <div className="lg:col-span-5 space-y-6">
           <div className="bg-white border border-[#CCD5DF] rounded-xl p-5 shadow-xs space-y-4">
             <div className="flex items-center justify-between border-b border-[#CCD5DF] pb-3">
-            <h3 className="font-bold text-base text-[#0F172A]">{visibleMonth.toLocaleDateString("en-AE", { month: "long", year: "numeric" })}</h3>
+            <h3 className="font-bold text-base text-[#0F172A]">{visibleMonth.toLocaleDateString(locale, { month: "long", year: "numeric" })}</h3>
             <div className="flex gap-1">
                 <button onClick={() => setVisibleMonth(new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() - 1, 1))} className="p-1 rounded hover:bg-slate-100 text-slate-500"><ChevronLeft size={16} /></button>
                 <button onClick={() => setVisibleMonth(new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + 1, 1))} className="p-1 rounded hover:bg-slate-100 text-slate-500"><ChevronRight size={16} /></button>
@@ -276,7 +278,7 @@ export default function AvailabilityView({ addToast }: AvailabilityViewProps) {
 
           {/* Working Days Config */}
           <div className="bg-white border border-[#CCD5DF] rounded-xl p-5 shadow-xs space-y-3">
-            <h3 className="text-sm font-bold text-[#0F172A]">Weekly Clinic Operational Days</h3>
+            <h3 className="text-sm font-bold text-[#0F172A]">{t("Weekly Clinic Operational Days")}</h3>
             <div className="flex flex-wrap gap-2">
               {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => {
                 const active = workingDays.includes(day);
@@ -316,13 +318,13 @@ export default function AvailabilityView({ addToast }: AvailabilityViewProps) {
             <div className="flex items-center justify-between border-b border-[#CCD5DF] pb-3">
               <div>
                 <h3 className="font-bold text-base text-[#0F172A]">
-                  Schedule for {new Date(`${selectedDate}T12:00:00`).toLocaleDateString("en-AE", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}
+                  {t("Schedule for")} {new Date(`${selectedDate}T12:00:00`).toLocaleDateString(locale, { weekday: "long", month: "long", day: "numeric", year: "numeric" })}
                 </h3>
-                <p className="text-xs text-slate-500">Tap any available slot to block / unblock instantly.</p>
+                <p className="text-xs text-slate-500">{t("Tap any available slot to block / unblock instantly.")}</p>
               </div>
 
               <span className="text-xs font-bold text-[#00685f] bg-[#00685f]/10 border border-[#00685f]/20 px-2.5 py-1 rounded-full">
-                {availableCount} Slots Open
+                {availableCount} {t("Slots Open")}
               </span>
             </div>
 
@@ -356,7 +358,7 @@ export default function AvailabilityView({ addToast }: AvailabilityViewProps) {
                       {isBlocked && <Lock size={12} className="text-rose-600" />}
                     </div>
                     <span className="text-[11px] block truncate">
-                      {isBooked ? slot.patient : isLunch ? "Lunch Break" : isBlocked ? "Blocked" : "Available"}
+                      {isBooked ? slot.patient : isLunch ? t("Lunch Break") : isBlocked ? t("Blocked") : t("Available")}
                     </span>
                   </button>
                 );

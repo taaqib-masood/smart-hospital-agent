@@ -8,6 +8,8 @@ Reva runs as a Next.js application container. Supabase and the WhatsApp Cloud AP
 2. Run `docker compose up --build`, confirm `http://localhost:3001/api/health` returns `{ "status": "ok" }`, then open `http://localhost:3001`.
 3. For a non-demo environment that needs background work, set `CRON_SECRET` and run `docker compose --profile scheduler up --build`.
 
+Run `npm run check:config` before starting a live workspace. For the scheduler profile, use `CHECK_SCHEDULER=true npm run check:config`.
+
 The optional scheduler calls the internal message worker every five minutes and materializes reminders every thirty minutes. Run exactly one scheduler replica per environment.
 
 ## Staging migration

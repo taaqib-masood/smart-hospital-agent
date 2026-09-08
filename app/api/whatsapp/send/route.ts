@@ -1,6 +1,6 @@
 /**
  * POST /api/whatsapp/send
- * Send a WhatsApp message from the dashboard (doctor-initiated)
+ * Queue a receptionist-authored WhatsApp message from the dashboard.
  * Body: { conversation_id, text }
  */
 

@@ -22,6 +22,7 @@ import {
   Lock
 } from "lucide-react";
 import { createConsent, getConsentWorkspace, type ConsentWorkspace } from "@/lib/api";
+import { usePortalLanguage } from "@/lib/i18n/portal";
 
 interface ConsentViewProps {
   addToast: (msg: string, type: "success" | "info" | "warn") => void;
@@ -98,6 +99,7 @@ function mapConsent(record: ConsentWorkspace["consents"][number]): ConsentRecord
 }
 
 export default function ConsentView({ addToast }: ConsentViewProps) {
+  const { t } = usePortalLanguage();
   const [records, setRecords] = useState<ConsentRecord[]>(CONSENT_RECORDS);
   const [templates, setTemplates] = useState<Template[]>(TEMPLATES_DATA);
   const [activeTab, setActiveTab] = useState<"queue" | "templates">("queue");
@@ -214,9 +216,9 @@ export default function ConsentView({ addToast }: ConsentViewProps) {
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-[#0F172A] tracking-tight">Informed Digital Consent</h2>
+          <h2 className="text-2xl font-bold text-[#0F172A] tracking-tight">{t("Informed Digital Consent")}</h2>
           <p className="text-sm text-slate-500 mt-0.5">
-            WhatsApp consent requests, mobile signing, and timestamped audit evidence for receptionist follow-up.
+            {t("WhatsApp consent requests, mobile signing, and timestamped audit evidence for receptionist follow-up.")}
           </p>
         </div>
 
@@ -224,7 +226,7 @@ export default function ConsentView({ addToast }: ConsentViewProps) {
           onClick={() => setShowSendModal(true)}
           className="flex items-center gap-1.5 px-4 py-2 bg-[#00685f] hover:bg-[#005049] text-white text-xs font-bold rounded-lg shadow-xs transition-colors"
         >
-          <Plus size={14} /> Send Consent Form
+          <Plus size={14} /> {t("Send Consent Form")}
         </button>
       </div>
 
@@ -237,29 +239,29 @@ export default function ConsentView({ addToast }: ConsentViewProps) {
         className="grid grid-cols-1 gap-6 md:grid-cols-4"
       >
         <div className="bg-white border border-[#CCD5DF] rounded-xl p-5 shadow-xs">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block mb-1">Signed Today</span>
+          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block mb-1">{t("Signed Today")}</span>
           <p className="text-2xl font-bold text-[#00685f]">{signedCount}</p>
-          <span className="text-xs text-emerald-700 font-bold">Recorded with audit evidence</span>
+          <span className="text-xs text-emerald-700 font-bold">{t("Recorded with audit evidence")}</span>
         </div>
 
         <div className="bg-white border border-[#CCD5DF] rounded-xl p-5 shadow-xs">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block mb-1">Awaiting Signature</span>
+          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block mb-1">{t("Awaiting Signature")}</span>
           <p className="text-2xl font-bold text-amber-700">{pendingCount}</p>
-          <span className="text-xs text-slate-500">Auto-reminders active</span>
+          <span className="text-xs text-slate-500">{t("Auto-reminders active")}</span>
         </div>
 
         <div className="bg-white border border-[#CCD5DF] rounded-xl p-5 shadow-xs">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block mb-1">Avg Sign Time</span>
+          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block mb-1">{t("Avg Sign Time")}</span>
           <p className="text-2xl font-bold text-[#0F172A]">{avgSignTime} mins</p>
-          <span className="text-xs text-[#00685f] font-semibold">Based on completed requests</span>
+          <span className="text-xs text-[#00685f] font-semibold">{t("Based on completed requests")}</span>
         </div>
 
         <div className="bg-white border border-[#CCD5DF] rounded-xl p-5 shadow-xs">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block mb-1">Audit Evidence</span>
+          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block mb-1">{t("Audit Evidence")}</span>
           <p className="text-2xl font-bold text-emerald-700 flex items-center gap-1">
-            <Shield size={20} /> Evidence Stored
+            <Shield size={20} /> {t("Evidence Stored")}
           </p>
-          <span className="text-xs text-slate-500">SHA-256 evidence hash</span>
+          <span className="text-xs text-slate-500">{t("SHA-256 evidence hash")}</span>
         </div>
       </motion.div>
 
@@ -273,7 +275,7 @@ export default function ConsentView({ addToast }: ConsentViewProps) {
               : "text-slate-600 hover:text-[#0F172A]"
           }`}
         >
-          Consent Queue ({records.length})
+          {t("Consent Queue")} ({records.length})
         </button>
         <button
           onClick={() => setActiveTab("templates")}
@@ -283,7 +285,7 @@ export default function ConsentView({ addToast }: ConsentViewProps) {
               : "text-slate-600 hover:text-[#0F172A]"
           }`}
         >
-          Procedure Templates ({templates.length})
+          {t("Procedure Templates")} ({templates.length})
         </button>
       </div>
 
@@ -301,7 +303,7 @@ export default function ConsentView({ addToast }: ConsentViewProps) {
               <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
-                placeholder="Search patient or procedure..."
+                placeholder={t("Search patient or procedure...")}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="w-full pl-9 pr-3 py-1.5 bg-white border border-[#CCD5DF] rounded-lg text-xs text-[#0F172A] focus:outline-none focus:border-[#00685f]"
@@ -310,11 +312,11 @@ export default function ConsentView({ addToast }: ConsentViewProps) {
           </div>
 
           <div className="grid min-w-[800px] grid-cols-[180px_minmax(200px,1fr)_105px_150px_165px] items-center px-6 py-3 bg-[#F8FAFC] border-b border-[#CCD5DF] text-[11px] font-bold uppercase tracking-wider text-slate-500">
-            <span>Patient</span>
-            <span>Procedure</span>
-            <span>Sent time</span>
-            <span>Status</span>
-            <span className="text-right">Action</span>
+            <span>{t("Patient")}</span>
+            <span>{t("Procedure")}</span>
+            <span>{t("Sent time")}</span>
+            <span>{t("Status")}</span>
+            <span className="text-right">{t("Action")}</span>
           </div>
 
           <div className="divide-y divide-[#CCD5DF]">
@@ -342,7 +344,7 @@ export default function ConsentView({ addToast }: ConsentViewProps) {
                           : "bg-amber-50 text-amber-700 border-amber-200"
                       }`}
                     >
-                      {rec.status === "Signed" ? "Signed ✓" : "Pending Signature"}
+                      {t(rec.status === "Signed" ? "Signed ✓" : "Pending Signature")}
                     </span>
                   </div>
 
@@ -352,7 +354,7 @@ export default function ConsentView({ addToast }: ConsentViewProps) {
                         onClick={(e) => { e.stopPropagation(); handleResend(rec); }}
                         className="whitespace-nowrap px-2.5 py-1 bg-[#00685f] hover:bg-[#005049] text-white text-[11px] font-bold rounded shadow-xs"
                       >
-                        Resend WhatsApp
+                        {t("Resend WhatsApp")}
                       </button>
                     ) : (
                       <button
@@ -430,7 +432,7 @@ export default function ConsentView({ addToast }: ConsentViewProps) {
               className="bg-white border border-[#CCD5DF] rounded-xl p-6 w-full max-w-md shadow-xl space-y-4"
             >
               <div className="flex items-center justify-between border-b border-[#CCD5DF] pb-3">
-                <h3 className="text-base font-bold text-[#0F172A]">Send Informed Consent Form</h3>
+                <h3 className="text-base font-bold text-[#0F172A]">{t("Send Informed Consent Form")}</h3>
                 <button onClick={() => setShowSendModal(false)} className="text-slate-400 hover:text-slate-600">
                   <X size={16} />
                 </button>
@@ -439,7 +441,7 @@ export default function ConsentView({ addToast }: ConsentViewProps) {
               <div className="space-y-3 text-xs">
                 <div>
                   <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
-                    Patient Full Name
+                    {t("Patient Full Name")}
                   </label>
                   <input
                     type="text"
@@ -458,7 +460,7 @@ export default function ConsentView({ addToast }: ConsentViewProps) {
 
                 <div>
                   <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
-                    Clinical Procedure
+                    {t("Clinical Procedure")}
                   </label>
                   <select
                     value={newProcedure}
@@ -484,7 +486,7 @@ export default function ConsentView({ addToast }: ConsentViewProps) {
                   disabled={sending}
                   className="flex-1 py-2 bg-[#00685f] hover:bg-[#005049] disabled:opacity-60 text-white text-xs font-bold rounded-lg shadow-xs"
                 >
-                  {sending ? "Queuing..." : "Send via WhatsApp"}
+                  {sending ? t("Queuing...") : t("Send via WhatsApp")}
                 </button>
               </div>
             </motion.div>

@@ -18,6 +18,7 @@ import {
 import { createInvoice, getInvoices, getPatients, updateInvoice } from "@/lib/api";
 import type { RevaInvoice, RevaPatient } from "@/lib/supabase/types";
 import type { PaymentMethod as SupportedPaymentMethod } from "@/lib/payment-methods";
+import { usePortalLanguage } from "@/lib/i18n/portal";
 
 type PaymentMethod = SupportedPaymentMethod | null;
 type InvoiceStatus = "Paid" | "Pending" | "Waived";
@@ -96,6 +97,7 @@ function StatCard({ label, value, prefix = "", suffix = "", sub, icon, trend }: 
 }
 
 export default function BillingView({ addToast }: BillingViewProps) {
+  const { t } = usePortalLanguage();
   const [invoices, setInvoices] = useState<Invoice[]>(INVOICES_DATA);
   const [patients, setPatients] = useState<RevaPatient[]>([]);
   const [usingRealData, setUsingRealData] = useState(false);
@@ -240,16 +242,16 @@ export default function BillingView({ addToast }: BillingViewProps) {
     <div className="space-y-8 max-w-[1200px] mx-auto">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-[#0F172A] tracking-tight">Billing & Invoicing</h2>
+          <h2 className="text-2xl font-bold text-[#0F172A] tracking-tight">{t("Billing & Invoicing")}</h2>
           <p className="text-sm text-slate-500 mt-0.5">
-            Instant invoice generation, settlement tracking, and automated WhatsApp payment links.
+            {t("Instant invoice generation, settlement tracking, and automated WhatsApp payment links.")}
           </p>
         </div>
         <button
           onClick={() => setShowAddModal(true)}
           className="flex items-center gap-1.5 px-4 py-2 bg-[#00685f] hover:bg-[#005049] text-white text-xs font-bold rounded-lg shadow-xs transition-colors"
         >
-          <Plus size={14} /> Create Invoice
+          <Plus size={14} /> {t("Create Invoice")}
         </button>
       </div>
 
@@ -262,33 +264,33 @@ export default function BillingView({ addToast }: BillingViewProps) {
         className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4"
       >
         <StatCard
-          label="Today's Revenue"
+          label={t("Today's Revenue")}
           value={todayRevenue}
           prefix="AED "
-          sub="collected today"
+          sub={t("collected today")}
           icon={<TrendingUp size={16} />}
           trend="+14% vs yesterday"
         />
         <StatCard
-          label="Pending Amount"
+          label={t("Pending Amount")}
           value={pendingAmount}
           prefix="AED "
           sub={`from ${pendingCount} patients`}
           icon={<AlertCircle size={16} />}
         />
         <StatCard
-          label="Collection Rate"
+          label={t("Collection Rate")}
           value={collectionRate}
           suffix="%"
-          sub="this week"
+          sub={t("this week")}
           icon={<Activity size={16} />}
           trend="94.2% on-time settlement"
         />
         <StatCard
-          label="Monthly Revenue"
+          label={t("Monthly Revenue")}
           value={234800}
           prefix="AED "
-          sub="April 2026 total"
+          sub={t("April 2026 total")}
           icon={<CreditCard size={16} />}
         />
       </motion.div>
@@ -306,7 +308,7 @@ export default function BillingView({ addToast }: BillingViewProps) {
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
-              placeholder="Search by patient or service..."
+              placeholder={t("Search by patient or service...")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full pl-9 pr-3 py-1.5 bg-white border border-[#CCD5DF] rounded-lg text-xs text-[#0F172A] focus:outline-none focus:border-[#00685f]"
@@ -323,7 +325,7 @@ export default function BillingView({ addToast }: BillingViewProps) {
                     filter === s ? "bg-[#00685f] text-white shadow-xs" : "text-slate-500 hover:text-[#0F172A]"
                   }`}
                 >
-                  {s}
+                  {t(s)}
                 </button>
               ))}
             </div>
@@ -333,18 +335,18 @@ export default function BillingView({ addToast }: BillingViewProps) {
                 onClick={sendAllReminders}
                 className="px-3 py-1 bg-white border border-[#CCD5DF] hover:bg-slate-50 text-[#00685f] text-xs font-bold rounded-lg shadow-xs flex items-center gap-1"
               >
-                <Send size={12} /> Send Reminders ({pendingInvoices.length})
+                <Send size={12} /> {t("Send Reminders")} ({pendingInvoices.length})
               </button>
             )}
           </div>
         </div>
 
         <div className="grid min-w-[820px] grid-cols-[1.8fr_1.6fr_1fr_1.3fr_180px] gap-4 px-6 py-3 bg-[#F8FAFC] border-b border-[#CCD5DF] text-[11px] font-bold uppercase tracking-wider text-slate-500 items-center">
-          <span>Patient</span>
-          <span>Service</span>
-          <span>Amount</span>
-          <span>Status</span>
-          <span className="text-right">Action</span>
+          <span>{t("Patient")}</span>
+          <span>{t("Service")}</span>
+          <span>{t("Amount")}</span>
+          <span>{t("Status")}</span>
+          <span className="text-right">{t("Action")}</span>
         </div>
 
         <div className="divide-y divide-[#CCD5DF]">
@@ -377,7 +379,7 @@ export default function BillingView({ addToast }: BillingViewProps) {
                         : "bg-slate-100 text-slate-600 border-slate-200"
                     }`}
                   >
-                    {inv.status} {inv.paymentMethod ? `(${inv.paymentMethod})` : ""}
+                    {t(inv.status)} {inv.paymentMethod ? `(${t(inv.paymentMethod)})` : ""}
                   </span>
                 </div>
 
@@ -388,13 +390,13 @@ export default function BillingView({ addToast }: BillingViewProps) {
                         onClick={(e) => { e.stopPropagation(); markPaid(inv.id, "Card"); }}
                         className="px-2 py-0.5 bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-bold rounded hover:bg-emerald-100 shadow-2xs whitespace-nowrap"
                       >
-                        Card
+                        {t("Card")}
                       </button>
                       <button
                         onClick={(e) => { e.stopPropagation(); markPaid(inv.id, "Cash"); }}
                         className="px-2 py-0.5 bg-slate-50 border border-slate-200 text-slate-700 text-[11px] font-bold rounded hover:bg-slate-100 shadow-2xs whitespace-nowrap"
                       >
-                        Cash
+                        {t("Cash")}
                       </button>
                     </div>
                   )}
@@ -413,15 +415,15 @@ export default function BillingView({ addToast }: BillingViewProps) {
                     className="bg-[#F8FAFC] border-t border-[#CCD5DF] px-6 py-3 text-xs flex justify-between items-center text-slate-500"
                   >
                     <div className="flex items-center gap-4">
-                      <span>Invoice ID: #INV-2026-{inv.id}</span>
-                      <span>Date: {inv.date}</span>
+                      <span>{t("Invoice ID:")} #INV-2026-{inv.id}</span>
+                      <span>{t("Date:")} {inv.date}</span>
                     </div>
                     {inv.status === "Pending" && (
                       <button
                         onClick={() => waiveInvoice(inv.id)}
                         className="text-xs text-rose-600 font-bold hover:underline"
                       >
-                        Waive Fee
+                        {t("Waive Fee")}
                       </button>
                     )}
                   </motion.div>
@@ -443,7 +445,7 @@ export default function BillingView({ addToast }: BillingViewProps) {
               className="bg-white border border-[#CCD5DF] rounded-xl p-6 w-full max-w-md shadow-xl space-y-4"
             >
               <div className="flex items-center justify-between border-b border-[#CCD5DF] pb-3">
-                <h3 className="text-base font-bold text-[#0F172A]">Create & Dispatch Invoice</h3>
+                <h3 className="text-base font-bold text-[#0F172A]">{t("Create & Dispatch Invoice")}</h3>
                 <button onClick={() => setShowAddModal(false)} className="text-slate-400 hover:text-slate-600">
                   <X size={16} />
                 </button>
@@ -452,7 +454,7 @@ export default function BillingView({ addToast }: BillingViewProps) {
               <div className="space-y-3 text-xs">
                 <div>
                   <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
-                    Patient Name
+                    {t("Patient Name")}
                   </label>
                   <input
                     type="text"
@@ -465,7 +467,7 @@ export default function BillingView({ addToast }: BillingViewProps) {
 
                 <div>
                   <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
-                    Procedure / Service
+                    {t("Procedure / Service")}
                   </label>
                   <select
                     value={newService}
@@ -480,7 +482,7 @@ export default function BillingView({ addToast }: BillingViewProps) {
 
                 <div>
                   <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
-                    Amount (AED)
+                    {t("Amount (AED)")}
                   </label>
                   <input
                     type="number"
@@ -502,7 +504,7 @@ export default function BillingView({ addToast }: BillingViewProps) {
                   onClick={handleCreateInvoice}
                   className="flex-1 py-2 bg-[#00685f] hover:bg-[#005049] text-white text-xs font-bold rounded-lg shadow-xs"
                 >
-                  Dispatch via WhatsApp
+                  {t("Dispatch via WhatsApp")}
                 </button>
               </div>
             </motion.div>
