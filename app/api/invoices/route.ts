@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getClinicAccess } from "@/lib/auth";
+import { isPaymentMethod } from "@/lib/payment-methods";
 
 export async function GET(req: NextRequest) {
   const supabase = await createClient();
@@ -44,6 +45,9 @@ export async function POST(req: NextRequest) {
   }
   if (body.status && !["Pending", "Paid", "Waived", "Cancelled"].includes(body.status)) {
     return NextResponse.json({ error: "Invalid invoice status" }, { status: 400 });
+  }
+  if (body.payment_method && !isPaymentMethod(body.payment_method)) {
+    return NextResponse.json({ error: "Invalid payment method" }, { status: 400 });
   }
   if (body.patient_id) {
     const { data: patient } = await supabase.from("reva_patients").select("id").eq("id", body.patient_id).eq("clinic_id", access.clinicId).maybeSingle();

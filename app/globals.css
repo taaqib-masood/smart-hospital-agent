@@ -1,11 +1,7 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #050714;
-  --surface: rgba(255, 255, 255, 0.03);
-  --border: rgba(255, 255, 255, 0.08);
-
-  /* Premium Surgical Green Theme Tokens */
+  /* Calm clinical-green workspace tokens */
   --surgical-primary: #00685f;
   --surgical-primary-hover: #005049;
   --surgical-primary-container: #008378;
@@ -23,11 +19,7 @@
 
 html { scroll-behavior: smooth; }
 
-body {
-  background-color: #050714;
-  color: white;
-  overflow-x: hidden;
-}
+body { overflow-x: hidden; }
 
 /* Clinical Scrollbar */
 .surgical-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -35,85 +27,9 @@ body {
 .surgical-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
 .surgical-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
-::-webkit-scrollbar { width: 5px; }
-::-webkit-scrollbar-track { background: #080c1a; }
-::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
-
 /* Phone mockup: hide scrollbar like real WhatsApp */
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
-
-@keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-14px); }
-}
-
-@keyframes pulse-glow {
-  0%, 100% { opacity: 0.35; transform: scale(1); }
-  50% { opacity: 0.65; transform: scale(1.06); }
-}
-
-@keyframes gradient-shift {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-
-@keyframes spin-slow {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-@keyframes message-right {
-  from { transform: translateX(16px) scale(0.94); opacity: 0; }
-  to   { transform: translateX(0) scale(1);   opacity: 1; }
-}
-
-@keyframes message-left {
-  from { transform: translateX(-16px) scale(0.94); opacity: 0; }
-  to   { transform: translateX(0)  scale(1);   opacity: 1; }
-}
-
-@keyframes dot-bounce {
-  0%, 80%, 100% { transform: translateY(0); }
-  40%           { transform: translateY(-5px); }
-}
-
-.float-anim  { animation: float 6s ease-in-out infinite; }
-.glow-orb    { animation: pulse-glow 4s ease-in-out infinite; }
-.spin-slow   { animation: spin-slow 20s linear infinite; }
-
-.gradient-text {
-  background: linear-gradient(135deg, #06B6D4 0%, #8B5CF6 50%, #EC4899 100%);
-  background-size: 200% 200%;
-  animation: gradient-shift 5s ease infinite;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.glass {
-  background: rgba(255,255,255,0.03);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(255,255,255,0.08);
-}
-
-.glow-border {
-  box-shadow: 0 0 0 1px rgba(6,182,212,0.25), 0 0 30px rgba(6,182,212,0.08);
-}
-
-.msg-right { animation: message-right 0.35s cubic-bezier(0.34,1.56,0.64,1) forwards; }
-.msg-left  { animation: message-left  0.35s cubic-bezier(0.34,1.56,0.64,1) forwards; }
-
-.dot1 { animation: dot-bounce 1.2s ease-in-out 0.0s infinite; }
-.dot2 { animation: dot-bounce 1.2s ease-in-out 0.2s infinite; }
-.dot3 { animation: dot-bounce 1.2s ease-in-out 0.4s infinite; }
-
-/* Workspace CSS appended below */
-
-
 
 @custom-variant dark (&:is(.dark *));
 
@@ -302,5 +218,14 @@ body {
   }
   .landing-scroll::-webkit-scrollbar-thumb:hover {
     background: #cbd5e1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
   }
 }

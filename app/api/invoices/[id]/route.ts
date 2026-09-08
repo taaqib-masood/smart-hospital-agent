@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getClinicAccess } from "@/lib/auth";
 import { enqueueMessage } from "@/lib/message-jobs";
+import { isPaymentMethod } from "@/lib/payment-methods";
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -20,6 +21,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   }
   if (body.amount !== undefined && (!Number.isFinite(Number(body.amount)) || Number(body.amount) < 0)) {
     return NextResponse.json({ error: "Invalid invoice amount" }, { status: 400 });
+  }
+  if (body.payment_method && !isPaymentMethod(body.payment_method)) {
+    return NextResponse.json({ error: "Invalid payment method" }, { status: 400 });
   }
   const allowed = ["status", "payment_method", "waived_reason", "amount"] as const;
   const updates: Record<string, unknown> = Object.fromEntries(allowed.filter(key => body[key] !== undefined).map(key => [key, body[key]]));

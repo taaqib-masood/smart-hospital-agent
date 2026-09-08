@@ -753,7 +753,7 @@ function SettingsView({ addToast }: { addToast: (msg: string, type: Toast["type"
 
 /* ─── Main Shell Component ─── */
 function DashboardPageInner() {
-  const { clinic, conversations } = useDashboard();
+  const { clinic, conversations, loading, error, refresh } = useDashboard();
   const demoMode = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
   const [activeView, setActiveView] = useState<View>("Dashboard");
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -869,12 +869,14 @@ function DashboardPageInner() {
           <div className="flex items-center gap-3">
             <button
               onClick={() => setActiveView("Notifications")}
+              aria-label="Open notifications"
               className="w-9 h-9 rounded-lg bg-white border border-[#CCD5DF] flex items-center justify-center text-slate-500 hover:text-[#00685f] hover:border-[#00685f] transition-colors"
             >
               <Bell size={15} />
             </button>
             <button
               onClick={() => { setActiveView("Calendar"); addToast("Select a date to manage appointments", "info"); }}
+              aria-label="Add appointment"
               className="flex items-center gap-1.5 px-4 py-2 bg-[#00685f] hover:bg-[#005049] text-white text-xs font-bold rounded-lg shadow-xs transition-colors"
             >
               <Plus size={14} /> <span className="hidden sm:inline">Add Appointment</span>
@@ -884,6 +886,17 @@ function DashboardPageInner() {
 
         {/* Main Content Area */}
         <div className="flex-1 overflow-y-auto px-4 py-5 md:px-8 md:py-8 surgical-scroll bg-[#f7f9fb]">
+          {!demoMode && loading && (
+            <div role="status" className="mb-4 flex items-center gap-2 rounded-xl border border-teal-100 bg-teal-50 px-3 py-2 text-xs font-semibold text-teal-800">
+              <span className="h-2 w-2 animate-pulse rounded-full bg-teal-600" /> Refreshing clinic workspace…
+            </div>
+          )}
+          {!demoMode && error && (
+            <div role="alert" className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+              <span>Could not refresh live data. Existing information may be out of date.</span>
+              <button onClick={refresh} className="font-bold underline underline-offset-2">Retry</button>
+            </div>
+          )}
           <AnimatePresence mode="wait">
             <motion.div
               key={activeView}

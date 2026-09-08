@@ -16,6 +16,7 @@ interface DashboardData {
   conversations: RevaConversation[];
   todayStr: string;
   loading: boolean;
+  error: string | null;
   refresh: () => void;
 }
 
@@ -26,6 +27,7 @@ const Ctx = createContext<DashboardData>({
   conversations: [],
   todayStr: "",
   loading: true,
+  error: null,
   refresh: () => {},
 });
 
@@ -35,6 +37,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
   const [patients, setPatients] = useState<RevaPatient[]>([]);
   const [conversations, setConversations] = useState<RevaConversation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const todayStr = new Date().toISOString().split("T")[0];
 
   const load = useCallback(async () => {
@@ -43,6 +46,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
       return;
     }
     setLoading(true);
+    setError(null);
     try {
       const [clinicRes, apptRes, patientRes, convRes] = await Promise.all([
         getClinic(),
@@ -55,8 +59,8 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
       setAppointments(apptRes);
       setPatients(patientRes);
       setConversations(convRes);
-    } catch {
-      // Fallback to demo mock data on any network or database error
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : "Could not refresh the workspace");
     } finally {
       setLoading(false);
     }
@@ -69,7 +73,7 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
   }, [load]);
 
   return (
-    <Ctx.Provider value={{ clinic, appointments, patients, conversations, todayStr, loading, refresh: load }}>
+    <Ctx.Provider value={{ clinic, appointments, patients, conversations, todayStr, loading, error, refresh: load }}>
       {children}
     </Ctx.Provider>
   );

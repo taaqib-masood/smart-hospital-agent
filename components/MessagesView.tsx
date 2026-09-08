@@ -627,9 +627,9 @@ export default function MessagesView({ addToast }: MessagesViewProps) {
                   </select>
                 </label>
                 {takenOverIds[activeContact.id] ? (
-                  <span className="hidden bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full border border-amber-200 sm:flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-                    Receptionist Takeover
+                  <span className="hidden bg-teal-50 text-teal-800 text-[10px] font-bold px-2 py-0.5 rounded-full border border-teal-200 sm:flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse" />
+                    Receptionist in control
                   </span>
                 ) : (
                   <span className="hidden bg-emerald-50 text-emerald-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-200 sm:flex items-center gap-1">
@@ -665,7 +665,7 @@ export default function MessagesView({ addToast }: MessagesViewProps) {
               }}
               className={`px-3 py-1.5 text-xs font-bold rounded-lg shadow-xs flex items-center gap-1.5 transition-all ${
                 takenOverIds[activeContact.id]
-                  ? "bg-amber-500 hover:bg-amber-600 text-white"
+                  ? "bg-teal-700 hover:bg-teal-800 text-white"
                   : "bg-[#00685f] hover:bg-[#005049] text-white"
               }`}
             >
@@ -682,16 +682,16 @@ export default function MessagesView({ addToast }: MessagesViewProps) {
 
             <div className="h-4 w-px bg-slate-200 mx-0.5" />
 
-            <motion.button whileTap={{ scale: 0.9 }} onClick={() => addToast(`Calling ${activeContact.name}...`, "info")} className="hidden p-2 rounded-lg hover:bg-slate-200 hover:text-slate-700 transition-colors sm:block" title="Voice Call"><Phone size={15} /></motion.button>
+            <motion.button whileTap={{ scale: 0.9 }} onClick={() => addToast("Voice calling is awaiting the clinic-approved carrier and provider setup", "info")} className="hidden p-2 rounded-lg hover:bg-slate-200 hover:text-slate-700 transition-colors sm:block" title="Voice calling setup required" aria-label="Voice calling setup required"><Phone size={15} /></motion.button>
             <motion.button whileTap={{ scale: 0.9 }} onClick={() => setShowDossier(!showDossier)} className={`hidden p-2 rounded-lg transition-colors xl:block ${showDossier ? "bg-[#00685f]/15 text-[#00685f]" : "hover:bg-slate-200 hover:text-slate-700"}`} title="Toggle Reception Context"><User size={16} /></motion.button>
           </div>
         </div>
 
         {/* Escalation & Takeover Banner */}
         {takenOverIds[activeContact.id] && (
-          <div className="bg-amber-50 border-b border-amber-200 px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 text-xs z-10">
-            <div className="flex items-center gap-2 text-amber-900 font-semibold">
-              <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
+          <div className="bg-teal-50 border-b border-teal-200 px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 text-xs z-10">
+            <div className="flex items-center gap-2 text-teal-900 font-semibold">
+              <span className="w-2 h-2 rounded-full bg-teal-500 animate-ping" />
               <span>Receptionist Takeover Active • Reva AI auto-responses paused for this patient.</span>
             </div>
 

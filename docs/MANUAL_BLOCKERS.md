@@ -34,3 +34,11 @@ These require the founders or the pilot clinic. The application can be developed
 - [ ] Configure `CRON_SECRET` and call both scheduler and message-worker routes from the production scheduler.
 - [ ] Run a one-week internal sandbox with test phone numbers and no real patient data.
 - [ ] Begin a paid 30–60 day clinic pilot only after message templates, opt-in, access control, and rollback procedures are verified.
+
+## Payment links and voice calling
+
+- [ ] Obtain a UAE payment-link merchant account and test credentials; do not enable Tabby or Tamara until each clinic's category is approved in writing.
+- [ ] Provide the payment-provider webhook secret and complete test payment, failure, duplicate webhook, cancellation/refund and reconciliation checks.
+- [ ] Choose a TDRA-compatible clinic phone/SIP carrier and obtain the provider's written UAE/data-processing confirmation.
+- [ ] Approve voice scripts, Arabic/English quality tests, human-transfer path, call/recording consent, retention and deletion rules.
+- [ ] Keep WhatsApp Calling separate from the existing messaging number until Meta's calling permissions and number-mode implications have been proven in staging.

@@ -17,8 +17,9 @@ import {
 } from "lucide-react";
 import { createInvoice, getInvoices, getPatients, updateInvoice } from "@/lib/api";
 import type { RevaInvoice, RevaPatient } from "@/lib/supabase/types";
+import type { PaymentMethod as SupportedPaymentMethod } from "@/lib/payment-methods";
 
-type PaymentMethod = "Cash" | "Apple Pay" | "Card" | "Tabby" | null;
+type PaymentMethod = SupportedPaymentMethod | null;
 type InvoiceStatus = "Paid" | "Pending" | "Waived";
 
 interface Invoice {
@@ -40,11 +41,11 @@ interface BillingViewProps {
 }
 
 const INVOICES_DATA: Invoice[] = [
-  { id: 1,  patientName: "Priya Sharma",   initials: "PS", service: "General Checkup",        date: "Today",     time: "10:30 AM", amount: 400,  paymentMethod: "Apple Pay",  status: "Paid",    daysOverdue: 0 },
+  { id: 1,  patientName: "Priya Sharma",   initials: "PS", service: "General Checkup",        date: "Today",     time: "10:30 AM", amount: 400,  paymentMethod: "Card",  status: "Paid",    daysOverdue: 0 },
   { id: 2,  patientName: "Rahul Gupta",    initials: "RG", service: "Follow-up",              date: "Today",     time: "11:00 AM", amount: 250,  paymentMethod: null,   status: "Pending", daysOverdue: 0 },
   { id: 3,  patientName: "Ananya Nair",    initials: "AN", service: "Dental Cleaning",        date: "Today",     time: "11:30 AM", amount: 1500, paymentMethod: "Cash", status: "Paid",    daysOverdue: 0 },
   { id: 4,  patientName: "Vikram Patel",   initials: "VP", service: "Consultation",           date: "Today",     time: "12:00 PM", amount: 500,  paymentMethod: "Card", status: "Paid",    daysOverdue: 0 },
-  { id: 5,  patientName: "Sunita Rao",     initials: "SR", service: "Blood Pressure Check",   date: "Today",     time: "2:30 PM",  amount: 200,  paymentMethod: "Apple Pay",  status: "Paid",    daysOverdue: 0 },
+  { id: 5,  patientName: "Sunita Rao",     initials: "SR", service: "Blood Pressure Check",   date: "Today",     time: "2:30 PM",  amount: 200,  paymentMethod: "Card",  status: "Paid",    daysOverdue: 0 },
   { id: 6,  patientName: "Karan Mehta",    initials: "KM", service: "General Checkup",        date: "Today",     time: "3:00 PM",  amount: 400,  paymentMethod: null,   status: "Pending", daysOverdue: 0 },
   { id: 7,  patientName: "Deepa Singh",    initials: "DS", service: "X-Ray Review",           date: "Today",     time: "3:30 PM",  amount: 800,  paymentMethod: null,   status: "Pending", daysOverdue: 0 },
   { id: 8,  patientName: "Arjun Kumar",    initials: "AK", service: "Root Canal (Part 1)",    date: "Yesterday", time: "10:00 AM", amount: 4000, paymentMethod: "Card", status: "Paid",    daysOverdue: 0 },
@@ -253,7 +254,13 @@ export default function BillingView({ addToast }: BillingViewProps) {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.15 }}
+        transition={{ duration: 0.2 }}
+        className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4"
+      >
         <StatCard
           label="Today's Revenue"
           value={todayRevenue}
@@ -284,10 +291,16 @@ export default function BillingView({ addToast }: BillingViewProps) {
           sub="April 2026 total"
           icon={<CreditCard size={16} />}
         />
-      </div>
+      </motion.div>
 
       {/* Invoices Ledger */}
-      <div className="bg-white border border-[#CCD5DF] rounded-xl overflow-x-auto shadow-xs">
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.1 }}
+        transition={{ duration: 0.2 }}
+        className="bg-white border border-[#CCD5DF] rounded-xl overflow-x-auto shadow-xs"
+      >
         <div className="p-4 border-b border-[#CCD5DF] bg-[#F8FAFC] flex items-center justify-between">
           <div className="relative max-w-sm w-full">
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -372,10 +385,10 @@ export default function BillingView({ addToast }: BillingViewProps) {
                   {inv.status === "Pending" && (
                     <div className="flex gap-1">
                       <button
-                        onClick={(e) => { e.stopPropagation(); markPaid(inv.id, "Apple Pay"); }}
+                        onClick={(e) => { e.stopPropagation(); markPaid(inv.id, "Card"); }}
                         className="px-2 py-0.5 bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-bold rounded hover:bg-emerald-100 shadow-2xs whitespace-nowrap"
                       >
-                        Paid (Apple Pay)
+                        Card
                       </button>
                       <button
                         onClick={(e) => { e.stopPropagation(); markPaid(inv.id, "Cash"); }}
@@ -417,7 +430,7 @@ export default function BillingView({ addToast }: BillingViewProps) {
             </div>
           ))}
         </div>
-      </div>
+      </motion.div>
 
       {/* Create Invoice Modal */}
       <AnimatePresence>

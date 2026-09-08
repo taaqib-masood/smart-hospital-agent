@@ -10,6 +10,7 @@ Reva is a receptionist-operated WhatsApp workflow for UAE clinics. It helps staf
 - Practitioner availability rules and one-off blocked periods
 - Scheduled follow-up and no-show automations using approved Meta templates
 - Billing records and payment reminders
+- Card and Cash settlement recording; payment-link rollout documented separately
 - Receptionist-managed consent templates, secure expiring signing links, and audit evidence
 - Operational analytics calculated from recorded activity
 - Clinic settings, tenant membership, row-level security, and audit events
@@ -22,6 +23,7 @@ Prescription creation, lab reports, doctor briefs, clinical records, waiting-roo
 - Supabase Auth and Postgres
 - Meta WhatsApp Cloud API
 - Vercel-compatible scheduled routes
+- Docker Compose for a shared application container and optional scheduler
 
 The pilot remains a modular monolith. Outbound messages are stored as durable jobs, incoming Meta events are deduplicated, and booking conflicts are rejected in Postgres.
 
@@ -47,6 +49,16 @@ The pilot remains a modular monolith. Outbound messages are stored as durable jo
 
 Set `NEXT_PUBLIC_DEMO_MODE=true` for the UI-only demo. Demo mode bypasses page login but never exposes protected API routes.
 
+## Containers
+
+For a shared team environment, copy `.env.example` to `.env`, then run:
+
+```powershell
+docker compose up --build
+```
+
+Open `http://localhost:3001`. Add `--profile scheduler` only when `CRON_SECRET` is configured and the environment needs its own worker/scheduler. See [docs/CONTAINERS.md](docs/CONTAINERS.md).
+
 ## Quality gates
 
 ```powershell
@@ -67,3 +79,5 @@ npm run build
 - A reconciliation migration if an existing Supabase database already contains earlier hand-created `reva_*` tables
 
 See [docs/BACKEND_ARCHITECTURE.md](docs/BACKEND_ARCHITECTURE.md) for system boundaries and delivery gates. The repository does not claim regulatory compliance or guaranteed commercial results; those require clinic-specific legal, security, and pilot validation.
+
+Payment and voice-provider decisions are intentionally documented before implementation: [payment links](docs/PAYMENT_LINK_PLAN.md) and [voice agents](docs/VOICE_AGENT_PLAN.md).

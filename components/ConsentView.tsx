@@ -229,7 +229,13 @@ export default function ConsentView({ addToast }: ConsentViewProps) {
       </div>
 
       {/* KPI Bento Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.15 }}
+        transition={{ duration: 0.2 }}
+        className="grid grid-cols-1 gap-6 md:grid-cols-4"
+      >
         <div className="bg-white border border-[#CCD5DF] rounded-xl p-5 shadow-xs">
           <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block mb-1">Signed Today</span>
           <p className="text-2xl font-bold text-[#00685f]">{signedCount}</p>
@@ -255,7 +261,7 @@ export default function ConsentView({ addToast }: ConsentViewProps) {
           </p>
           <span className="text-xs text-slate-500">SHA-256 evidence hash</span>
         </div>
-      </div>
+      </motion.div>
 
       {/* Tabs */}
       <div className="flex gap-2 border-b border-[#CCD5DF] pb-2">
@@ -283,7 +289,13 @@ export default function ConsentView({ addToast }: ConsentViewProps) {
 
       {activeTab === "queue" ? (
         /* Queue Table */
-        <div className="bg-white border border-[#CCD5DF] rounded-xl overflow-x-auto shadow-xs">
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.1 }}
+          transition={{ duration: 0.2 }}
+          className="bg-white border border-[#CCD5DF] rounded-xl overflow-x-auto shadow-xs"
+        >
           <div className="p-4 border-b border-[#CCD5DF] bg-[#F8FAFC]">
             <div className="relative max-w-sm">
               <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -297,10 +309,10 @@ export default function ConsentView({ addToast }: ConsentViewProps) {
             </div>
           </div>
 
-          <div className="grid min-w-[760px] grid-cols-[1.5fr_1.5fr_1fr_1fr_auto] gap-4 px-6 py-3 bg-[#F8FAFC] border-b border-[#CCD5DF] text-[11px] font-bold uppercase tracking-wider text-slate-500">
+          <div className="grid min-w-[800px] grid-cols-[180px_minmax(200px,1fr)_105px_150px_165px] items-center px-6 py-3 bg-[#F8FAFC] border-b border-[#CCD5DF] text-[11px] font-bold uppercase tracking-wider text-slate-500">
             <span>Patient</span>
             <span>Procedure</span>
-            <span>Sent Time</span>
+            <span>Sent time</span>
             <span>Status</span>
             <span className="text-right">Action</span>
           </div>
@@ -310,7 +322,7 @@ export default function ConsentView({ addToast }: ConsentViewProps) {
               <div key={rec.id} className="hover:bg-slate-50 transition-colors">
                 <div
                   onClick={() => setExpandedId(expandedId === rec.id ? null : rec.id)}
-                  className="grid min-w-[760px] grid-cols-[1.5fr_1.5fr_1fr_1fr_auto] gap-4 px-6 py-3.5 items-center cursor-pointer text-xs"
+                  className="grid min-w-[800px] grid-cols-[180px_minmax(200px,1fr)_105px_150px_165px] items-center px-6 py-3.5 cursor-pointer text-xs"
                 >
                   <div className="flex items-center gap-2.5">
                     <div className="w-7 h-7 rounded-full bg-[#00685f]/15 text-[#00685f] font-bold text-[10px] flex items-center justify-center shrink-0">
@@ -319,7 +331,7 @@ export default function ConsentView({ addToast }: ConsentViewProps) {
                     <span className="font-bold text-[#0F172A]">{rec.patient}</span>
                   </div>
 
-                  <span className="text-slate-600 font-medium">{rec.procedure}</span>
+                  <span className="min-w-0 truncate text-slate-600 font-medium" title={rec.procedure}>{rec.procedure}</span>
                   <span className="text-slate-500">{rec.sentTime}</span>
 
                   <div>
@@ -334,11 +346,11 @@ export default function ConsentView({ addToast }: ConsentViewProps) {
                     </span>
                   </div>
 
-                  <div className="flex items-center gap-2 justify-end">
+                  <div className="flex min-w-0 items-center justify-end gap-2">
                     {rec.status === "Pending" ? (
                       <button
                         onClick={(e) => { e.stopPropagation(); handleResend(rec); }}
-                        className="px-2.5 py-1 bg-[#00685f] hover:bg-[#005049] text-white text-[11px] font-bold rounded shadow-xs"
+                        className="whitespace-nowrap px-2.5 py-1 bg-[#00685f] hover:bg-[#005049] text-white text-[11px] font-bold rounded shadow-xs"
                       >
                         Resend WhatsApp
                       </button>
@@ -377,7 +389,7 @@ export default function ConsentView({ addToast }: ConsentViewProps) {
               </div>
             ))}
           </div>
-        </div>
+        </motion.div>
       ) : (
         /* Templates List */
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
