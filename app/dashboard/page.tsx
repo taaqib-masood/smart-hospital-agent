@@ -417,6 +417,7 @@ function CalendarView({ addToast }: { addToast: (msg: string, type: Toast["type"
   const [appointments, setAppointments] = useState<RevaAppointment[]>([]);
   const [doctors, setDoctors] = useState<Array<{ id: string; name: string }>>([]);
   const [showAdd, setShowAdd] = useState(false);
+  const [walkIn, setWalkIn] = useState(false);
   const [draft, setDraft] = useState({ patient_id: "", doctor_id: "", time: "09:00", type: "Consultation" });
 
   useEffect(() => {
@@ -434,24 +435,30 @@ function CalendarView({ addToast }: { addToast: (msg: string, type: Toast["type"
     }).catch(() => setDoctors([]));
   }, [demoMode, patients]);
 
+  const openAppointmentForm = (isWalkIn = false) => {
+    setWalkIn(isWalkIn);
+    setDraft(current => ({ ...current, type: isWalkIn ? "Walk-in" : "Consultation", time: isWalkIn ? new Date().toTimeString().slice(0, 5) : current.time }));
+    setShowAdd(true);
+  };
+
   const addAppointment = async () => {
     if (demoMode) {
       setShowAdd(false);
-      addToast("Demo appointment added ✓", "success");
+      addToast(walkIn ? "Demo walk-in registered ✓" : "Demo appointment added ✓", "success");
       return;
     }
-    if (!draft.patient_id || !draft.doctor_id) {
-      addToast("Configure a patient contact and practitioner first", "warn");
+    if ((!walkIn && !draft.patient_id) || !draft.doctor_id) {
+      addToast(walkIn ? "Select a practitioner for this walk-in" : "Configure a patient contact and practitioner first", "warn");
       return;
     }
     try {
-      await createAppointment({ patient_id: draft.patient_id, doctor_id: draft.doctor_id, appointment_date: selected, appointment_time: draft.time, type: draft.type });
+      await createAppointment({ patient_id: draft.patient_id || undefined, doctor_id: draft.doctor_id, appointment_date: selected, appointment_time: draft.time, type: draft.type });
       const first = new Date(visibleMonth.getFullYear(), visibleMonth.getMonth(), 1);
       const last = new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + 1, 0);
       const localDate = (date: Date) => new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().split("T")[0];
       setAppointments(await getAppointments({ from: localDate(first), to: localDate(last) }));
       setShowAdd(false);
-      addToast("Appointment created ✓", "success");
+      addToast(walkIn ? "Walk-in registered ✓" : "Appointment created ✓", "success");
     } catch (error) {
       addToast(error instanceof Error ? error.message : "Could not create appointment", "warn");
     }
@@ -472,7 +479,10 @@ function CalendarView({ addToast }: { addToast: (msg: string, type: Toast["type"
     <div className="space-y-8 max-w-[1200px] mx-auto">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div><h2 className="text-2xl font-bold text-[#0F172A] tracking-tight">{t("Appointment Calendar")}</h2><p className="text-sm text-slate-500 mt-0.5">{t("Reception scheduling and daily appointment status.")}</p></div>
-        <button onClick={() => setShowAdd(true)} className="flex items-center gap-1.5 px-4 py-2 bg-[#00685f] text-white text-xs font-bold rounded-lg"><Plus size={14} /> {t("Add Appointment")}</button>
+        <div className="flex gap-2">
+          <button onClick={() => openAppointmentForm(true)} className="flex items-center gap-1.5 px-4 py-2 border border-[#00685f] text-[#00685f] text-xs font-bold rounded-lg"><Plus size={14} /> {t("Walk-in")}</button>
+          <button onClick={() => openAppointmentForm()} className="flex items-center gap-1.5 px-4 py-2 bg-[#00685f] text-white text-xs font-bold rounded-lg"><Plus size={14} /> {t("Add Appointment")}</button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -536,7 +546,7 @@ function CalendarView({ addToast }: { addToast: (msg: string, type: Toast["type"
         </div>
       </div>
 
-      {showAdd && <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4"><div className="bg-white border border-[#CCD5DF] rounded-xl p-6 w-full max-w-md space-y-4"><div className="flex justify-between"><h3 className="font-bold">{t("Add Appointment")}</h3><button onClick={() => setShowAdd(false)}><X size={16} /></button></div><p className="text-xs text-slate-500">{new Date(`${selected}T12:00:00`).toLocaleDateString(locale, { dateStyle: "full" })}</p>{!demoMode && <><select value={draft.patient_id} onChange={event => setDraft({ ...draft, patient_id: event.target.value })} className="w-full px-3 py-2 border border-[#CCD5DF] rounded-lg text-xs"><option value="">{t("Select patient")}</option>{patients.map(patient => <option key={patient.id} value={patient.id}>{patient.name}</option>)}</select><select value={draft.doctor_id} onChange={event => setDraft({ ...draft, doctor_id: event.target.value })} className="w-full px-3 py-2 border border-[#CCD5DF] rounded-lg text-xs"><option value="">{t("Select practitioner")}</option>{doctors.map(doctor => <option key={doctor.id} value={doctor.id}>{doctor.name}</option>)}</select></>}<input type="time" value={draft.time} onChange={event => setDraft({ ...draft, time: event.target.value })} className="w-full px-3 py-2 border border-[#CCD5DF] rounded-lg text-xs" /><input value={draft.type} onChange={event => setDraft({ ...draft, type: event.target.value })} placeholder={t("Appointment type")} className="w-full px-3 py-2 border border-[#CCD5DF] rounded-lg text-xs" /><div className="flex gap-2"><button onClick={() => setShowAdd(false)} className="flex-1 py-2 border border-[#CCD5DF] rounded-lg text-xs font-bold">{t("Cancel")}</button><button onClick={addAppointment} className="flex-1 py-2 bg-[#00685f] text-white rounded-lg text-xs font-bold">{t("Create")}</button></div></div></div>}
+      {showAdd && <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4"><div className="bg-white border border-[#CCD5DF] rounded-xl p-6 w-full max-w-md space-y-4"><div className="flex justify-between"><h3 className="font-bold">{walkIn ? t("Register Walk-in") : t("Add Appointment")}</h3><button onClick={() => setShowAdd(false)}><X size={16} /></button></div><p className="text-xs text-slate-500">{new Date(`${selected}T12:00:00`).toLocaleDateString(locale, { dateStyle: "full" })}</p>{!demoMode && <><select value={draft.patient_id} onChange={event => setDraft({ ...draft, patient_id: event.target.value })} className="w-full px-3 py-2 border border-[#CCD5DF] rounded-lg text-xs"><option value="">{walkIn ? t("Existing patient (optional)") : t("Select patient")}</option>{patients.map(patient => <option key={patient.id} value={patient.id}>{patient.name}</option>)}</select><select value={draft.doctor_id} onChange={event => setDraft({ ...draft, doctor_id: event.target.value })} className="w-full px-3 py-2 border border-[#CCD5DF] rounded-lg text-xs"><option value="">{t("Select practitioner")}</option>{doctors.map(doctor => <option key={doctor.id} value={doctor.id}>{doctor.name}</option>)}</select></>}<input type="time" value={draft.time} onChange={event => setDraft({ ...draft, time: event.target.value })} className="w-full px-3 py-2 border border-[#CCD5DF] rounded-lg text-xs" /><input value={draft.type} onChange={event => setDraft({ ...draft, type: event.target.value })} placeholder={t("Appointment type")} className="w-full px-3 py-2 border border-[#CCD5DF] rounded-lg text-xs" /><div className="flex gap-2"><button onClick={() => setShowAdd(false)} className="flex-1 py-2 border border-[#CCD5DF] rounded-lg text-xs font-bold">{t("Cancel")}</button><button onClick={addAppointment} className="flex-1 py-2 bg-[#00685f] text-white rounded-lg text-xs font-bold">{walkIn ? t("Register Walk-in") : t("Create")}</button></div></div></div>}
     </div>
   );
 }
