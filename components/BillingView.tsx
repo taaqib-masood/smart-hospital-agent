@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCountUp } from "@/lib/hooks";
 import {
@@ -12,16 +12,20 @@ import {
   Plus,
   X,
   CreditCard,
-  CheckCircle,
   ChevronDown,
   ChevronUp
 } from "lucide-react";
+import { createInvoice, getInvoices, getPatients, updateInvoice } from "@/lib/api";
+import type { RevaInvoice, RevaPatient } from "@/lib/supabase/types";
+import type { PaymentMethod as SupportedPaymentMethod } from "@/lib/payment-methods";
+import { usePortalLanguage } from "@/lib/i18n/portal";
 
-type PaymentMethod = "Cash" | "Apple Pay" | "Card" | "Tabby" | null;
+type PaymentMethod = SupportedPaymentMethod | null;
 type InvoiceStatus = "Paid" | "Pending" | "Waived";
 
 interface Invoice {
-  id: number;
+  id: string | number;
+  patientId?: string;
   patientName: string;
   initials: string;
   service: string;
@@ -38,11 +42,11 @@ interface BillingViewProps {
 }
 
 const INVOICES_DATA: Invoice[] = [
-  { id: 1,  patientName: "Priya Sharma",   initials: "PS", service: "General Checkup",        date: "Today",     time: "10:30 AM", amount: 400,  paymentMethod: "Apple Pay",  status: "Paid",    daysOverdue: 0 },
+  { id: 1,  patientName: "Priya Sharma",   initials: "PS", service: "General Checkup",        date: "Today",     time: "10:30 AM", amount: 400,  paymentMethod: "Card",  status: "Paid",    daysOverdue: 0 },
   { id: 2,  patientName: "Rahul Gupta",    initials: "RG", service: "Follow-up",              date: "Today",     time: "11:00 AM", amount: 250,  paymentMethod: null,   status: "Pending", daysOverdue: 0 },
   { id: 3,  patientName: "Ananya Nair",    initials: "AN", service: "Dental Cleaning",        date: "Today",     time: "11:30 AM", amount: 1500, paymentMethod: "Cash", status: "Paid",    daysOverdue: 0 },
   { id: 4,  patientName: "Vikram Patel",   initials: "VP", service: "Consultation",           date: "Today",     time: "12:00 PM", amount: 500,  paymentMethod: "Card", status: "Paid",    daysOverdue: 0 },
-  { id: 5,  patientName: "Sunita Rao",     initials: "SR", service: "Blood Pressure Check",   date: "Today",     time: "2:30 PM",  amount: 200,  paymentMethod: "Apple Pay",  status: "Paid",    daysOverdue: 0 },
+  { id: 5,  patientName: "Sunita Rao",     initials: "SR", service: "Blood Pressure Check",   date: "Today",     time: "2:30 PM",  amount: 200,  paymentMethod: "Card",  status: "Paid",    daysOverdue: 0 },
   { id: 6,  patientName: "Karan Mehta",    initials: "KM", service: "General Checkup",        date: "Today",     time: "3:00 PM",  amount: 400,  paymentMethod: null,   status: "Pending", daysOverdue: 0 },
   { id: 7,  patientName: "Deepa Singh",    initials: "DS", service: "X-Ray Review",           date: "Today",     time: "3:30 PM",  amount: 800,  paymentMethod: null,   status: "Pending", daysOverdue: 0 },
   { id: 8,  patientName: "Arjun Kumar",    initials: "AK", service: "Root Canal (Part 1)",    date: "Yesterday", time: "10:00 AM", amount: 4000, paymentMethod: "Card", status: "Paid",    daysOverdue: 0 },
@@ -72,7 +76,7 @@ function StatCard({ label, value, prefix = "", suffix = "", sub, icon, trend }: 
 
   return (
     <div className="bg-white border border-[#CCD5DF] rounded-xl p-5 shadow-xs space-y-3">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">{label}</span>
         <div className="w-8 h-8 rounded-lg bg-[#00685f]/10 text-[#00685f] flex items-center justify-center">
           {icon}
@@ -93,10 +97,13 @@ function StatCard({ label, value, prefix = "", suffix = "", sub, icon, trend }: 
 }
 
 export default function BillingView({ addToast }: BillingViewProps) {
+  const { t } = usePortalLanguage();
   const [invoices, setInvoices] = useState<Invoice[]>(INVOICES_DATA);
+  const [patients, setPatients] = useState<RevaPatient[]>([]);
+  const [usingRealData, setUsingRealData] = useState(false);
   const [filter, setFilter] = useState<"All" | InvoiceStatus>("All");
   const [search, setSearch] = useState("");
-  const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [expandedId, setExpandedId] = useState<string | number | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
 
   const [newName, setNewName] = useState("");
@@ -121,22 +128,98 @@ export default function BillingView({ addToast }: BillingViewProps) {
     return matchStatus && matchSearch;
   });
 
-  const markPaid = (id: number, method: PaymentMethod) => {
+  useEffect(() => {
+    if (process.env.NEXT_PUBLIC_DEMO_MODE === "true") return;
+    void Promise.all([getInvoices(), getPatients()]).then(([invoiceRows, patientRows]) => {
+      setPatients(patientRows);
+      setInvoices(invoiceRows.map((invoice: RevaInvoice) => {
+        const created = new Date(invoice.created_at);
+        const today = new Date().toDateString() === created.toDateString();
+        const name = invoice.patient?.name ?? "Unassigned contact";
+        return {
+          id: invoice.id,
+          patientId: invoice.patient_id ?? undefined,
+          patientName: name,
+          initials: name.split(/\s+/).slice(0, 2).map(part => part[0]?.toUpperCase()).join("") || "--",
+          service: invoice.service_description,
+          date: today ? "Today" : new Date(invoice.invoice_date).toLocaleDateString("en-AE"),
+          time: created.toLocaleTimeString("en-AE", { hour: "2-digit", minute: "2-digit" }),
+          amount: invoice.amount,
+          paymentMethod: invoice.payment_method as PaymentMethod,
+          status: invoice.status as InvoiceStatus,
+          daysOverdue: Math.max(0, Math.floor((Date.now() - new Date(invoice.invoice_date).getTime()) / 86_400_000)),
+        };
+      }));
+      setUsingRealData(true);
+    }).catch(() => addToast("Could not load billing data", "warn"));
+  }, [addToast]);
+
+  const markPaid = async (id: string | number, method: PaymentMethod) => {
+    if (usingRealData) {
+      try { await updateInvoice(String(id), { status: "Paid", payment_method: method ?? undefined }); }
+      catch { addToast("Could not update invoice", "warn"); return; }
+    }
     setInvoices(prev => prev.map(inv => inv.id === id ? { ...inv, status: "Paid", paymentMethod: method } : inv));
     addToast(`Invoice marked as paid via ${method} ✓`, "success");
   };
 
-  const waiveInvoice = (id: number) => {
+  const waiveInvoice = async (id: string | number) => {
+    if (usingRealData) {
+      try { await updateInvoice(String(id), { status: "Waived", waived_reason: "Waived by receptionist" }); }
+      catch { addToast("Could not waive invoice", "warn"); return; }
+    }
     setInvoices(prev => prev.map(inv => inv.id === id ? { ...inv, status: "Waived" } : inv));
     addToast("Invoice waived", "warn");
   };
 
-  const sendAllReminders = () => {
-    addToast(`WhatsApp payment reminders dispatched to ${pendingInvoices.length} patients ✓`, "success");
+  const sendAllReminders = async () => {
+    if (usingRealData) {
+      const results = await Promise.allSettled(pendingInvoices.map(invoice => updateInvoice(String(invoice.id), { send_reminder: true })));
+      const queued = results.filter(result => result.status === "fulfilled").length;
+      addToast(queued ? `${queued} payment reminder${queued === 1 ? "" : "s"} queued` : "No reminders could be queued", queued ? "success" : "warn");
+      return;
+    }
+    addToast(`Demo reminders prepared for ${pendingInvoices.length} patients`, "success");
   };
 
-  const handleCreateInvoice = () => {
+  const handleCreateInvoice = async () => {
     if (!newName.trim()) return;
+    const patient = patients.find(item => item.name.toLowerCase() === newName.trim().toLowerCase());
+    if (usingRealData && !patient) {
+      addToast("Choose an existing contact name before creating an invoice", "warn");
+      return;
+    }
+    if (usingRealData) {
+      try {
+        const created = await createInvoice({
+          patient_id: patient?.id ?? null,
+          service_description: newService,
+          amount: newAmount,
+          status: "Pending",
+          invoice_date: new Date().toISOString().split("T")[0],
+        });
+        const createdName = created.patient?.name ?? newName.trim();
+        setInvoices(prev => [{
+          id: created.id,
+          patientId: created.patient_id ?? undefined,
+          patientName: createdName,
+          initials: createdName.split(/\s+/).slice(0, 2).map(word => word[0]).join("").toUpperCase(),
+          service: created.service_description,
+          date: "Today",
+          time: "Just now",
+          amount: created.amount,
+          paymentMethod: null,
+          status: "Pending",
+          daysOverdue: 0,
+        }, ...prev]);
+        setShowAddModal(false);
+        setNewName("");
+        addToast("Invoice created", "success");
+      } catch {
+        addToast("Could not create invoice", "warn");
+      }
+      return;
+    }
     const newInv: Invoice = {
       id: Date.now(),
       patientName: newName.trim(),
@@ -152,68 +235,80 @@ export default function BillingView({ addToast }: BillingViewProps) {
     setInvoices(prev => [newInv, ...prev]);
     setShowAddModal(false);
     setNewName("");
-    addToast("New invoice generated & dispatched via WhatsApp ✓", "success");
+    addToast("Demo invoice generated", "success");
   };
 
   return (
     <div className="space-y-8 max-w-[1200px] mx-auto">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-[#0F172A] tracking-tight">Billing & Invoicing</h2>
+          <h2 className="text-2xl font-bold text-[#0F172A] tracking-tight">{t("Billing & Invoicing")}</h2>
           <p className="text-sm text-slate-500 mt-0.5">
-            Instant invoice generation, settlement tracking, and automated WhatsApp payment links.
+            {t("Instant invoice generation, settlement tracking, and automated WhatsApp payment links.")}
           </p>
         </div>
         <button
           onClick={() => setShowAddModal(true)}
           className="flex items-center gap-1.5 px-4 py-2 bg-[#00685f] hover:bg-[#005049] text-white text-xs font-bold rounded-lg shadow-xs transition-colors"
         >
-          <Plus size={14} /> Create Invoice
+          <Plus size={14} /> {t("Create Invoice")}
         </button>
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.15 }}
+        transition={{ duration: 0.2 }}
+        className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4"
+      >
         <StatCard
-          label="Today's Revenue"
+          label={t("Today's Revenue")}
           value={todayRevenue}
           prefix="AED "
-          sub="collected today"
+          sub={t("collected today")}
           icon={<TrendingUp size={16} />}
           trend="+14% vs yesterday"
         />
         <StatCard
-          label="Pending Amount"
+          label={t("Pending Amount")}
           value={pendingAmount}
           prefix="AED "
           sub={`from ${pendingCount} patients`}
           icon={<AlertCircle size={16} />}
         />
         <StatCard
-          label="Collection Rate"
+          label={t("Collection Rate")}
           value={collectionRate}
           suffix="%"
-          sub="this week"
+          sub={t("this week")}
           icon={<Activity size={16} />}
           trend="94.2% on-time settlement"
         />
         <StatCard
-          label="Monthly Revenue"
+          label={t("Monthly Revenue")}
           value={234800}
           prefix="AED "
-          sub="April 2026 total"
+          sub={t("April 2026 total")}
           icon={<CreditCard size={16} />}
         />
-      </div>
+      </motion.div>
 
       {/* Invoices Ledger */}
-      <div className="bg-white border border-[#CCD5DF] rounded-xl overflow-hidden shadow-xs">
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.1 }}
+        transition={{ duration: 0.2 }}
+        className="bg-white border border-[#CCD5DF] rounded-xl overflow-x-auto shadow-xs"
+      >
         <div className="p-4 border-b border-[#CCD5DF] bg-[#F8FAFC] flex items-center justify-between">
           <div className="relative max-w-sm w-full">
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
-              placeholder="Search by patient or service..."
+              placeholder={t("Search by patient or service...")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full pl-9 pr-3 py-1.5 bg-white border border-[#CCD5DF] rounded-lg text-xs text-[#0F172A] focus:outline-none focus:border-[#00685f]"
@@ -230,7 +325,7 @@ export default function BillingView({ addToast }: BillingViewProps) {
                     filter === s ? "bg-[#00685f] text-white shadow-xs" : "text-slate-500 hover:text-[#0F172A]"
                   }`}
                 >
-                  {s}
+                  {t(s)}
                 </button>
               ))}
             </div>
@@ -240,18 +335,18 @@ export default function BillingView({ addToast }: BillingViewProps) {
                 onClick={sendAllReminders}
                 className="px-3 py-1 bg-white border border-[#CCD5DF] hover:bg-slate-50 text-[#00685f] text-xs font-bold rounded-lg shadow-xs flex items-center gap-1"
               >
-                <Send size={12} /> Send Reminders ({pendingInvoices.length})
+                <Send size={12} /> {t("Send Reminders")} ({pendingInvoices.length})
               </button>
             )}
           </div>
         </div>
 
-        <div className="grid grid-cols-[1.8fr_1.6fr_1fr_1.3fr_180px] gap-4 px-6 py-3 bg-[#F8FAFC] border-b border-[#CCD5DF] text-[11px] font-bold uppercase tracking-wider text-slate-500 items-center">
-          <span>Patient</span>
-          <span>Service</span>
-          <span>Amount</span>
-          <span>Status</span>
-          <span className="text-right">Action</span>
+        <div className="grid min-w-[820px] grid-cols-[1.8fr_1.6fr_1fr_1.3fr_180px] gap-4 px-6 py-3 bg-[#F8FAFC] border-b border-[#CCD5DF] text-[11px] font-bold uppercase tracking-wider text-slate-500 items-center">
+          <span>{t("Patient")}</span>
+          <span>{t("Service")}</span>
+          <span>{t("Amount")}</span>
+          <span>{t("Status")}</span>
+          <span className="text-right">{t("Action")}</span>
         </div>
 
         <div className="divide-y divide-[#CCD5DF]">
@@ -259,7 +354,7 @@ export default function BillingView({ addToast }: BillingViewProps) {
             <div key={inv.id} className="hover:bg-slate-50 transition-colors">
               <div
                 onClick={() => setExpandedId(expandedId === inv.id ? null : inv.id)}
-                className="grid grid-cols-[1.8fr_1.6fr_1fr_1.3fr_180px] gap-4 px-6 py-3.5 items-center cursor-pointer text-xs"
+                className="grid min-w-[820px] grid-cols-[1.8fr_1.6fr_1fr_1.3fr_180px] gap-4 px-6 py-3.5 items-center cursor-pointer text-xs"
               >
                 <div className="flex items-center gap-2.5 min-w-0">
                   <div className="w-7 h-7 rounded-full bg-[#00685f]/15 text-[#00685f] font-bold text-[10px] flex items-center justify-center shrink-0">
@@ -284,7 +379,7 @@ export default function BillingView({ addToast }: BillingViewProps) {
                         : "bg-slate-100 text-slate-600 border-slate-200"
                     }`}
                   >
-                    {inv.status} {inv.paymentMethod ? `(${inv.paymentMethod})` : ""}
+                    {t(inv.status)} {inv.paymentMethod ? `(${t(inv.paymentMethod)})` : ""}
                   </span>
                 </div>
 
@@ -292,16 +387,16 @@ export default function BillingView({ addToast }: BillingViewProps) {
                   {inv.status === "Pending" && (
                     <div className="flex gap-1">
                       <button
-                        onClick={(e) => { e.stopPropagation(); markPaid(inv.id, "Apple Pay"); }}
+                        onClick={(e) => { e.stopPropagation(); markPaid(inv.id, "Card"); }}
                         className="px-2 py-0.5 bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-bold rounded hover:bg-emerald-100 shadow-2xs whitespace-nowrap"
                       >
-                        Paid (Apple Pay)
+                        {t("Card")}
                       </button>
                       <button
                         onClick={(e) => { e.stopPropagation(); markPaid(inv.id, "Cash"); }}
                         className="px-2 py-0.5 bg-slate-50 border border-slate-200 text-slate-700 text-[11px] font-bold rounded hover:bg-slate-100 shadow-2xs whitespace-nowrap"
                       >
-                        Cash
+                        {t("Cash")}
                       </button>
                     </div>
                   )}
@@ -320,15 +415,15 @@ export default function BillingView({ addToast }: BillingViewProps) {
                     className="bg-[#F8FAFC] border-t border-[#CCD5DF] px-6 py-3 text-xs flex justify-between items-center text-slate-500"
                   >
                     <div className="flex items-center gap-4">
-                      <span>Invoice ID: #INV-2026-{inv.id}</span>
-                      <span>Date: {inv.date}</span>
+                      <span>{t("Invoice ID:")} #INV-2026-{inv.id}</span>
+                      <span>{t("Date:")} {inv.date}</span>
                     </div>
                     {inv.status === "Pending" && (
                       <button
                         onClick={() => waiveInvoice(inv.id)}
                         className="text-xs text-rose-600 font-bold hover:underline"
                       >
-                        Waive Fee
+                        {t("Waive Fee")}
                       </button>
                     )}
                   </motion.div>
@@ -337,7 +432,7 @@ export default function BillingView({ addToast }: BillingViewProps) {
             </div>
           ))}
         </div>
-      </div>
+      </motion.div>
 
       {/* Create Invoice Modal */}
       <AnimatePresence>
@@ -350,7 +445,7 @@ export default function BillingView({ addToast }: BillingViewProps) {
               className="bg-white border border-[#CCD5DF] rounded-xl p-6 w-full max-w-md shadow-xl space-y-4"
             >
               <div className="flex items-center justify-between border-b border-[#CCD5DF] pb-3">
-                <h3 className="text-base font-bold text-[#0F172A]">Create & Dispatch Invoice</h3>
+                <h3 className="text-base font-bold text-[#0F172A]">{t("Create & Dispatch Invoice")}</h3>
                 <button onClick={() => setShowAddModal(false)} className="text-slate-400 hover:text-slate-600">
                   <X size={16} />
                 </button>
@@ -359,7 +454,7 @@ export default function BillingView({ addToast }: BillingViewProps) {
               <div className="space-y-3 text-xs">
                 <div>
                   <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
-                    Patient Name
+                    {t("Patient Name")}
                   </label>
                   <input
                     type="text"
@@ -372,7 +467,7 @@ export default function BillingView({ addToast }: BillingViewProps) {
 
                 <div>
                   <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
-                    Procedure / Service
+                    {t("Procedure / Service")}
                   </label>
                   <select
                     value={newService}
@@ -387,7 +482,7 @@ export default function BillingView({ addToast }: BillingViewProps) {
 
                 <div>
                   <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">
-                    Amount (AED)
+                    {t("Amount (AED)")}
                   </label>
                   <input
                     type="number"
@@ -409,7 +504,7 @@ export default function BillingView({ addToast }: BillingViewProps) {
                   onClick={handleCreateInvoice}
                   className="flex-1 py-2 bg-[#00685f] hover:bg-[#005049] text-white text-xs font-bold rounded-lg shadow-xs"
                 >
-                  Dispatch via WhatsApp
+                  {t("Dispatch via WhatsApp")}
                 </button>
               </div>
             </motion.div>

@@ -14,10 +14,12 @@
  *   If user says "reschedule" or "cancel" from any state → handle inline
  */
 
-import { createClient } from "@/lib/supabase/server";
+import { randomUUID } from "node:crypto";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { sendWhatsAppMessage } from "@/lib/whatsapp";
-import type { RevaClinic, RevaDoctor } from "@/lib/supabase/types";
+import type { RevaClinic } from "@/lib/supabase/types";
 import { formatDate, formatTime } from "@/lib/utils";
+import { getAvailableSlots } from "@/lib/availability";
 
 type BotState =
   | "idle"
@@ -35,6 +37,8 @@ interface BotContext extends Record<string, unknown> {
   selected_doctor_name?: string;
   selected_date?: string;
   selected_time?: string;
+  reschedule_appointment_id?: string;
+  appointment_type?: string;
 }
 
 function today() {
@@ -49,21 +53,6 @@ function nextDays(n: number): string[] {
     days.push(d.toISOString().split("T")[0]);
   }
   return days;
-}
-
-function generateSlots(date: string, slotMinutes: number): string[] {
-  // Simple 9AM–5PM slots, skip lunch 1–2PM
-  const slots: string[] = [];
-  for (let h = 9; h < 17; h++) {
-    if (h === 13) continue;
-    for (let m = 0; m < 60; m += slotMinutes) {
-      const hh = String(h).padStart(2, "0");
-      const mm = String(m).padStart(2, "0");
-      slots.push(`${hh}:${mm}`);
-    }
-  }
-  // Return only 6 slots for readability
-  return slots.slice(0, 6);
 }
 
 const KEYWORDS = {
@@ -85,7 +74,7 @@ export async function handleBotMessage(
   incomingText: string,
   waMessageId: string
 ) {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   // Load or init state
   const { data: stateRow } = await supabase
@@ -107,16 +96,40 @@ export async function handleBotMessage(
   const text = incomingText.trim();
 
   // --- Global keyword overrides ---
-  if (matchesKeyword(text, KEYWORDS.cancel) && state !== "idle") {
+  if (matchesKeyword(text, KEYWORDS.cancel)) {
+    const cancelled = await findUpcomingAppointment(supabase, clinic.id, contactPhone);
+    if (cancelled) {
+      const { error } = await supabase.from("reva_appointments").update({ status: "Cancelled" }).eq("id", cancelled.id).eq("clinic_id", clinic.id);
+      if (!error) await recordBotAudit(supabase, clinic.id, "appointment.cancelled_via_whatsapp", cancelled.id, contactPhone);
+    }
     await saveState(supabase, clinic.id, contactPhone, "idle", {});
-    await reply(clinic, contactPhone, `No problem! Your appointment has been cancelled. Feel free to book again anytime. 😊`);
+    await reply(clinic, contactPhone, cancelled
+      ? "Your upcoming appointment has been cancelled. Reply BOOK whenever you would like a new time."
+      : "I could not find an upcoming appointment to cancel. A receptionist can help you.");
     return;
   }
 
-  if (matchesKeyword(text, KEYWORDS.reschedule) && state !== "idle") {
+  if (matchesKeyword(text, KEYWORDS.reschedule)) {
+    const appointment = await findUpcomingAppointment(supabase, clinic.id, contactPhone);
+    if (!appointment?.doctor_id) {
+      await reply(clinic, contactPhone, "I could not find an upcoming appointment to reschedule. A receptionist can help you.");
+      return;
+    }
     state = "show_slots";
-    context.selected_time = undefined;
+    const dates = nextDays(5);
+    context = {
+      ...context,
+      patient_id: appointment.patient_id,
+      selected_doctor_id: appointment.doctor_id,
+      selected_doctor_name: appointment.doctor?.name,
+      reschedule_appointment_id: appointment.id,
+      appointment_type: appointment.type,
+      selected_time: undefined,
+      _dates: dates,
+    };
     await saveState(supabase, clinic.id, contactPhone, state, context);
+    await reply(clinic, contactPhone, dates.map((date, index) => `${index + 1}. ${formatDate(date)}`).join("\n") + "\n\nReply with a number to choose a new date.");
+    return;
   }
 
   // --- State machine ---
@@ -248,19 +261,7 @@ export async function handleBotMessage(
         .single();
 
       const duration = doctor?.slot_duration_minutes ?? 15;
-      const slots = generateSlots(pickedDate, duration);
-
-      // Check existing appointments for that doctor+date to show only free slots
-      const { data: taken } = await supabase
-        .from("reva_appointments")
-        .select("appointment_time")
-        .eq("clinic_id", clinic.id)
-        .eq("doctor_id", context.selected_doctor_id!)
-        .eq("appointment_date", pickedDate)
-        .in("status", ["Confirmed", "Pending"]);
-
-      const takenTimes = new Set((taken ?? []).map(a => a.appointment_time.slice(0, 5)));
-      const freeSlots = slots.filter(s => !takenTimes.has(s));
+      const freeSlots = await getAvailableSlots(supabase, clinic.id, context.selected_doctor_id!, pickedDate, duration);
 
       if (!freeSlots.length) {
         await reply(clinic, contactPhone, `Sorry, no slots available on ${formatDate(pickedDate)}. Please pick another date.`);
@@ -302,20 +303,39 @@ export async function handleBotMessage(
     case "booked": {
       if (matchesKeyword(text, KEYWORDS.yes)) {
         // Create appointment
-        const { data: appt } = await supabase
-          .from("reva_appointments")
-          .insert({
-            clinic_id: clinic.id,
-            patient_id: context.patient_id,
-            doctor_id: context.selected_doctor_id,
-            appointment_date: context.selected_date,
-            appointment_time: context.selected_time,
-            type: "General Checkup",
-            status: "Confirmed",
-            confirmed_via: "whatsapp",
-          })
+        const booking = {
+              clinic_id: clinic.id,
+              patient_id: context.patient_id,
+              doctor_id: context.selected_doctor_id,
+              appointment_date: context.selected_date,
+              appointment_time: context.selected_time,
+              type: context.appointment_type ?? "General Checkup",
+              status: "Confirmed",
+              confirmed_via: "whatsapp",
+            };
+        const query = context.reschedule_appointment_id
+          ? supabase.from("reva_appointments").update(booking).eq("id", context.reschedule_appointment_id).eq("clinic_id", clinic.id)
+          : supabase.from("reva_appointments").insert(booking);
+        const { data: savedBooking, error: bookingError } = await query
           .select("id")
           .single();
+
+        if (bookingError) {
+          const conflict = bookingError.code === "23505";
+          await reply(clinic, contactPhone, conflict
+            ? "That slot was just taken. Please choose another available time."
+            : "I could not complete that booking. A receptionist has been notified.");
+          await saveState(supabase, clinic.id, contactPhone, conflict ? "show_slots" : "idle", context);
+          break;
+        }
+
+        await recordBotAudit(
+          supabase,
+          clinic.id,
+          context.reschedule_appointment_id ? "appointment.rescheduled_via_whatsapp" : "appointment.created_via_whatsapp",
+          savedBooking.id,
+          contactPhone,
+        );
 
         const dateStr = formatDate(context.selected_date!);
         const timeStr = formatTime(context.selected_time!);
@@ -337,8 +357,36 @@ export async function handleBotMessage(
 
 // --- Helpers ---
 
+async function findUpcomingAppointment(
+  supabase: ReturnType<typeof createAdminClient>,
+  clinicId: string,
+  phone: string,
+) {
+  const { data: patient } = await supabase.from("reva_patients")
+    .select("id")
+    .eq("clinic_id", clinicId)
+    .eq("phone", phone)
+    .maybeSingle();
+  if (!patient) return null;
+
+  const { data } = await supabase.from("reva_appointments")
+    .select("id,patient_id,doctor_id,type,appointment_date,appointment_time,doctor:reva_doctors(name)")
+    .eq("clinic_id", clinicId)
+    .eq("patient_id", patient.id)
+    .in("status", ["Pending", "Confirmed"])
+    .gte("appointment_date", today())
+    .order("appointment_date")
+    .order("appointment_time")
+    .limit(1)
+    .maybeSingle();
+
+  if (!data) return null;
+  const doctor = data.doctor as unknown as { name: string } | null;
+  return { ...data, doctor };
+}
+
 async function goToShowDoctors(
-  supabase: Awaited<ReturnType<typeof createClient>>,
+  supabase: ReturnType<typeof createAdminClient>,
   clinic: RevaClinic,
   contactPhone: string,
   context: BotContext
@@ -349,7 +397,7 @@ async function goToShowDoctors(
     .eq("clinic_id", clinic.id);
 
   if (!doctors?.length) {
-    await sendWhatsAppMessage(contactPhone, "Sorry, no doctors are available right now. Please call the clinic.", clinic.whatsapp_phone_id, clinic.whatsapp_token);
+    await reply(clinic, contactPhone, "Sorry, no doctors are available right now. Please call the clinic.");
     return;
   }
 
@@ -357,38 +405,85 @@ async function goToShowDoctors(
     // Auto-select only doctor
     context.selected_doctor_id = doctors[0].id;
     context.selected_doctor_name = doctors[0].name;
-    await sendWhatsAppMessage(contactPhone, `Great! You'll be seeing *${doctors[0].name}*.\n\nWhich date works for you?`, clinic.whatsapp_phone_id, clinic.whatsapp_token);
+    await reply(clinic, contactPhone, `Great! You'll be seeing *${doctors[0].name}*.\n\nWhich date works for you?`);
     const dates = nextDays(5);
     const dateList = dates.map((d, i) => `${i + 1}. ${formatDate(d)}`).join("\n");
-    await sendWhatsAppMessage(contactPhone, dateList + "\n\nReply with a number (1-5).", clinic.whatsapp_phone_id, clinic.whatsapp_token);
+    await reply(clinic, contactPhone, dateList + "\n\nReply with a number (1-5).");
     await saveState(supabase, clinic.id, contactPhone, "show_slots", { ...context, _dates: dates });
   } else {
     const list = doctors.map((d, i) => `${i + 1}. ${d.name}${d.specialization ? ` (${d.specialization})` : ""}`).join("\n");
-    await sendWhatsAppMessage(contactPhone, `Who would you like to see?\n\n${list}\n\nReply with a number.`, clinic.whatsapp_phone_id, clinic.whatsapp_token);
+    await reply(clinic, contactPhone, `Who would you like to see?\n\n${list}\n\nReply with a number.`);
     await saveState(supabase, clinic.id, contactPhone, "show_doctors", context);
   }
 }
 
 async function confirmAndBook(
-  supabase: Awaited<ReturnType<typeof createClient>>,
+  supabase: ReturnType<typeof createAdminClient>,
   clinic: RevaClinic,
   contactPhone: string,
   context: BotContext
 ) {
   const dateStr = formatDate(context.selected_date!);
   const timeStr = formatTime(context.selected_time!);
-  await sendWhatsAppMessage(contactPhone,
-    `Almost done! ✅\n\n*${context.patient_name}*\nDoctor: ${context.selected_doctor_name}\nDate: ${dateStr}\nTime: ${timeStr}\n\nReply *YES* to confirm or *NO* to cancel.`,
-    clinic.whatsapp_phone_id, clinic.whatsapp_token);
+  await reply(clinic, contactPhone,
+    `Almost done! ✅\n\n*${context.patient_name}*\nDoctor: ${context.selected_doctor_name}\nDate: ${dateStr}\nTime: ${timeStr}\n\nReply *YES* to confirm or *NO* to cancel.`);
   await saveState(supabase, clinic.id, contactPhone, "booked", context);
 }
 
 async function reply(clinic: RevaClinic, to: string, text: string) {
-  await sendWhatsAppMessage(to, text, clinic.whatsapp_phone_id, clinic.whatsapp_token);
+  const supabase = createAdminClient();
+  const { data: conversation } = await supabase.from("reva_conversations")
+    .select("id")
+    .eq("clinic_id", clinic.id)
+    .eq("contact_phone", to)
+    .maybeSingle();
+
+  const { data: message } = conversation
+    ? await supabase.from("reva_messages").insert({
+        conversation_id: conversation.id,
+        clinic_id: clinic.id,
+        direction: "outbound",
+        content: text,
+        status: "queued",
+        sent_by: "automation",
+      }).select("id").single()
+    : { data: null };
+
+  try {
+    const result = await sendWhatsAppMessage(to, text, clinic.whatsapp_phone_id, clinic.whatsapp_token);
+    if (message) {
+      await supabase.from("reva_messages").update({
+        status: "sent",
+        wa_message_id: result.messages?.[0]?.id ?? null,
+      }).eq("id", message.id);
+    }
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : "WhatsApp send failed";
+    if (message && conversation) {
+      await supabase.from("reva_messages").update({ status: "failed", error_message: reason }).eq("id", message.id);
+      await supabase.from("reva_message_jobs").insert({
+        clinic_id: clinic.id,
+        conversation_id: conversation.id,
+        recipient_phone: to,
+        kind: "manual",
+        idempotency_key: `bot-retry:${message.id}:${randomUUID()}`,
+        payload: { text, message_id: message.id, requires_consent: false },
+      });
+      return;
+    }
+    throw error;
+  }
+
+  if (conversation) {
+    await supabase.from("reva_conversations").update({
+      last_message: text.slice(0, 200),
+      last_message_at: new Date().toISOString(),
+    }).eq("id", conversation.id);
+  }
 }
 
 async function saveState(
-  supabase: Awaited<ReturnType<typeof createClient>>,
+  supabase: ReturnType<typeof createAdminClient>,
   clinicId: string,
   phone: string,
   state: BotState,
@@ -402,4 +497,20 @@ async function saveState(
     expires_at: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
     updated_at: new Date().toISOString(),
   }, { onConflict: "clinic_id,contact_phone" });
+}
+
+async function recordBotAudit(
+  supabase: ReturnType<typeof createAdminClient>,
+  clinicId: string,
+  action: string,
+  appointmentId: string,
+  phone: string,
+) {
+  await supabase.from("reva_audit_events").insert({
+    clinic_id: clinicId,
+    action,
+    entity_type: "appointment",
+    entity_id: appointmentId,
+    metadata: { channel: "whatsapp", phone_suffix: phone.slice(-4) },
+  });
 }

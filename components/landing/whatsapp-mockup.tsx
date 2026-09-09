@@ -128,7 +128,7 @@ export function WhatsAppMockup() {
         {
           id: "m-2",
           side: "out",
-          text: "Hello! Welcome to Aloka Eye Clinic. 👋 We have open slots for comprehensive LASIK evaluation with Dr. Sharma this week. Please select your preferred time:",
+          text: "Hello! Welcome to Demo Clinic. 👋 I can show the clinic's approved services and available appointment times. Please select your preferred time:",
           time: "4:02 PM",
           slots: ["Thu 4:00 PM", "Fri 11:30 AM", "Sat 2:00 PM"],
         },
@@ -142,6 +142,8 @@ export function WhatsAppMockup() {
   };
 
   useEffect(() => {
+    // Language changes intentionally reset this self-contained demo state.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     resetConversation();
     return () => clearTimers();
   }, [isAr]);
@@ -317,6 +319,8 @@ export function WhatsAppMockup() {
 
     const time = formatTime();
     const userMsg: MessageItem = {
+      // Event handlers may allocate a unique local demo-message id.
+      // eslint-disable-next-line react-hooks/purity
       id: `user-${Date.now()}`,
       side: "in",
       text: raw,
@@ -340,8 +344,8 @@ export function WhatsAppMockup() {
             id: `reva-${Date.now()}`,
             side: "out",
             text: isAr
-              ? "تبدأ عمليات الفيمتو ليزك المخصصة من 4,900 درهم للعينين شاملة فحوصات القرنية الطبوغرافية ثلاثية الأبعاد والمتابعة لمدة 3 أشهر مع د. شارما. فحص الملاءمة الشامل هو 500 درهم (يُخصم بالكامل عند إجراء العملية). تتوفر خطط تقسيط ميسرة 0% عبر تابي وتمارا."
-              : "Custom Femto-LASIK at Aloka starts from AED 4,900 for both eyes, including all pre-op Pentacam 3D corneal scans and 3 months of follow-up care with Dr. Sharma. Initial suitability assessment is AED 500 (100% credited toward the procedure). Flexible 0% installments available via Tabby & Tamara.",
+              ? "تختلف الأسعار وخيارات الدفع حسب العيادة والخدمة. يمكنني مشاركة قائمة الأسعار التي تعتمدها العيادة أو تحويلك إلى موظف الاستقبال للتأكيد."
+              : "Prices and payment options depend on the clinic and service. I can share the clinic-approved price list or hand this conversation to reception for confirmation.",
             time: replyTime,
             slots: isAr
               ? ["الخميس 4:00 م", "الجمعة 11:30 ص", "السبت 2:00 م"]
@@ -368,8 +372,8 @@ export function WhatsAppMockup() {
             id: `reva-${Date.now()}`,
             side: "out",
             text: isAr
-              ? "📍 عيادة ألوكا للعيون: جناح 402، مبنى 64 (مجمع الرازي الطبي)، مدينة دبي للرعاية الصحية (DHCC)، دبي. تتوفر خدمة صف السيارات مجاناً أمام المدخل."
-              : "📍 Aloka Eye Clinic: Suite 402, Building 64 (Al Razi Medical Complex), Dubai Healthcare City (DHCC), Dubai. Complimentary patient valet parking is available at the entrance.",
+              ? "📍 يمكنني مشاركة دبوس الموقع والاتجاهات المعتمدة من العيادة. لا يستخدم هذا العرض عنوان عيادة حقيقية."
+              : "📍 I can share the clinic-approved location pin and directions. This demo does not use a real clinic address.",
             time: replyTime,
             slots: isAr
               ? ["الخميس 4:00 م", "الجمعة 11:30 ص", "ساعات الدوام"]
@@ -396,8 +400,8 @@ export function WhatsAppMockup() {
             id: `reva-${Date.now()}`,
             side: "out",
             text: isAr
-              ? "الدكتورة بريا شارما هي استشارية أولى لجراحة القرنية والليزك والعيون (مرخصة من هيئة الصحة بدبي DHA، بخبرة أكثر من 16 عاماً، وأجرت أكثر من 12,000 عملية ناجحة). هل ترغب في حجز استشارة معها؟"
-              : "Dr. Priya Sharma is our Senior Consultant Cornea & Refractive Surgeon (DHA Licensed, 16+ years clinical experience, 12,000+ laser vision corrections performed). Shall I schedule your evaluation with her?",
+              ? "يمكنني عرض قائمة الأطباء والخدمات والمواعيد التي تعتمدها العيادة. هل ترغب في اختيار طبيب أو أول موعد متاح؟"
+              : "I can show the clinic-approved practitioner list, services, and available times. Would you prefer a specific practitioner or the first available appointment?",
             time: replyTime,
             slots: isAr
               ? ["الخميس 4:00 م", "الجمعة 11:30 ص", "السبت 2:00 م"]
@@ -425,7 +429,7 @@ export function WhatsAppMockup() {
             side: "out",
             text: isAr
               ? "✅ تم تأكيد موعدك بنجاح في عيادة ألوكا للعيون مع د. شارما! تم إرسال رابط الاستبيان الطبي المسبق لهاتفك."
-              : "✅ Confirmed! Your appointment is locked in with Dr. Sharma at Aloka Eye Clinic. A digital pre-consultation intake form has been sent.",
+              : "✅ Confirmed! Your appointment is recorded in the demo calendar. The clinic's configured confirmation and consent steps can now be sent.",
             time: replyTime,
             isConfirmed: true,
           };
@@ -473,6 +477,8 @@ export function WhatsAppMockup() {
 
     const time = formatTime();
     const userMsg: MessageItem = {
+      // Event handlers may allocate a unique local demo-message id.
+      // eslint-disable-next-line react-hooks/purity
       id: `slot-user-${Date.now()}`,
       side: "in",
       text: slotText,
@@ -660,7 +666,7 @@ export function WhatsAppMockup() {
                   </span>
                   <div className="min-w-0 flex-1 leading-tight">
                     <p className="flex items-center gap-1.5 truncate text-[13px] font-bold">
-                      Aloka Eye Clinic
+                      Demo Clinic
                       <span className="rounded bg-white/15 px-1.5 py-px text-[8.5px] font-semibold tracking-wide text-white/90">
                         {t.mockup.business}
                       </span>

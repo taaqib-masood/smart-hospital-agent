@@ -11,6 +11,8 @@ export interface RevaClinic {
   registration_no: string | null;
   greeting_message: string;
   reminder_hours_before: number;
+  timezone: string;
+  currency: string;
   working_hours: Record<string, { open: string; close: string } | null>;
   created_at: string;
   updated_at: string;
@@ -77,6 +79,7 @@ export interface RevaConversation {
   contact_phone: string;
   last_message: string | null;
   last_message_at: string;
+  last_inbound_at: string | null;
   unread_count: number;
   is_bot_active: boolean;
   created_at: string;
@@ -90,7 +93,7 @@ export interface RevaMessage {
   content: string;
   message_type: string;
   wa_message_id: string | null;
-  status: "sent" | "delivered" | "read" | "failed";
+  status: "queued" | "sent" | "delivered" | "read" | "failed" | "suppressed";
   sent_by: string;
   sent_at: string;
 }

@@ -11,7 +11,7 @@ import { RevaBrand } from "./brand";
 import { LeadDialogButton } from "./lead-dialog";
 import { useLang } from "./language-provider";
 
-const LINK_HREFS = ["#features", "#how-it-works", "#pricing"] as const;
+const LINK_HREFS = ["#features", "#how-it-works", "#chat"] as const;
 
 /** Highlights the nav link whose section currently occupies the viewport band. */
 function useActiveSection(ids: string[]) {
@@ -89,7 +89,7 @@ export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const { t } = useLang();
-  const active = useActiveSection(["features", "how-it-works", "pricing"]);
+  const active = useActiveSection(["features", "how-it-works", "chat"]);
 
   const links = [
     { label: t.nav.features, href: LINK_HREFS[0] },
@@ -170,7 +170,7 @@ export function Navbar() {
             className="h-9 px-3.5 text-sm font-medium text-slate-600 hover:text-slate-950"
             asChild
           >
-            <a href="#portal">{t.nav.login}</a>
+            <a href="/dashboard">{t.nav.login}</a>
           </Button>
           <LangToggle />
           <LeadDialogButton
@@ -241,8 +241,7 @@ export function Navbar() {
                 {t.nav.tryAgent}
               </a>
               <a
-                href="#portal"
-                onClick={handleMobileNav("#portal")}
+                href="/dashboard"
                 className="block rounded-lg px-3 py-2.5 text-[15px] font-medium text-slate-700 transition-colors hover:bg-slate-50"
               >
                 {t.nav.login}

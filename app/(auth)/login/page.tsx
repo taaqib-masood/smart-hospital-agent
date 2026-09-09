@@ -20,8 +20,6 @@ function LoginForm() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  const supabase = createClient();
-
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
@@ -34,6 +32,7 @@ function LoginForm() {
     }
 
     try {
+      const supabase = createClient();
       if (mode === "login") {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
@@ -42,15 +41,16 @@ function LoginForm() {
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
-          options: { emailRedirectTo: `${window.location.origin}/api/auth/callback` },
+          options: {
+            emailRedirectTo: `${window.location.origin}/api/auth/callback`,
+            data: { clinic_name: clinicName.trim(), reva_create_clinic: true },
+          },
         });
         if (error) throw error;
 
-        if (data.user) {
-          await supabase.from("reva_clinics").insert({
-            owner_id: data.user.id,
-            name: clinicName || "My Clinic",
-          });
+        if (data.session) {
+          router.push(next);
+          return;
         }
 
         setSuccess("Check your email to confirm your account, then log in.");
@@ -72,7 +72,7 @@ function LoginForm() {
         </div>
         <div>
           <span className="text-[#0F172A] font-bold text-2xl tracking-tight">Reva AI</span>
-          <p className="text-xs font-semibold text-slate-500">Autonomous Clinic Portal</p>
+          <p className="text-xs font-semibold text-slate-500">WhatsApp Receptionist Portal</p>
         </div>
       </div>
 
@@ -124,14 +124,15 @@ function LoginForm() {
               <input
                 value={clinicName}
                 onChange={(e) => setClinicName(e.target.value)}
-                placeholder="Dr. Sharma's Clinic"
+                required
+                placeholder="Your clinic name"
                 className="w-full px-3.5 py-2.5 bg-[#F8FAFC] border border-[#CCD5DF] rounded-xl text-[#0F172A] text-xs focus:outline-none focus:border-[#00685f] focus:bg-white transition-colors"
               />
             </div>
           )}
 
           <div>
-            <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">Doctor Email</label>
+            <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">Work Email</label>
             <div className="relative">
               <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input
@@ -139,7 +140,7 @@ function LoginForm() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                placeholder="doctor@clinic.com"
+                placeholder="reception@clinic.ae"
                 className="w-full pl-10 pr-3.5 py-2.5 bg-[#F8FAFC] border border-[#CCD5DF] rounded-xl text-[#0F172A] text-xs focus:outline-none focus:border-[#00685f] focus:bg-white transition-colors"
               />
             </div>

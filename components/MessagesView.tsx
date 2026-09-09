@@ -6,41 +6,29 @@ import {
   Search,
   Send,
   Phone,
-  Video,
-  MoreVertical,
   Paperclip,
   Smile,
   Mic,
-  Check,
   CheckCheck,
-  FileText,
-  Download,
   Play,
   Pause,
-  Clock,
-  Calendar,
   CreditCard,
-  MapPin,
   Sparkles,
   User,
-  Shield,
   X,
   Plus,
-  ArrowLeft,
-  ChevronRight,
-  ExternalLink,
-  Pill,
-  Activity
+  Shield,
 } from "lucide-react";
 import { useDashboard } from "@/lib/dashboard-context";
-import { sendMessage, markConversationRead, getMessages } from "@/lib/api";
-import type { RevaConversation, RevaMessage } from "@/lib/supabase/types";
+import { sendMessage, markConversationRead, getMessages, setConversationAutomation } from "@/lib/api";
+import type { RevaMessage } from "@/lib/supabase/types";
+import { usePortalLanguage } from "@/lib/i18n/portal";
 
 interface MessagesViewProps {
   addToast: (msg: string, type: "success" | "info" | "warn") => void;
 }
 
-type MessageType = "text" | "booking_card" | "rx_attachment" | "voice_note" | "lab_attachment";
+type MessageType = "text" | "booking_card" | "voice_note";
 
 interface ChatMessage {
   id: string;
@@ -72,8 +60,6 @@ interface WhatsAppContact {
   category: "appointment" | "followup" | "general";
   tag: string;
   upcomingAppt?: string;
-  bloodGroup?: string;
-  allergies?: string[];
   messages: ChatMessage[];
   _realId?: string;
 }
@@ -93,8 +79,6 @@ const DEFAULT_CONTACTS: WhatsAppContact[] = [
     category: "appointment",
     tag: "Implant Consultation Booked",
     upcomingAppt: "Tomorrow, 10:30 AM (Dental Implant Consultation)",
-    bloodGroup: "O+",
-    allergies: ["None recorded"],
     messages: [
       {
         id: "m1",
@@ -165,7 +149,7 @@ const DEFAULT_CONTACTS: WhatsAppContact[] = [
       {
         id: "m10",
         from: "reva",
-        text: "✅ Booked & Confirmed!\n\n📍 Patient: Sarah Al-Hashimi\n🩺 Service: Dental Implant Consultation & 3D CT Scan\n👩‍⚕️ Doctor: Dr. Basmah\n📅 Slot: Tomorrow at 10:30 AM\n🏢 Location: Dar Basmah Dental Clinic, Jumeirah 1, Dubai\n\nA confirmation SMS and calendar invite have been sent. Please arrive 10 minutes prior for initial scans.",
+        text: "✅ Booked & Confirmed!\n\n📍 Patient: Sarah Al-Hashimi\n🩺 Service: Dental Implant Consultation\n👩‍⚕️ Practitioner: Dr. Basmah\n📅 Slot: Tomorrow at 10:30 AM\n\nPlease arrive 10 minutes before your appointment.",
         time: "10:18 AM",
         type: "text",
       },
@@ -177,46 +161,40 @@ const DEFAULT_CONTACTS: WhatsAppContact[] = [
     phone: "+971 55 234 5678",
     avatarColor: "bg-teal-700",
     initials: "RG",
-    lastMessage: "Thank you doctor! Should I take the Paracetamol after meals?",
+    lastMessage: "Can you move my follow-up to next week?",
     lastMessageTime: "08:45 AM",
     unreadCount: 1,
     isOnline: false,
     statusText: "last seen today at 8:45 AM",
     category: "followup",
-    tag: "Digital Rx Dispatched",
+    tag: "Reschedule Requested",
     upcomingAppt: "In 2 weeks (Follow-up)",
-    bloodGroup: "O+",
-    allergies: [],
     messages: [
       {
         id: "rg1",
         from: "patient",
-        text: "Hi doctor, I finished my consultation earlier today. Could you please send me a digital copy of my prescription?",
+        text: "Hi, I need to move my follow-up appointment to next week.",
         time: "08:14 AM",
         type: "text",
       },
       {
         id: "rg2",
         from: "reva",
-        text: "Hello Rahul! Here is your verified digital prescription PDF from Dr. Basmah:",
+        text: "Of course. Which day next week would suit you?",
         time: "08:15 AM",
-        type: "rx_attachment",
-        meta: {
-          fileName: "Rx_DarBasmah_RahulGupta_2026.pdf",
-          fileSize: "1.2 MB",
-        },
+        type: "text",
       },
       {
         id: "rg3",
         from: "patient",
-        text: "Thank you doctor! Should I take the Paracetamol after meals?",
+        text: "Tuesday afternoon, if available.",
         time: "08:45 AM",
         type: "text",
       },
       {
         id: "rg4",
         from: "reva",
-        text: "Yes, take 1 tablet Paracetamol 500mg after meals, 3 times a day. Stay well hydrated!",
+        text: "A receptionist is checking Tuesday afternoon and will confirm shortly.",
         time: "08:46 AM",
         type: "text",
       },
@@ -236,13 +214,11 @@ const DEFAULT_CONTACTS: WhatsAppContact[] = [
     category: "general",
     tag: "Voice Inquiry",
     upcomingAppt: "Saturday, 11:30 AM (Dental)",
-    bloodGroup: "A+",
-    allergies: ["Penicillin"],
     messages: [
       {
         id: "an1",
         from: "patient",
-        text: "Hello doctor, sending a quick audio message describing my wisdom tooth pain.",
+        text: "Hello, I am sending a voice note about the appointment time I prefer.",
         time: "Yesterday 4:10 PM",
         type: "voice_note",
         meta: {
@@ -253,7 +229,7 @@ const DEFAULT_CONTACTS: WhatsAppContact[] = [
       {
         id: "an2",
         from: "reva",
-        text: "We have reviewed your symptoms. Dr. Basmah recommends a dental extraction evaluation. We have reserved Saturday at 11:30 AM for you.",
+        text: "Thank you. Your voice note was received and a receptionist will help confirm an available appointment.",
         time: "Yesterday 4:12 PM",
         type: "text",
       },
@@ -265,40 +241,33 @@ const DEFAULT_CONTACTS: WhatsAppContact[] = [
     phone: "+971 58 456 7890",
     avatarColor: "bg-[#005049]",
     initials: "VP",
-    lastMessage: "Lab investigation report attached.",
+    lastMessage: "Consent link received, thank you.",
     lastMessageTime: "Yesterday",
     unreadCount: 0,
     isOnline: false,
     statusText: "last seen yesterday at 6:00 PM",
     category: "appointment",
-    tag: "Lab Reports Ready",
+    tag: "Consent Pending",
     upcomingAppt: "Monday, 12:00 PM",
-    bloodGroup: "AB+",
-    allergies: ["Aspirin"],
     messages: [
       {
         id: "vp1",
         from: "patient",
-        text: "Good afternoon, are my diagnostic blood test and lipid reports from Al Zahra ready yet?",
+        text: "Good afternoon, can you resend the consent form for Monday's appointment?",
         time: "Yesterday 3:28 PM",
         type: "text",
       },
       {
         id: "vp2",
         from: "reva",
-        text: "Hi Vikram, your Fasting Blood Sugar and Lipid Profile reports from Al Zahra Diagnostics, Dubai are ready:",
+        text: "Yes. A new secure consent link has been sent to this WhatsApp number.",
         time: "Yesterday 3:30 PM",
-        type: "lab_attachment",
-        meta: {
-          fileName: "LabReport_VikramPatel_CBC_Lipid.pdf",
-          fileSize: "2.4 MB",
-          reportType: "Lipid Profile & HbA1c",
-        },
+        type: "text",
       },
       {
         id: "vp3",
         from: "patient",
-        text: "Received, thank you! I will discuss the values with Dr. Basmah during my Monday visit.",
+        text: "Consent link received, thank you.",
         time: "Yesterday 3:45 PM",
         type: "text",
       },
@@ -310,13 +279,13 @@ const QUICK_REPLIES = [
   "⚡ Escalate to Coordinator",
   "✅ Confirm Appointment",
   "📍 Clinic Location & Directions",
-  "💳 Send Digital Payment Link (AED)",
-  "📄 Send Digital Rx PDF",
-  "⭐ Request Google Review",
+  "🗓️ Ask for Preferred Time",
 ];
 
 export default function MessagesView({ addToast }: MessagesViewProps) {
-  const { conversations: realConvos, refresh } = useDashboard();
+  const { locale, t } = usePortalLanguage();
+  const { clinic, conversations: realConvos, refresh } = useDashboard();
+  const demoMode = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
   const [contacts, setContacts] = useState<WhatsAppContact[]>(DEFAULT_CONTACTS);
   const [activeContactId, setActiveContactId] = useState<string>("c1");
   const [takenOverIds, setTakenOverIds] = useState<Record<string, boolean>>({});
@@ -329,7 +298,51 @@ export default function MessagesView({ addToast }: MessagesViewProps) {
   const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const localMessageId = useRef(0);
   const activeContact = contacts.find((c) => c.id === activeContactId) || contacts[0];
+
+  useEffect(() => {
+    if (!realConvos.length) return;
+    const mapped = realConvos.map((conversation) => {
+      const name = conversation.contact_name || conversation.contact_phone;
+      return {
+        id: conversation.id,
+        _realId: conversation.id,
+        name,
+        phone: conversation.contact_phone,
+        avatarColor: "bg-[#00685f]",
+        initials: name.split(/\s+/).slice(0, 2).map(part => part[0]?.toUpperCase()).join("") || "WA",
+        lastMessage: conversation.last_message || "No messages yet",
+        lastMessageTime: new Date(conversation.last_message_at).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" }),
+        unreadCount: conversation.unread_count,
+        isOnline: false,
+        statusText: conversation.is_bot_active ? "automation active" : "with receptionist",
+        category: "general" as const,
+        tag: conversation.is_bot_active ? "Automated" : "Receptionist takeover",
+        messages: [],
+      };
+    });
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setContacts(mapped);
+    setTakenOverIds(Object.fromEntries(realConvos.map(conversation => [conversation.id, !conversation.is_bot_active])));
+    setActiveContactId(current => mapped.some(contact => contact.id === current) ? current : mapped[0].id);
+  }, [realConvos]);
+
+  useEffect(() => {
+    if (!activeContact?._realId) return;
+    void getMessages(activeContact._realId).then(messages => {
+      setContacts(previous => previous.map(contact => contact.id === activeContact.id ? {
+        ...contact,
+        messages: messages.map((message: RevaMessage) => ({
+          id: message.id,
+          from: message.direction === "inbound" ? "patient" : "reva",
+          text: message.content,
+          time: new Date(message.sent_at).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" }),
+          type: "text",
+        })),
+      } : contact));
+    }).catch(() => addToast("Could not load this conversation", "warn"));
+  }, [activeContact?._realId, activeContact?.id, addToast]);
 
   // Scroll to bottom
   const scrollToBottom = () => {
@@ -353,15 +366,15 @@ export default function MessagesView({ addToast }: MessagesViewProps) {
     return c.category === filterTab;
   });
 
-  const handleSendMessage = (textToSend?: string) => {
+  const handleSendMessage = async (textToSend?: string) => {
     const msg = (textToSend || inputText).trim();
     if (!msg) return;
 
     const newMsg: ChatMessage = {
-      id: "msg-" + Date.now(),
+      id: `msg-${++localMessageId.current}`,
       from: "reva",
       text: msg,
-      time: new Date().toLocaleTimeString("en-AE", { hour: "2-digit", minute: "2-digit" }),
+      time: new Date().toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" }),
       type: "text",
     };
 
@@ -380,7 +393,18 @@ export default function MessagesView({ addToast }: MessagesViewProps) {
 
     setInputText("");
     setShowAttachMenu(false);
-    addToast("WhatsApp message dispatched ✓", "success");
+    if (activeContact._realId) {
+      try {
+        await sendMessage(activeContact._realId, msg);
+        addToast("WhatsApp message queued ✓", "success");
+        refresh();
+      } catch {
+        addToast("Message could not be queued", "warn");
+      }
+      return;
+    }
+
+    addToast("Demo message dispatched ✓", "success");
 
     // Simulate smart patient auto-response after 1.5s
     setTimeout(() => {
@@ -388,10 +412,10 @@ export default function MessagesView({ addToast }: MessagesViewProps) {
       setTimeout(() => {
         setIsTypingAI(false);
         const replyMsg: ChatMessage = {
-          id: "reply-" + Date.now(),
+          id: `reply-${++localMessageId.current}`,
           from: "patient",
-          text: "Thank you Dr. Sharma! I will follow these instructions.",
-          time: new Date().toLocaleTimeString("en-AE", { hour: "2-digit", minute: "2-digit" }),
+          text: "Thank you! I will wait for the receptionist to confirm.",
+      time: new Date().toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" }),
           type: "text",
         };
         setContacts((prev) =>
@@ -413,10 +437,10 @@ export default function MessagesView({ addToast }: MessagesViewProps) {
   const handleQuickReply = (chip: string) => {
     if (chip.includes("Escalate")) {
       const escMsg: ChatMessage = {
-        id: "esc-" + Date.now(),
+        id: `esc-${++localMessageId.current}`,
         from: "reva",
-        text: "📌 [Staff Escalation]: Please have the implant coordinator call this patient regarding 3D CBCT scan review and bone graft evaluation.",
-        time: new Date().toLocaleTimeString("en-AE", { hour: "2-digit", minute: "2-digit" }),
+        text: "📌 [Staff Escalation]: A receptionist callback has been requested for this conversation.",
+      time: new Date().toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" }),
         type: "text",
       };
       setContacts((prev) =>
@@ -432,17 +456,13 @@ export default function MessagesView({ addToast }: MessagesViewProps) {
             : c
         )
       );
-      addToast("Escalated: Implant coordinator notified for patient callback ✓", "success");
+      addToast("Escalated: receptionist callback requested ✓", "success");
     } else if (chip.includes("Confirm Appointment")) {
-      handleSendMessage("Your appointment is confirmed with Dr. Basmah at Dar Basmah Clinic. Please arrive 10 minutes prior.");
+      handleSendMessage("Your appointment is confirmed. Please arrive 10 minutes before the scheduled time.");
     } else if (chip.includes("Clinic Location")) {
-      handleSendMessage("📍 Dar Basmah Dental Center: Villa 12, Jumeirah 1 (near Jumeirah Mosque), Dubai, UAE. Complimentary valet parking available.");
-    } else if (chip.includes("Payment Link")) {
-      handleSendMessage("💳 Here is your secure digital consultation payment link: https://reva.ae/pay/inv_904 (AED 500)");
-    } else if (chip.includes("Prescription")) {
-      handleSendMessage("📄 Please find your digital prescription attached. Feel free to message here for any medication queries.");
-    } else if (chip.includes("Google Review")) {
-      handleSendMessage("⭐ We hope you had a great consultation! Would you take 30 seconds to rate Dar Basmah Clinic on Google? https://g.page/r/darbasmah");
+      handleSendMessage(clinic?.address ? `📍 Clinic location: ${clinic.address}` : "Please contact reception for the clinic's confirmed location details.");
+    } else if (chip.includes("Preferred Time")) {
+      handleSendMessage("Which day and time would you prefer for your appointment?");
     } else {
       handleSendMessage(chip);
     }
@@ -455,7 +475,7 @@ export default function MessagesView({ addToast }: MessagesViewProps) {
   return (
     <div className="flex h-[calc(100vh-140px)] bg-white border border-[#CCD5DF] rounded-2xl overflow-hidden shadow-xs">
       {/* ── LEFT PANEL: WhatsApp Chat List (340px) ─────────────────────────────────── */}
-      <div className="w-[340px] shrink-0 border-r border-[#CCD5DF] bg-[#F8FAFC] flex flex-col">
+      <div className="hidden w-[340px] shrink-0 border-r border-[#CCD5DF] bg-[#F8FAFC] flex-col lg:flex">
         {/* User Header */}
         <div className="p-3.5 border-b border-[#CCD5DF] bg-[#F8FAFC] flex items-center justify-between">
           <div className="flex items-center gap-2.5">
@@ -463,9 +483,9 @@ export default function MessagesView({ addToast }: MessagesViewProps) {
               DS
             </div>
             <div>
-              <p className="font-bold text-xs text-[#0F172A] leading-tight">Dr. Sharma&apos;s Clinic</p>
-              <p className="text-[10px] text-emerald-700 font-bold flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" /> WhatsApp Business Active
+              <p className="font-bold text-xs text-[#0F172A] leading-tight">{clinic?.name ?? (demoMode ? "Demo Clinic" : t("Clinic Inbox"))}</p>
+              <p className={`text-[10px] font-bold flex items-center gap-1 ${demoMode ? "text-slate-500" : clinic?.whatsapp_phone_id ? "text-emerald-700" : "text-amber-700"}`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${demoMode ? "bg-slate-400" : clinic?.whatsapp_phone_id ? "bg-emerald-600 animate-pulse" : "bg-amber-500"}`} /> {t(demoMode ? "Demo conversation data" : clinic?.whatsapp_phone_id ? "WhatsApp Business connected" : "WhatsApp setup required")}
               </p>
             </div>
           </div>
@@ -474,7 +494,7 @@ export default function MessagesView({ addToast }: MessagesViewProps) {
             <button
               onClick={() => addToast("Starting new WhatsApp conversation", "info")}
               className="p-1.5 rounded-lg hover:bg-slate-200 hover:text-slate-700 transition-colors"
-              title="New Chat"
+              title={t("New Chat")}
             >
               <Plus size={16} />
             </button>
@@ -489,7 +509,7 @@ export default function MessagesView({ addToast }: MessagesViewProps) {
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search chats or mobile..."
+              placeholder={t("Search chats or mobile...")}
               className="w-full pl-8 pr-3 py-1.5 bg-[#F8FAFC] border border-[#CCD5DF] rounded-lg text-xs text-[#0F172A] focus:outline-none focus:border-[#00685f] transition-all"
             />
           </div>
@@ -497,15 +517,15 @@ export default function MessagesView({ addToast }: MessagesViewProps) {
 
         {/* Filter Chips */}
         <div className="px-3 py-2 border-b border-[#CCD5DF] bg-[#F8FAFC] flex gap-1.5 overflow-x-auto text-[11px]">
-          {[
+          {([
             { id: "all", label: "All" },
             { id: "unread", label: "Unread" },
             { id: "appointment", label: "Appointments" },
             { id: "followup", label: "Follow-ups" },
-          ].map((tab) => (
+          ] satisfies Array<{ id: "all" | "unread" | "appointment" | "followup"; label: string }>).map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setFilterTab(tab.id as any)}
+              onClick={() => setFilterTab(tab.id)}
               className={`px-2.5 py-1 rounded-full font-bold whitespace-nowrap transition-all ${
                 filterTab === tab.id
                   ? "bg-[#00685f] text-white shadow-xs"
@@ -534,6 +554,7 @@ export default function MessagesView({ addToast }: MessagesViewProps) {
                   setContacts((prev) =>
                     prev.map((item) => (item.id === c.id ? { ...item, unreadCount: 0 } : item))
                   );
+                  if (c._realId) void markConversationRead(c._realId).then(refresh);
                 }}
                 className={`p-3.5 flex items-start gap-3 cursor-pointer transition-colors relative ${
                   isSelected ? "bg-teal-50/70 border-l-4 border-[#00685f]" : "bg-white hover:bg-slate-50"
@@ -582,8 +603,8 @@ export default function MessagesView({ addToast }: MessagesViewProps) {
       {/* ── CENTER PANEL: WhatsApp Chat Area ─────────────────────────────────────────── */}
       <div className="flex-1 flex flex-col bg-[#e5ddd5]/25 relative min-w-0">
         {/* WhatsApp Chat Top Header */}
-        <div className="h-16 px-4 bg-[#F8FAFC] border-b border-[#CCD5DF] flex items-center justify-between shrink-0 z-10">
-          <div className="flex items-center gap-3">
+        <div className="h-16 px-2 sm:px-4 bg-[#F8FAFC] border-b border-[#CCD5DF] flex items-center justify-between gap-2 shrink-0 z-10">
+          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
             <div className="relative">
               <div
                 className={`w-9 h-9 rounded-full ${activeContact.avatarColor} text-white font-bold text-xs flex items-center justify-center shadow-xs`}
@@ -597,20 +618,30 @@ export default function MessagesView({ addToast }: MessagesViewProps) {
 
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="font-bold text-xs text-[#0F172A] leading-tight">{activeContact.name}</h3>
+                <h3 className="hidden font-bold text-xs text-[#0F172A] leading-tight lg:block">{activeContact.name}</h3>
+                <label className="lg:hidden">
+                  <span className="sr-only">{t("Select conversation")}</span>
+                  <select
+                    value={activeContactId}
+                    onChange={(event) => setActiveContactId(event.target.value)}
+                    className="max-w-36 rounded-lg border border-[#CCD5DF] bg-white px-2 py-1 text-xs font-bold text-[#0F172A]"
+                  >
+                    {contacts.map(contact => <option key={contact.id} value={contact.id}>{contact.name}</option>)}
+                  </select>
+                </label>
                 {takenOverIds[activeContact.id] ? (
-                  <span className="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full border border-amber-200 flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-                    Receptionist Takeover
+                  <span className="hidden bg-teal-50 text-teal-800 text-[10px] font-bold px-2 py-0.5 rounded-full border border-teal-200 sm:flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse" />
+                    Receptionist in control
                   </span>
                 ) : (
-                  <span className="bg-emerald-50 text-emerald-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1">
+                  <span className="hidden bg-emerald-50 text-emerald-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-200 sm:flex items-center gap-1">
                     <Sparkles className="w-3 h-3 text-[#00685f]" />
                     Reva AI Active
                   </span>
                 )}
               </div>
-              <p className="text-[10px] text-slate-500 flex items-center gap-1 mt-0.5">
+              <p className="hidden text-[10px] text-slate-500 items-center gap-1 mt-0.5 sm:flex">
                 <span className="font-mono">{activeContact.phone}</span> •{" "}
                 <span className={activeContact.isOnline ? "text-emerald-700 font-bold" : "text-slate-400"}>
                   {activeContact.statusText}
@@ -622,55 +653,58 @@ export default function MessagesView({ addToast }: MessagesViewProps) {
           <div className="flex items-center gap-2">
             {/* Take Over / Resume AI Button */}
             <button
-              onClick={() => {
+              onClick={async () => {
                 const nextState = !takenOverIds[activeContact.id];
-                setTakenOverIds((prev) => ({ ...prev, [activeContact.id]: nextState }));
-                if (nextState) {
-                  addToast("Receptionist Takeover Active — Reva AI paused for this chat", "info");
-                } else {
-                  addToast("Reva AI resumed for this conversation ✓", "success");
+                try {
+                  if (activeContact._realId) {
+                    await setConversationAutomation(activeContact._realId, !nextState);
+                    refresh();
+                  }
+                  setTakenOverIds((prev) => ({ ...prev, [activeContact.id]: nextState }));
+                  addToast(nextState ? "Receptionist takeover active — automation paused" : "Automation resumed ✓", nextState ? "info" : "success");
+                } catch {
+                  addToast("Could not change automation state", "warn");
                 }
               }}
               className={`px-3 py-1.5 text-xs font-bold rounded-lg shadow-xs flex items-center gap-1.5 transition-all ${
                 takenOverIds[activeContact.id]
-                  ? "bg-amber-500 hover:bg-amber-600 text-white"
+                  ? "bg-teal-700 hover:bg-teal-800 text-white"
                   : "bg-[#00685f] hover:bg-[#005049] text-white"
               }`}
             >
               {takenOverIds[activeContact.id] ? (
                 <>
-                  <Sparkles size={13} /> Resume AI
+                  <Sparkles size={13} /> <span className="hidden sm:inline">{t("Resume AI")}</span>
                 </>
               ) : (
                 <>
-                  <User size={13} /> Take over
+                  <User size={13} /> <span className="hidden sm:inline">{t("Take over")}</span>
                 </>
               )}
             </button>
 
             <div className="h-4 w-px bg-slate-200 mx-0.5" />
 
-            <motion.button whileTap={{ scale: 0.9 }} onClick={() => addToast(`Calling ${activeContact.name}...`, "info")} className="p-2 rounded-lg hover:bg-slate-200 hover:text-slate-700 transition-colors" title="Voice Call"><Phone size={15} /></motion.button>
-            <motion.button whileTap={{ scale: 0.9 }} onClick={() => addToast(`Starting video consultation with ${activeContact.name}...`, "info")} className="p-2 rounded-lg hover:bg-slate-200 hover:text-slate-700 transition-colors" title="Video Consult"><Video size={16} /></motion.button>
-            <motion.button whileTap={{ scale: 0.9 }} onClick={() => setShowDossier(!showDossier)} className={`p-2 rounded-lg transition-colors ${showDossier ? "bg-[#00685f]/15 text-[#00685f]" : "hover:bg-slate-200 hover:text-slate-700"}`} title="Toggle Patient Dossier"><User size={16} /></motion.button>
+            <motion.button whileTap={{ scale: 0.9 }} onClick={() => addToast("Voice calling is awaiting the clinic-approved carrier and provider setup", "info")} className="hidden p-2 rounded-lg hover:bg-slate-200 hover:text-slate-700 transition-colors sm:block" title={t("Voice calling setup required")} aria-label={t("Voice calling setup required")}><Phone size={15} /></motion.button>
+            <motion.button whileTap={{ scale: 0.9 }} onClick={() => setShowDossier(!showDossier)} className={`hidden p-2 rounded-lg transition-colors xl:block ${showDossier ? "bg-[#00685f]/15 text-[#00685f]" : "hover:bg-slate-200 hover:text-slate-700"}`} title={t("Toggle Reception Context")}><User size={16} /></motion.button>
           </div>
         </div>
 
         {/* Escalation & Takeover Banner */}
         {takenOverIds[activeContact.id] && (
-          <div className="bg-amber-50 border-b border-amber-200 px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 text-xs z-10">
-            <div className="flex items-center gap-2 text-amber-900 font-semibold">
-              <span className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
-              <span>Receptionist Takeover Active • Reva AI auto-responses paused for this patient.</span>
+          <div className="bg-teal-50 border-b border-teal-200 px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 text-xs z-10">
+            <div className="flex items-center gap-2 text-teal-900 font-semibold">
+              <span className="w-2 h-2 rounded-full bg-teal-500 animate-ping" />
+              <span>{t("Receptionist Takeover Active • Reva AI auto-responses paused for this patient.")}</span>
             </div>
 
             <div className="flex items-center gap-2">
               <button
                 onClick={() => {
                   const escMsg: ChatMessage = {
-                    id: "esc-" + Date.now(),
+                    id: `esc-${++localMessageId.current}`,
                     from: "reva",
-                    text: "📌 [Staff Escalation]: Please have the implant coordinator call this patient regarding 3D CBCT scan review and bone graft evaluation.",
+                    text: "📌 [Staff Escalation]: A receptionist callback has been requested for this conversation.",
                     time: new Date().toLocaleTimeString("en-AE", { hour: "2-digit", minute: "2-digit" }),
                     type: "text",
                   };
@@ -687,7 +721,7 @@ export default function MessagesView({ addToast }: MessagesViewProps) {
                         : c
                     )
                   );
-                  addToast("Escalated: Implant coordinator notified for patient callback ✓", "success");
+                  addToast("Escalated: receptionist callback requested ✓", "success");
                 }}
                 className="px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-md shadow-2xs flex items-center gap-1.5 transition-colors"
               >
@@ -740,7 +774,7 @@ export default function MessagesView({ addToast }: MessagesViewProps) {
                   {/* Interactive Booking Card */}
                   {m.type === "booking_card" && m.meta?.slots && (
                     <div className="mt-2.5 pt-2 border-t border-emerald-300/50 space-y-2">
-                      <p className="text-[11px] font-bold text-[#00685f]">Available Slots with Dr. Sharma:</p>
+                      <p className="text-[11px] font-bold text-[#00685f]">{t("Available Slots with Dr. Sharma:")}</p>
                       <div className="flex flex-wrap gap-1.5">
                         {m.meta.slots.map((slot) => (
                           <button
@@ -752,52 +786,6 @@ export default function MessagesView({ addToast }: MessagesViewProps) {
                           </button>
                         ))}
                       </div>
-                    </div>
-                  )}
-
-                  {/* Rx Attachment Card */}
-                  {m.type === "rx_attachment" && (
-                    <div className="mt-2.5 p-2.5 bg-white rounded-xl border border-emerald-200 flex items-center justify-between gap-3 shadow-2xs">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-lg bg-rose-50 border border-rose-200 text-rose-600 flex items-center justify-center font-bold text-[10px]">
-                          PDF
-                        </div>
-                        <div>
-                          <p className="font-bold text-[11px] text-[#0F172A] truncate max-w-[180px]">
-                            {m.meta?.fileName || "Prescription.pdf"}
-                          </p>
-                          <p className="text-[9px] text-slate-400">{m.meta?.fileSize || "1.2 MB"}</p>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => addToast("Opening prescription preview...", "info")}
-                        className="px-2 py-1 bg-[#00685f] hover:bg-[#005049] text-white text-[10px] font-bold rounded flex items-center gap-1 shadow-2xs"
-                      >
-                        <Download size={11} /> View
-                      </button>
-                    </div>
-                  )}
-
-                  {/* Lab Attachment Card */}
-                  {m.type === "lab_attachment" && (
-                    <div className="mt-2.5 p-2.5 bg-white rounded-xl border border-emerald-200 flex items-center justify-between gap-3 shadow-2xs">
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-lg bg-teal-50 border border-teal-200 text-[#00685f] flex items-center justify-center font-bold text-[10px]">
-                          LAB
-                        </div>
-                        <div>
-                          <p className="font-bold text-[11px] text-[#0F172A] truncate max-w-[180px]">
-                            {m.meta?.reportType || "Diagnostic Report"}
-                          </p>
-                          <p className="text-[9px] text-slate-400">{m.meta?.fileSize || "2.4 MB"}</p>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => addToast("Opening diagnostic report...", "info")}
-                        className="px-2 py-1 bg-[#00685f] hover:bg-[#005049] text-white text-[10px] font-bold rounded flex items-center gap-1 shadow-2xs"
-                      >
-                        <Download size={11} /> PDF
-                      </button>
                     </div>
                   )}
 
@@ -853,7 +841,7 @@ export default function MessagesView({ addToast }: MessagesViewProps) {
               className="flex justify-start"
             >
               <div className="bg-white border border-[#CCD5DF] rounded-2xl rounded-tl-none px-4 py-2.5 flex items-center gap-2 shadow-xs">
-                <span className="text-[11px] font-bold text-[#00685f]">Reva AI is typing</span>
+                <span className="text-[11px] font-bold text-[#00685f]">{t("Reva AI is typing")}</span>
                 <div className="flex gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-[#00685f] animate-bounce" style={{ animationDelay: "0ms" }} />
                   <span className="w-1.5 h-1.5 rounded-full bg-[#00685f] animate-bounce" style={{ animationDelay: "150ms" }} />
@@ -869,7 +857,7 @@ export default function MessagesView({ addToast }: MessagesViewProps) {
 
         {/* Quick Action Preset Chips Bar */}
         <div className="px-4 py-2 bg-[#F8FAFC] border-t border-[#CCD5DF] flex items-center gap-1.5 overflow-x-auto text-[11px]">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 shrink-0">Quick Action:</span>
+          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 shrink-0">{t("Quick Action:")}</span>
           {QUICK_REPLIES.map((chip) => (
             <motion.button
               whileHover={{ scale: 1.02 }}
@@ -914,27 +902,21 @@ export default function MessagesView({ addToast }: MessagesViewProps) {
                 >
                   <button
                     onClick={() => {
-                      handleSendMessage("📄 [Attachment]: Digital Prescription PDF");
+                      setShowAttachMenu(false);
+                      addToast("Open Consent to create and send a secure consent link", "info");
                     }}
                     className="w-full px-3 py-2 text-left hover:bg-teal-50 hover:text-[#00685f] rounded-lg flex items-center gap-2"
                   >
-                    <FileText size={14} className="text-rose-500" /> Prescription (PDF)
+                    <Shield size={14} className="text-[#00685f]" /> Secure Consent Link
                   </button>
                   <button
                     onClick={() => {
-                      handleSendMessage("🔬 [Attachment]: Diagnostic Lab Investigation Report");
+                      setShowAttachMenu(false);
+                      addToast("Open Billing to create or remind the correct invoice", "info");
                     }}
                     className="w-full px-3 py-2 text-left hover:bg-teal-50 hover:text-[#00685f] rounded-lg flex items-center gap-2"
                   >
-                    <Activity size={14} className="text-teal-600" /> Lab Report
-                  </button>
-                  <button
-                    onClick={() => {
-                      handleSendMessage("💳 [Payment Link]: Digital Payment Request for AED 350");
-                    }}
-                    className="w-full px-3 py-2 text-left hover:bg-teal-50 hover:text-[#00685f] rounded-lg flex items-center gap-2"
-                  >
-                    <CreditCard size={14} className="text-amber-500" /> Invoice Payment Link
+                    <CreditCard size={14} className="text-amber-500" /> Billing Reminder
                   </button>
                 </motion.div>
               )}
@@ -947,7 +929,7 @@ export default function MessagesView({ addToast }: MessagesViewProps) {
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
-            placeholder="Type a WhatsApp message..."
+            placeholder={t("Type a WhatsApp message...")}
             className="flex-1 px-4 py-2.5 bg-white border border-[#CCD5DF] rounded-xl text-xs text-[#0F172A] focus:outline-none focus:border-[#00685f] shadow-2xs transition-colors"
           />
 
@@ -963,7 +945,7 @@ export default function MessagesView({ addToast }: MessagesViewProps) {
             <button
               onClick={() => addToast("Voice note recording started 🎙️", "info")}
               className="w-9 h-9 bg-white border border-[#CCD5DF] text-[#00685f] hover:bg-slate-100 flex items-center justify-center rounded-xl shadow-2xs transition-colors"
-              title="Record Voice Note"
+              title={t("Record Voice Note")}
             >
               <Mic size={16} />
             </button>
@@ -971,7 +953,7 @@ export default function MessagesView({ addToast }: MessagesViewProps) {
         </div>
       </div>
 
-      {/* ── RIGHT PANEL: Collapsible Patient Dossier (280px) ─────────────────────────── */}
+      {/* ── RIGHT PANEL: Reception context (280px) ─────────────────────────── */}
       <AnimatePresence>
         {showDossier && (
           <motion.div
@@ -979,11 +961,11 @@ export default function MessagesView({ addToast }: MessagesViewProps) {
             animate={{ width: 280, opacity: 1 }}
             exit={{ width: 0, opacity: 0 }}
             transition={{ type: "spring", stiffness: 400, damping: 30 }}
-            className="shrink-0 border-l border-[#CCD5DF] bg-[#F8FAFC] flex flex-col overflow-hidden"
+            className="hidden shrink-0 border-l border-[#CCD5DF] bg-[#F8FAFC] flex-col overflow-hidden xl:flex"
           >
             {/* Dossier Header */}
             <div className="p-4 border-b border-[#CCD5DF] bg-white flex items-center justify-between">
-              <h3 className="font-bold text-xs uppercase tracking-wider text-slate-500">Patient Dossier</h3>
+              <h3 className="font-bold text-xs uppercase tracking-wider text-slate-500">{t("Reception Context")}</h3>
               <button onClick={() => setShowDossier(false)} className="text-slate-400 hover:text-slate-600">
                 <X size={15} />
               </button>
@@ -1017,40 +999,34 @@ export default function MessagesView({ addToast }: MessagesViewProps) {
                 </p>
               </div>
 
-              {/* Clinical Vitals & Flags */}
+              {/* Automation status */}
               <div className="bg-white border border-[#CCD5DF] rounded-xl p-3.5 shadow-xs space-y-2">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
-                  Medical Summary
+                  Conversation Routing
                 </span>
                 <div className="flex justify-between text-slate-600 text-[11px]">
-                  <span>Blood Group:</span>
-                  <span className="font-bold text-[#0F172A]">{activeContact.bloodGroup || "B+"}</span>
+                  <span>{t("Automation:")}</span>
+                  <span className="font-bold text-[#0F172A]">{takenOverIds[activeContact.id] ? "Paused" : "Active"}</span>
                 </div>
                 <div className="flex justify-between text-slate-600 text-[11px]">
-                  <span>Allergies:</span>
-                  {activeContact.allergies && activeContact.allergies.length > 0 ? (
-                    <span className="font-bold text-rose-700 bg-rose-50 px-1.5 rounded">
-                      {activeContact.allergies.join(", ")}
-                    </span>
-                  ) : (
-                    <span className="text-emerald-700 font-medium">None Reported</span>
-                  )}
+                  <span>{t("Unread:")}</span>
+                  <span className="font-bold text-[#0F172A]">{activeContact.unreadCount}</span>
                 </div>
               </div>
 
-              {/* Quick Clinical Triggers */}
+              {/* Reception workflows */}
               <div className="space-y-2 pt-1">
                 <button
-                  onClick={() => addToast(`Opening Rx Builder for ${activeContact.name}`, "info")}
+                  onClick={() => addToast(`Open Consent to send a form to ${activeContact.name}`, "info")}
                   className="w-full py-2 bg-white hover:bg-slate-100 border border-[#CCD5DF] text-slate-700 font-bold text-xs rounded-xl shadow-2xs flex items-center justify-center gap-1.5"
                 >
-                  <Pill size={13} className="text-[#00685f]" /> Create Digital Rx
+                  <Shield size={13} className="text-[#00685f]" /> Send Consent Form
                 </button>
                 <button
-                  onClick={() => addToast(`Collecting payment from ${activeContact.name}`, "info")}
+                  onClick={() => addToast(`Open Billing to manage ${activeContact.name}'s invoice`, "info")}
                   className="w-full py-2 bg-white hover:bg-slate-100 border border-[#CCD5DF] text-slate-700 font-bold text-xs rounded-xl shadow-2xs flex items-center justify-center gap-1.5"
                 >
-                  <CreditCard size={13} className="text-emerald-600" /> Collect Deposit
+                  <CreditCard size={13} className="text-emerald-600" /> Manage Billing
                 </button>
               </div>
             </div>

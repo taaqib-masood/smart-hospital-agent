@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test --experimental-strip-types tests/*.test.ts",
+    "check:config": "node scripts/check-config.mjs"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.20",

@@ -296,7 +296,7 @@ export function ChatPlayground() {
                   </span>
                   <div className="min-w-0 flex-1 leading-tight">
                     <p className="flex items-center gap-1.5 truncate text-[14px] font-bold">
-                      Aloka Eye Clinic
+                      Demo Clinic
                       <span className="rounded bg-white/15 px-1.5 py-px text-[8.5px] font-semibold tracking-wide text-white/90">
                         {t.mockup.business}
                       </span>

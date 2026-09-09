@@ -4,7 +4,7 @@ import { ArrowRight, ShieldCheck } from "lucide-react";
 import { RevaBrand, WhatsAppIcon } from "./brand";
 import { useLang } from "./language-provider";
 
-const PRODUCT_HREFS = ["#features", "#how-it-works", "#portal", "#chat", "#before-after", "#day", "#pricing", "#faq"] as const;
+const PRODUCT_HREFS = ["#features", "#how-it-works", "#chat", "#security", "#faq"] as const;
 const COMPANY_HREFS = ["#security", "#top", "#security", "#faq"] as const;
 
 export function Footer() {
@@ -96,7 +96,7 @@ export function Footer() {
               {t.footer.ctaP}
             </p>
             <a
-              href="#pricing"
+              href="#chat"
               className="mt-5 inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-aloka-500 px-5 text-[14px] font-semibold text-white shadow-[0_8px_24px_rgba(16,185,129,0.25)] transition-all hover:-translate-y-0.5 hover:bg-aloka-400 hover:shadow-[0_12px_32px_rgba(16,185,129,0.35)] sm:w-auto"
             >
               {t.footer.ctaBtn}

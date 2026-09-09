@@ -1,17 +1,19 @@
 /**
  * POST /api/whatsapp/send
- * Send a WhatsApp message from the dashboard (doctor-initiated)
+ * Queue a receptionist-authored WhatsApp message from the dashboard.
  * Body: { conversation_id, text }
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { randomUUID } from "node:crypto";
 import { createClient } from "@/lib/supabase/server";
-import { sendWhatsAppMessage } from "@/lib/whatsapp";
+import { getClinicAccess } from "@/lib/auth";
+import { enqueueMessage } from "@/lib/message-jobs";
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const access = await getClinicAccess(supabase);
+  if (!access) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json();
   const { conversation_id, text } = body;
@@ -23,41 +25,44 @@ export async function POST(req: NextRequest) {
   // Fetch conversation + clinic
   const { data: conv } = await supabase
     .from("reva_conversations")
-    .select("*, clinic:reva_clinics(id, whatsapp_phone_id, whatsapp_token, owner_id)")
+    .select("*, clinic:reva_clinics(id)")
     .eq("id", conversation_id)
+    .eq("clinic_id", access.clinicId)
     .single();
 
   if (!conv) return NextResponse.json({ error: "Conversation not found" }, { status: 404 });
 
-  const clinic = conv.clinic as { id: string; whatsapp_phone_id: string | null; whatsapp_token: string | null; owner_id: string };
-  if (clinic.owner_id !== user.id) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  const clinic = conv.clinic as { id: string };
 
-  // Send via WhatsApp
-  const result = await sendWhatsAppMessage(
-    conv.contact_phone,
-    text.trim(),
-    clinic.whatsapp_phone_id,
-    clinic.whatsapp_token
-  );
-
-  const waMessageId = result.messages?.[0]?.id;
-
-  // Save outbound message
-  const { data: msg } = await supabase.from("reva_messages").insert({
+  const content = text.trim();
+  const { data: msg, error: messageError } = await supabase.from("reva_messages").insert({
     conversation_id,
     clinic_id: clinic.id,
     direction: "outbound",
-    content: text.trim(),
-    wa_message_id: waMessageId,
-    status: "sent",
-    sent_by: "doctor",
+    content,
+    status: "queued",
+    sent_by: access.userId,
   }).select().single();
+  if (messageError || !msg) return NextResponse.json({ error: messageError?.message ?? "Could not queue message" }, { status: 500 });
+
+  const { error: jobError } = await enqueueMessage(supabase, {
+    clinicId: clinic.id,
+    conversationId: conversation_id,
+    recipientPhone: conv.contact_phone,
+    kind: "manual",
+    idempotencyKey: `manual:${msg.id}:${randomUUID()}`,
+    payload: { text: content, message_id: msg.id, requires_consent: false },
+  });
+  if (jobError) {
+    await supabase.from("reva_messages").update({ status: "failed", error_message: jobError.message }).eq("id", msg.id);
+    return NextResponse.json({ error: "Could not queue message" }, { status: 500 });
+  }
 
   // Update conversation last_message
   await supabase.from("reva_conversations").update({
-    last_message: text.trim().slice(0, 200),
+    last_message: content.slice(0, 200),
     last_message_at: new Date().toISOString(),
   }).eq("id", conversation_id);
 
-  return NextResponse.json({ message: msg });
+  return NextResponse.json({ message: msg }, { status: 202 });
 }

@@ -9,10 +9,6 @@ export function useCountUp(target: number, duration = 1200) {
   const [val, setVal] = useState(0);
 
   useEffect(() => {
-    if (target === 0) {
-      setVal(0);
-      return;
-    }
     const start = performance.now();
     let rafId: number;
 

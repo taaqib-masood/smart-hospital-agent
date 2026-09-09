@@ -10,14 +10,9 @@ import { useLang } from "./language-provider";
 const SECTIONS: { id: string; key: keyof Dict["dots"] }[] = [
   { id: "top", key: "home" },
   { id: "features", key: "features" },
-  { id: "journey", key: "journey" },
   { id: "how-it-works", key: "how" },
-  { id: "portal", key: "portal" },
   { id: "chat", key: "chat" },
-  { id: "before-after", key: "compare" },
-  { id: "day", key: "day" },
   { id: "security", key: "security" },
-  { id: "pricing", key: "pricing" },
   { id: "faq", key: "faq" },
 ];
 
