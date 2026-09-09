@@ -5,7 +5,7 @@ Complete these steps in order. Do not put API keys, tokens, or patient data in G
 ## 1. Create a disposable Supabase project
 
 1. Create a project named `reva-staging`.
-2. In **SQL Editor**, run the full contents of `supabase/migrations/202609080001_receptionist_foundation.sql`.
+2. In **SQL Editor**, run every migration in `supabase/migrations/` in filename order. This creates the clinic workflow first, then moves WhatsApp access tokens out of the receptionist-readable clinic record.
 3. Copy the project URL, anon key, and service-role key into a private `.env` file:
 
 ```env
@@ -31,6 +31,8 @@ WHATSAPP_TOKEN=
 CRON_SECRET=
 ```
 
+For a per-clinic credential instead of the shared staging environment values, insert it only through a service-role/admin process into `reva_whatsapp_credentials`. Do not add an access token to `reva_clinics`, the browser, GitHub, or chat.
+
 4. Subscribe the webhook to message and delivery-status events.
 5. Use test contacts and synthetic data only until approved templates and opt-in wording exist.
 
@@ -50,7 +52,7 @@ docker compose --profile scheduler up --build
 
 - Clinic-approved English and Arabic templates, opt-in wording, service list, schedules, cancellation rules, and escalation contact.
 - UAE privacy, retention, hosting-region, and staff-access approval.
-- A payment-link merchant account and sandbox credentials before linking payments.
+- Payment links are deliberately deferred; Billing remains a manual receptionist workflow until merchant onboarding is approved.
 - A carrier-approved phone/SIP route and recorded-call policy before enabling voice.
 
 Do not enable Tabby, Tamara, or Meta SIP Calling until the clinic category and number-mode implications are approved in writing.
