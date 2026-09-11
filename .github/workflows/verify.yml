@@ -2,7 +2,7 @@ name: Verify
 
 on:
   push:
-    branches: [dev, receptionist-backend-foundation]
+    branches: ["**"]
   pull_request:
 
 jobs:

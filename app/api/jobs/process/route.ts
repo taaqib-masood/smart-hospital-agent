@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendWhatsAppMessage, sendWhatsAppTemplate } from "@/lib/whatsapp";
 import { retryDelaySeconds } from "@/lib/message-jobs";
+import { getWhatsAppCredentials } from "@/lib/whatsapp-credentials";
 
 type MessageJob = {
   id: string;
@@ -69,11 +70,7 @@ async function processJobs() {
         }
       }
 
-      const { data: clinic } = await supabase.from("reva_clinics")
-        .select("whatsapp_phone_id,whatsapp_token")
-        .eq("id", job.clinic_id)
-        .single();
-      if (!clinic) throw new Error("Clinic WhatsApp connection not found");
+      const credentials = await getWhatsAppCredentials(supabase, job.clinic_id);
 
       const templateName = typeof payload.template_name === "string" ? payload.template_name : null;
       const result = templateName
@@ -82,14 +79,14 @@ async function processJobs() {
             templateName,
             typeof payload.language_code === "string" ? payload.language_code : "en",
             Array.isArray(payload.components) ? payload.components as Record<string, unknown>[] : [],
-            clinic.whatsapp_phone_id,
-            clinic.whatsapp_token,
+            credentials.phoneId,
+            credentials.token,
           )
         : await sendWhatsAppMessage(
             job.recipient_phone,
             String(payload.text ?? ""),
-            clinic.whatsapp_phone_id,
-            clinic.whatsapp_token,
+            credentials.phoneId,
+            credentials.token,
           );
 
       const waMessageId = result.messages?.[0]?.id ?? null;

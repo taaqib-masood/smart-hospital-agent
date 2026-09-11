@@ -90,6 +90,12 @@ export const getMessages = (conversationId: string) =>
 export const sendMessage = (conversationId: string, text: string) =>
   apiFetch<{ message: RevaMessage }>("/api/whatsapp/send", { method: "POST", body: JSON.stringify({ conversation_id: conversationId, text }) }).then(r => r.message);
 
+export const sendTemplateMessage = (conversationId: string, templateId: string) =>
+  apiFetch<{ message: RevaMessage }>("/api/whatsapp/send", {
+    method: "POST",
+    body: JSON.stringify({ conversation_id: conversationId, template_id: templateId }),
+  }).then(r => r.message);
+
 export const markConversationRead = (conversationId: string) =>
   apiFetch<{ ok: boolean }>(`/api/conversations/${conversationId}/read`, { method: "POST" });
 
@@ -131,7 +137,7 @@ export interface RevaAutomationRule {
 
 export interface AutomationWorkspace {
   rules: RevaAutomationRule[];
-  templates: Array<{ id: string; purpose: string; template_name: string; language_code: string; status: "pending" | "approved" | "rejected" | "paused" }>;
+  templates: Array<{ id: string; purpose: string; template_name: string; language_code: string; status: "pending" | "approved" | "rejected" | "paused"; components: Array<Record<string, unknown>> }>;
 }
 
 export const getAutomationRules = () => apiFetch<AutomationWorkspace>("/api/automation-rules");

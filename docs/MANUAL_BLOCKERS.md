@@ -24,7 +24,7 @@ These require the founders or the pilot clinic. The application can be developed
 - [ ] Have UAE counsel/privacy staff approve the consent flow, wording, evidence model, retention, deletion, and data-subject request process.
 - [ ] Decide and document the production hosting region and data-location policy.
 - [ ] Approve staff roles and perform a real cross-clinic access test in staging.
-- [ ] Move per-clinic WhatsApp credentials to an approved secrets/encryption design before multi-tenant production use.
+- [ ] Restrict service-role access, rotate WhatsApp credentials, and approve the database-backed credential handling before multi-tenant production use. Receptionists cannot read `reva_whatsapp_credentials`.
 - [ ] Configure monitoring, credential rotation, database backups, restore testing, and incident contacts.
 
 ## Database and operations
@@ -35,10 +35,10 @@ These require the founders or the pilot clinic. The application can be developed
 - [ ] Run a one-week internal sandbox with test phone numbers and no real patient data.
 - [ ] Begin a paid 30–60 day clinic pilot only after message templates, opt-in, access control, and rollback procedures are verified.
 
-## Payment links and voice calling
+## Deferred payment links and voice calling
 
-- [ ] Obtain a UAE payment-link merchant account and test credentials; do not enable Tabby or Tamara until each clinic's category is approved in writing.
-- [ ] Provide the payment-provider webhook secret and complete test payment, failure, duplicate webhook, cancellation/refund and reconciliation checks.
+- [ ] When payment links are restarted later, obtain a UAE payment-link merchant account and test credentials; do not enable Tabby or Tamara until each clinic's category is approved in writing.
+- [ ] When payment links are restarted later, provide the payment-provider webhook secret and complete test payment, failure, duplicate webhook, cancellation/refund and reconciliation checks.
 - [ ] Choose a TDRA-compatible clinic phone/SIP carrier and obtain the provider's written UAE/data-processing confirmation.
 - [ ] Approve voice scripts, Arabic/English quality tests, human-transfer path, call/recording consent, retention and deletion rules.
 - [ ] Keep WhatsApp Calling separate from the existing messaging number until Meta's calling permissions and number-mode implications have been proven in staging.

@@ -20,9 +20,11 @@ import {
   Shield,
 } from "lucide-react";
 import { useDashboard } from "@/lib/dashboard-context";
-import { sendMessage, markConversationRead, getMessages, setConversationAutomation } from "@/lib/api";
+import { sendMessage, sendTemplateMessage, markConversationRead, getMessages, getAutomationRules, setConversationAutomation } from "@/lib/api";
+import type { AutomationWorkspace } from "@/lib/api";
 import type { RevaMessage } from "@/lib/supabase/types";
 import { usePortalLanguage } from "@/lib/i18n/portal";
+import { getWhatsAppWindow } from "@/lib/whatsapp-window";
 
 interface MessagesViewProps {
   addToast: (msg: string, type: "success" | "info" | "warn") => void;
@@ -61,6 +63,7 @@ interface WhatsAppContact {
   tag: string;
   upcomingAppt?: string;
   messages: ChatMessage[];
+  lastInboundAt?: string | null;
   _realId?: string;
 }
 
@@ -295,11 +298,23 @@ export default function MessagesView({ addToast }: MessagesViewProps) {
   const [isTypingAI, setIsTypingAI] = useState(false);
   const [showDossier, setShowDossier] = useState(true);
   const [showAttachMenu, setShowAttachMenu] = useState(false);
+  const [showTemplateMenu, setShowTemplateMenu] = useState(false);
+  const [templates, setTemplates] = useState<AutomationWorkspace["templates"]>([]);
+  const [sendingTemplate, setSendingTemplate] = useState(false);
   const [playingVoiceId, setPlayingVoiceId] = useState<string | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const localMessageId = useRef(0);
   const activeContact = contacts.find((c) => c.id === activeContactId) || contacts[0];
+  const serviceWindow = demoMode
+    ? { isOpen: true, remainingSeconds: 0, openedAt: null, closesAt: null }
+    : getWhatsAppWindow(activeContact.lastInboundAt);
+
+  const formatWindowRemaining = (remainingSeconds: number) => {
+    const hours = Math.floor(remainingSeconds / 3600);
+    const minutes = Math.ceil((remainingSeconds % 3600) / 60);
+    return hours > 0 ? `${hours}h ${minutes}m left` : `${minutes}m left`;
+  };
 
   useEffect(() => {
     if (!realConvos.length) return;
@@ -319,6 +334,7 @@ export default function MessagesView({ addToast }: MessagesViewProps) {
         statusText: conversation.is_bot_active ? "automation active" : "with receptionist",
         category: "general" as const,
         tag: conversation.is_bot_active ? "Automated" : "Receptionist takeover",
+        lastInboundAt: conversation.last_inbound_at,
         messages: [],
       };
     });
@@ -327,6 +343,13 @@ export default function MessagesView({ addToast }: MessagesViewProps) {
     setTakenOverIds(Object.fromEntries(realConvos.map(conversation => [conversation.id, !conversation.is_bot_active])));
     setActiveContactId(current => mapped.some(contact => contact.id === current) ? current : mapped[0].id);
   }, [realConvos]);
+
+  useEffect(() => {
+    if (demoMode) return;
+    void getAutomationRules()
+      .then(workspace => setTemplates(workspace.templates.filter(template => template.status === "approved")))
+      .catch(() => setTemplates([]));
+  }, [demoMode]);
 
   useEffect(() => {
     if (!activeContact?._realId) return;
@@ -369,6 +392,12 @@ export default function MessagesView({ addToast }: MessagesViewProps) {
   const handleSendMessage = async (textToSend?: string) => {
     const msg = (textToSend || inputText).trim();
     if (!msg) return;
+
+    if (!demoMode && activeContact._realId && !getWhatsAppWindow(activeContact.lastInboundAt).isOpen) {
+      setShowTemplateMenu(true);
+      addToast("This WhatsApp window is closed. Choose an approved template.", "warn");
+      return;
+    }
 
     const newMsg: ChatMessage = {
       id: `msg-${++localMessageId.current}`,
@@ -432,6 +461,39 @@ export default function MessagesView({ addToast }: MessagesViewProps) {
         );
       }, 1800);
     }, 800);
+  };
+
+  const handleSendTemplate = async (template: AutomationWorkspace["templates"][number]) => {
+    if (!activeContact._realId) {
+      addToast("Approved templates are available in live WhatsApp mode.", "info");
+      return;
+    }
+
+    setSendingTemplate(true);
+    try {
+      const message = await sendTemplateMessage(activeContact._realId, template.id);
+      const displayText = message.content || `Approved template: ${template.purpose}`;
+      const newMsg: ChatMessage = {
+        id: `template-${++localMessageId.current}`,
+        from: "reva",
+        text: displayText,
+        time: new Date().toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" }),
+        type: "text",
+      };
+      setContacts(previous => previous.map(contact => contact.id === activeContact.id ? {
+        ...contact,
+        lastMessage: displayText,
+        lastMessageTime: newMsg.time,
+        messages: [...contact.messages, newMsg],
+      } : contact));
+      setShowTemplateMenu(false);
+      addToast("Approved template queued ✓", "success");
+      refresh();
+    } catch (error) {
+      addToast(error instanceof Error ? error.message : "Template could not be queued", "warn");
+    } finally {
+      setSendingTemplate(false);
+    }
   };
 
   const handleQuickReply = (chip: string) => {
@@ -647,6 +709,18 @@ export default function MessagesView({ addToast }: MessagesViewProps) {
                   {activeContact.statusText}
                 </span>
               </p>
+              <span
+                className={`mt-1 inline-flex rounded-full border px-2 py-0.5 text-[9px] font-bold ${
+                  serviceWindow.isOpen
+                    ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                    : "border-amber-200 bg-amber-50 text-amber-800"
+                }`}
+                title={serviceWindow.closesAt ? `Closes ${new Date(serviceWindow.closesAt).toLocaleString(locale)}` : undefined}
+              >
+                {serviceWindow.isOpen
+                  ? demoMode ? t("Demo window open") : `${t("WhatsApp window open")} · ${formatWindowRemaining(serviceWindow.remainingSeconds)}`
+                  : t("Template required")}
+              </span>
             </div>
           </div>
 
@@ -871,6 +945,41 @@ export default function MessagesView({ addToast }: MessagesViewProps) {
           ))}
         </div>
 
+        {!demoMode && activeContact._realId && !serviceWindow.isOpen && (
+          <div className="mx-3 mb-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-[11px] text-amber-900">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span>{t("The 24-hour customer service window is closed. Use an approved template; free-text messages are blocked.")}</span>
+              <button
+                type="button"
+                onClick={() => setShowTemplateMenu(current => !current)}
+                className="shrink-0 rounded-lg bg-amber-700 px-2.5 py-1.5 font-bold text-white hover:bg-amber-800 disabled:opacity-50"
+                disabled={sendingTemplate}
+              >
+                {t("Use approved template")}
+              </button>
+            </div>
+            {showTemplateMenu && (
+              <div className="mt-2 space-y-1.5 border-t border-amber-200 pt-2">
+                <p className="font-bold">{t("Approved templates")}</p>
+                {templates.length === 0 ? (
+                  <p className="text-amber-800">{t("No approved templates are available for this clinic.")}</p>
+                ) : templates.map(template => (
+                  <button
+                    key={template.id}
+                    type="button"
+                    onClick={() => void handleSendTemplate(template)}
+                    disabled={sendingTemplate}
+                    className="flex w-full items-center justify-between rounded-lg border border-amber-200 bg-white px-2.5 py-2 text-left font-bold text-slate-700 hover:border-[#00685f] hover:text-[#00685f] disabled:opacity-50"
+                  >
+                    <span>{template.purpose} · {template.template_name}</span>
+                    <span className="ml-2 shrink-0 text-[10px] uppercase text-slate-400">{template.language_code}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* WhatsApp Message Input Bar */}
         <div className="p-3 bg-[#F8FAFC] border-t border-[#CCD5DF] flex items-center gap-2 relative">
           {/* Emoji Trigger */}
@@ -929,22 +1038,25 @@ export default function MessagesView({ addToast }: MessagesViewProps) {
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
-            placeholder={t("Type a WhatsApp message...")}
-            className="flex-1 px-4 py-2.5 bg-white border border-[#CCD5DF] rounded-xl text-xs text-[#0F172A] focus:outline-none focus:border-[#00685f] shadow-2xs transition-colors"
+            placeholder={serviceWindow.isOpen ? t("Type a WhatsApp message...") : t("Choose an approved template to message this patient")}
+            disabled={!serviceWindow.isOpen}
+            className="flex-1 px-4 py-2.5 bg-white border border-[#CCD5DF] rounded-xl text-xs text-[#0F172A] focus:outline-none focus:border-[#00685f] shadow-2xs transition-colors disabled:cursor-not-allowed disabled:bg-slate-100"
           />
 
           {/* Send or Voice Record Button */}
           {inputText.trim() ? (
             <button
               onClick={() => handleSendMessage()}
-              className="px-4 py-2.5 bg-[#00685f] hover:bg-[#005049] text-white text-xs font-bold rounded-xl shadow-xs flex items-center gap-1.5 transition-colors"
+              disabled={!serviceWindow.isOpen}
+              className="px-4 py-2.5 bg-[#00685f] hover:bg-[#005049] text-white text-xs font-bold rounded-xl shadow-xs flex items-center gap-1.5 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Send size={13} /> Send
             </button>
           ) : (
             <button
               onClick={() => addToast("Voice note recording started 🎙️", "info")}
-              className="w-9 h-9 bg-white border border-[#CCD5DF] text-[#00685f] hover:bg-slate-100 flex items-center justify-center rounded-xl shadow-2xs transition-colors"
+              disabled={!serviceWindow.isOpen}
+              className="w-9 h-9 bg-white border border-[#CCD5DF] text-[#00685f] hover:bg-slate-100 flex items-center justify-center rounded-xl shadow-2xs transition-colors disabled:cursor-not-allowed disabled:opacity-50"
               title={t("Record Voice Note")}
             >
               <Mic size={16} />

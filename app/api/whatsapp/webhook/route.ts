@@ -5,6 +5,7 @@ import { handleBotMessage } from "@/lib/booking-bot";
 import { verifyMetaWebhookSignature } from "@/lib/security";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { extractMessageText, markMessageRead, normalizePhone } from "@/lib/whatsapp";
+import { getWhatsAppCredentials } from "@/lib/whatsapp-credentials";
 
 type AdminClient = ReturnType<typeof createAdminClient>;
 type WAStatus = { id: string; status: string };
@@ -86,7 +87,8 @@ async function handleInboundMessage(supabase: AdminClient, value: WAValue, messa
     return "ignored" as const;
   }
 
-  await markMessageRead(message.id, clinic.whatsapp_phone_id, clinic.whatsapp_token).catch(() => undefined);
+  const credentials = await getWhatsAppCredentials(supabase, clinic.id);
+  await markMessageRead(message.id, credentials.phoneId, credentials.token).catch(() => undefined);
   const contactPhone = normalizePhone(message.from);
   const contactName = value.contacts?.find(contact => contact.wa_id === message.from)?.profile?.name
     ?? value.contacts?.[0]?.profile?.name

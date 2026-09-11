@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getClinicAccess } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 
-const RULE_SELECT = "*,template:reva_whatsapp_templates(id,purpose,template_name,language_code,status)";
+const RULE_SELECT = "*,template:reva_whatsapp_templates(id,purpose,template_name,language_code,status,components)";
 
 export async function GET() {
   const supabase = await createClient();
@@ -10,7 +10,7 @@ export async function GET() {
   if (!access) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const [{ data: rules, error }, { data: templates, error: templateError }] = await Promise.all([
     supabase.from("reva_automation_rules").select(RULE_SELECT).eq("clinic_id", access.clinicId).order("created_at"),
-    supabase.from("reva_whatsapp_templates").select("id,purpose,template_name,language_code,status").eq("clinic_id", access.clinicId).order("purpose"),
+    supabase.from("reva_whatsapp_templates").select("id,purpose,template_name,language_code,status,components").eq("clinic_id", access.clinicId).order("purpose"),
   ]);
   const failure = error ?? templateError;
   if (failure) return NextResponse.json({ error: failure.message }, { status: 500 });

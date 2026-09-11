@@ -51,13 +51,21 @@ Set `NEXT_PUBLIC_DEMO_MODE=true` for the UI-only demo. Demo mode bypasses page l
 
 ## Containers
 
-For a shared team environment, copy `.env.example` to `.env`, then run:
+For a no-credentials demo that you can share with friends, run:
+
+```powershell
+docker compose --env-file demo.env.example up --build
+```
+
+Open `http://localhost:3001`. This uses synthetic demo data and does not connect to Supabase or WhatsApp.
+
+For a shared staging or live environment, copy `.env.example` to `.env`, fill in the private values, then run:
 
 ```powershell
 docker compose up --build
 ```
 
-Open `http://localhost:3001`. Add `--profile scheduler` only when `CRON_SECRET` is configured and the environment needs its own worker/scheduler. See [docs/CONTAINERS.md](docs/CONTAINERS.md).
+Open `http://localhost:3001`. Add `--profile scheduler` only when `CRON_SECRET` is configured and the environment needs its own worker/scheduler. See [docs/CONTAINERS.md](docs/CONTAINERS.md) and [docs/SHARE_WITH_FRIENDS.md](docs/SHARE_WITH_FRIENDS.md).
 
 ## Quality gates
 
