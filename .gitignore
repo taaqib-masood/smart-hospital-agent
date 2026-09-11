@@ -54,3 +54,6 @@ workspace-*
 stitch_*
 *.zip
 Reva-Ai landing page/
+/dist/
+.vinext/
+.wrangler/
