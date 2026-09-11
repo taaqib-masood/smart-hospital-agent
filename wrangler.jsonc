@@ -1,7 +1,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "reva-ai-staging",
-  "compatibility_date": "2026-09-12",
+  "compatibility_date": "2026-09-01",
   "compatibility_flags": [
     "nodejs_compat"
   ],
@@ -30,15 +30,6 @@
       {
         "binding": "WHATSAPP_QUEUE",
         "queue": "reva-whatsapp-staging"
-      }
-    ],
-    "consumers": [
-      {
-        "queue": "reva-whatsapp-staging",
-        "max_batch_size": 10,
-        "max_batch_timeout": 30,
-        "max_retries": 5,
-        "dead_letter_queue": "reva-whatsapp-staging-dlq"
       }
     ]
   }
