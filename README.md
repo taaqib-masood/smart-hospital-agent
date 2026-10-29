@@ -569,7 +569,8 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 # WhatsApp Cloud API — get from Meta Developer Console
 WHATSAPP_PHONE_ID=your-phone-number-id
 WHATSAPP_TOKEN=your-permanent-access-token
-WHATSAPP_VERIFY_TOKEN=reva_webhook_verify_2026
+WHATSAPP_VERIFY_TOKEN=your-random-verify-token
+WHATSAPP_APP_SECRET=your-meta-app-secret
 
 # Cron security — any random string
 CRON_SECRET=your-random-secret
@@ -588,7 +589,7 @@ NEXT_PUBLIC_APP_URL=https://your-app.vercel.app
 3. Add a WhatsApp phone number
 4. Copy the **Phone Number ID** and **Permanent Access Token**
 5. Set your webhook URL to: `https://your-app.vercel.app/api/whatsapp/webhook`
-6. Set webhook verify token to: `reva_webhook_verify_2026`
+6. Set webhook verify token to the same value as `WHATSAPP_VERIFY_TOKEN`
 7. Subscribe to `messages` events
 
 ### 4. Deploy to Vercel
