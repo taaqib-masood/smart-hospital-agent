@@ -55,3 +55,17 @@ export function formatTime(date: string | Date | number): string {
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
+
+/**
+ * Returns `next` only when it is a same-site absolute path; otherwise "/dashboard".
+ * Blocks open redirects: full URLs, protocol-relative "//host", backslash "/\\host",
+ * and "@" in the path portion (userinfo tricks like "/@evil.com").
+ */
+export function safeNextPath(next: string | null): string {
+  if (!next) return "/dashboard";
+  const path = next.split(/[?#]/)[0];
+  if (!next.startsWith("/") || next.startsWith("//") || next.startsWith("/\\") || path.includes("@")) {
+    return "/dashboard";
+  }
+  return next;
+}
