@@ -68,6 +68,24 @@ const STATUS_CONFIG: Record<TxStatus, { color: string; bg: string; border: strin
 
 const AMOUNT_OPTIONS = [100, 150, 200, 250, 300];
 
+function Toggle({ val, onToggle }: { val: boolean; onToggle: () => void }) {
+  return (
+    <button
+      onClick={onToggle}
+      className={`relative w-10 h-5.5 rounded-full transition-colors duration-200 flex items-center ${
+        val ? "bg-[#00685f]" : "bg-slate-200"
+      }`}
+      style={{ height: "22px", width: "40px" }}
+    >
+      <motion.div
+        animate={{ x: val ? 20 : 2 }}
+        transition={{ type: "spring", stiffness: 700, damping: 30 }}
+        className="w-4 h-4 rounded-full bg-white shadow-xs"
+      />
+    </button>
+  );
+}
+
 export default function DepositsView({ addToast }: DepositsViewProps) {
   const [txns, setTxns] = useState(TRANSACTIONS);
   const [expandedId, setExpandedId] = useState<number | null>(null);
@@ -119,24 +137,6 @@ export default function DepositsView({ addToast }: DepositsViewProps) {
     setFormPatient("");
     setFormDate("");
     setFormTime("");
-  }
-
-  function Toggle({ val, onToggle }: { val: boolean; onToggle: () => void }) {
-    return (
-      <button
-        onClick={onToggle}
-        className={`relative w-10 h-5.5 rounded-full transition-colors duration-200 flex items-center ${
-          val ? "bg-[#00685f]" : "bg-slate-200"
-        }`}
-        style={{ height: "22px", width: "40px" }}
-      >
-        <motion.div
-          animate={{ x: val ? 20 : 2 }}
-          transition={{ type: "spring", stiffness: 700, damping: 30 }}
-          className="w-4 h-4 rounded-full bg-white shadow-xs"
-        />
-      </button>
-    );
   }
 
   return (

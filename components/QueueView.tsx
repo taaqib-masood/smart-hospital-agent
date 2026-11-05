@@ -54,6 +54,27 @@ const NO_SHOW_RISKS = [
   },
 ];
 
+function Toggle({ val, onToggle, label }: { val: boolean; onToggle: () => void; label: string }) {
+  return (
+    <div className="flex items-center justify-between gap-4">
+      <span className="text-xs font-bold text-slate-700">{label}</span>
+      <button
+        onClick={onToggle}
+        className={`relative w-10 h-5.5 rounded-full transition-colors duration-200 flex items-center ${
+          val ? "bg-[#00685f]" : "bg-slate-200"
+        }`}
+        style={{ height: "22px", width: "40px" }}
+      >
+        <motion.div
+          animate={{ x: val ? 20 : 2 }}
+          transition={{ type: "spring", stiffness: 700, damping: 30 }}
+          className="w-4 h-4 rounded-full bg-white shadow-xs"
+        />
+      </button>
+    </div>
+  );
+}
+
 export default function QueueView({ addToast }: QueueViewProps) {
   const [queue, setQueue] = useState<Patient[]>(INITIAL_QUEUE);
   const [paused, setPaused] = useState(false);
@@ -121,27 +142,6 @@ export default function QueueView({ addToast }: QueueViewProps) {
     addToast("Broadcast update sent to all waiting patients ✓", "success");
     setBroadcastMsg("");
   };
-
-  function Toggle({ val, onToggle, label }: { val: boolean; onToggle: () => void; label: string }) {
-    return (
-      <div className="flex items-center justify-between gap-4">
-        <span className="text-xs font-bold text-slate-700">{label}</span>
-        <button
-          onClick={onToggle}
-          className={`relative w-10 h-5.5 rounded-full transition-colors duration-200 flex items-center ${
-            val ? "bg-[#00685f]" : "bg-slate-200"
-          }`}
-          style={{ height: "22px", width: "40px" }}
-        >
-          <motion.div
-            animate={{ x: val ? 20 : 2 }}
-            transition={{ type: "spring", stiffness: 700, damping: 30 }}
-            className="w-4 h-4 rounded-full bg-white shadow-xs"
-          />
-        </button>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-8 max-w-[1200px] mx-auto">
