@@ -233,4 +233,4 @@ _Questions this graph is uniquely positioned to answer:_
 
 AST-only extraction of 109 code files. Documents and media were not semantically extracted. Community names use deterministic hub labels. No LLM or paid API calls were made.
 
-Graph health diagnostics: dangling_endpoint_edges=2, undirected_same_endpoint_collapsed_edges=5.
+Raw pre-build extraction diagnostics (not exported-graph counts): dangling_endpoint_edges=2, undirected_same_endpoint_collapsed_edges=5. During build, endpoints may be resolved or external import stubs created; edges whose endpoints remain unresolved are dropped and are absent from `graph.json`. The exported graph has no dangling endpoints.
