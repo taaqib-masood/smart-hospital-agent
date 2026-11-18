@@ -64,7 +64,7 @@ export function cn(...inputs: ClassValue[]) {
 export function safeNextPath(next: string | null): string {
   if (!next) return "/dashboard";
   const path = next.split(/[?#]/)[0];
-  if (!next.startsWith("/") || next.startsWith("//") || next.startsWith("/\\") || path.includes("@")) {
+  if (!next.startsWith("/") || /^\/(?:\/|%2f)/i.test(next) || /[\\\u0000-\u001f\u007f-\u009f]|%(?:0[0-9a-f]|1[0-9a-f]|5c|7f)/i.test(next) || new URL(next, "https://return.invalid").pathname.startsWith("//") || path.includes("@")) {
     return "/dashboard";
   }
   return next;
