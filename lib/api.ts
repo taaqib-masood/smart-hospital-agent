@@ -151,6 +151,10 @@ export interface ConsentWorkspace {
     signed_at: string | null;
     created_at: string;
     ip_address: string | null;
+    document_hash: string | null;
+    document_origin: "issued_snapshot" | "legacy_unsigned_snapshot" | "legacy_unverified";
+    document_captured_at: string | null;
+    evidence_notice: string | null;
     patient: { id: string; name: string; phone: string } | null;
     template: { id: string; name: string; version: number } | null;
   }>;

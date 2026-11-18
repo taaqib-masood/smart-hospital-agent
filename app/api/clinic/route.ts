@@ -21,6 +21,14 @@ export async function PATCH(req: NextRequest) {
   if (access.role === "receptionist") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const body = await req.json();
+  if (body.timezone !== undefined) {
+    try {
+      if (typeof body.timezone !== "string" || !body.timezone.trim()) throw new Error("Invalid timezone");
+      new Intl.DateTimeFormat("en", { timeZone: body.timezone });
+    } catch {
+      return NextResponse.json({ error: "A valid timezone is required" }, { status: 400 });
+    }
+  }
   const allowed = ["name", "phone", "whatsapp_number", "address", "specialty", "registration_no", "greeting_message", "reminder_hours_before", "working_hours", "timezone", "currency"] as const;
   const updates = Object.fromEntries(allowed.filter(key => body[key] !== undefined).map(key => [key, body[key]]));
   const { data, error } = await supabase

@@ -7,6 +7,8 @@ type ConsentDetails = {
   patient: { name: string };
   template: { name: string; version: number; body: string };
   clinic: { name: string };
+  document_hash: string;
+  evidence_notice: string | null;
 };
 
 export default function ConsentSigningPage() {
@@ -33,13 +35,13 @@ export default function ConsentSigningPage() {
     const response = await fetch(`/api/consents/public/${encodeURIComponent(token)}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ signer_name: signerName, accepted }),
-    });
-    setStatus(response.ok ? "signed" : "error");
+      body: JSON.stringify({ signer_name: signerName, accepted, document_hash: consent?.document_hash }),
+    }).catch(() => null);
+    setStatus(response?.ok ? "signed" : "error");
   }
 
   if (status === "loading") return <main className="min-h-screen grid place-items-center bg-slate-50 text-slate-600">Loading consent…</main>;
-  if (status === "error" || !consent) return <main className="min-h-screen grid place-items-center bg-slate-50 text-slate-700">This consent link is invalid, expired, or already completed.</main>;
+  if (status === "error" || !consent) return <main className="min-h-screen grid place-items-center bg-slate-50 text-slate-700">This consent link is unavailable. Reload to review the document, or ask the clinic for a new link.</main>;
   if (status === "signed") return <main className="min-h-screen grid place-items-center bg-slate-50"><div className="max-w-md rounded-2xl bg-white p-8 shadow-sm text-center"><h1 className="text-xl font-bold text-emerald-800">Consent recorded</h1><p className="mt-2 text-sm text-slate-600">You may now close this page.</p></div></main>;
 
   return (
@@ -48,6 +50,7 @@ export default function ConsentSigningPage() {
         <p className="text-sm font-semibold text-emerald-800">{consent.clinic.name}</p>
         <h1 className="mt-2 text-2xl font-bold">{consent.template.name}</h1>
         <p className="mt-1 text-xs text-slate-500">Version {consent.template.version} · Prepared for {consent.patient.name}</p>
+        {consent.evidence_notice && <p role="note" className="mt-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-900">{consent.evidence_notice}</p>}
         <div className="my-6 whitespace-pre-wrap rounded-xl bg-slate-50 p-5 text-sm leading-6 text-slate-700">{consent.template.body}</div>
         <label className="block text-sm font-semibold" htmlFor="signer-name">Full name</label>
         <input id="signer-name" value={signerName} onChange={event => setSignerName(event.target.value)} required minLength={2} className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2" />
