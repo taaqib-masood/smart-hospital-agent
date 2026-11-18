@@ -1,19 +1,20 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 const leadSchema = z.object({
   name: z.string().trim().min(2).max(80),
   email: z.string().email().max(120),
   clinic: z.string().trim().min(2).max(120),
   phone: z.string().trim().max(40).optional().or(z.literal("")),
-  plan: z.enum(["Clinic Pro", "Hospital Group", "One-Pager", "Starter", "Walkthrough", "Pilot"]).or(z.string()),
+  plan: z.enum(["Clinic Pro", "Hospital Group", "One-Pager", "Starter", "Walkthrough", "Pilot"]),
   slot: z.string().trim().max(100).optional().or(z.literal("")),
   specialty: z.string().trim().max(120).optional().or(z.literal("")),
   notes: z.string().trim().max(500).optional().or(z.literal("")),
 });
 
 /* ---- Simple in-memory rate limiter (per-IP, sliding window) ---- */
+// shortcut: per-instance Map trusting the first X-Forwarded-For hop (set by Vercel); move to shared storage (Upstash/Postgres) if deployed off Vercel or abused across instances.
 const WINDOW_MS = 60_000; // 1 minute
 const MAX_REQUESTS = 5; // submissions per window
 const hits = new Map<string, { count: number; resetAt: number }>();
@@ -73,16 +74,12 @@ export async function POST(req: Request) {
 
     const leadId = "lead_" + Date.now();
 
-    try {
-      const supabase = await createClient();
-      await supabase.from("leads").insert([{
-        id: leadId,
-        ...parsed.data,
-        created_at: new Date().toISOString()
-      }]);
-    } catch {
-      // Gracefully continue even if table not yet created
-    }
+    const { error } = await createAdminClient().from("leads").insert([{
+      id: leadId,
+      ...parsed.data,
+      created_at: new Date().toISOString()
+    }]);
+    if (error) throw error;
 
     return NextResponse.json({ ok: true, id: leadId }, { status: 201 });
   } catch (error) {

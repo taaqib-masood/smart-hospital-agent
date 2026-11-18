@@ -565,6 +565,8 @@ Edit `.env.local`:
 # Supabase — get from supabase.com dashboard
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+# Server-only; used by /api/leads (anon INSERT on leads is revoked)
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 
 # WhatsApp sender credentials are configured per clinic, not deployment-wide.
 WHATSAPP_VERIFY_TOKEN=your-random-verify-token
