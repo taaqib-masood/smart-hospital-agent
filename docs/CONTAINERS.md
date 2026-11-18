@@ -14,6 +14,6 @@ The optional scheduler calls the internal message worker every five minutes and 
 
 ## Staging migration
 
-Apply `supabase/migrations/202609080001_receptionist_foundation.sql` to a disposable or staging Supabase project using the Supabase CLI or dashboard. Do not run migrations automatically from Compose: this schema depends on Supabase Auth, row-level-security roles, and `auth.users`.
+Apply every migration in `supabase/migrations/` in filename order to a disposable or staging Supabase project using the Supabase CLI or dashboard. Provision each clinic's WhatsApp credential pair through a service-role/admin process as described in `STAGING_HANDOFF.md`. Do not run migrations automatically from Compose: this schema depends on Supabase Auth, row-level-security roles, and `auth.users`.
 
 `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` are build arguments because Next.js embeds them in the browser bundle. Rebuild after either value changes. Service-role, Meta and cron secrets are runtime-only environment values.

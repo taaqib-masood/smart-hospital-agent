@@ -13,26 +13,22 @@ export interface WASendResult {
 
 /**
  * Send a plain text WhatsApp message.
- * phoneId and token come from the clinic's row in reva_clinics,
- * falling back to env vars (used for the default clinic during dev).
+ * phoneId and token must be resolved from the same clinic's credentials.
  */
 export async function sendWhatsAppMessage(
   to: string,
   text: string,
-  phoneId?: string | null,
-  token?: string | null
+  phoneId: string | null,
+  token: string | null
 ): Promise<WASendResult> {
-  const pid = phoneId || process.env.WHATSAPP_PHONE_ID;
-  const tok = token || process.env.WHATSAPP_TOKEN;
-
-  if (!pid || !tok) {
+  if (!phoneId || !token) {
     throw new Error("WhatsApp credentials not configured");
   }
 
-  const res = await fetch(`${WA_API_BASE}/${pid}/messages`, {
+  const res = await fetch(`${WA_API_BASE}/${phoneId}/messages`, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${tok}`,
+      Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
@@ -61,18 +57,15 @@ export async function sendWhatsAppTemplate(
   templateName: string,
   languageCode: string,
   components: Record<string, unknown>[],
-  phoneId?: string | null,
-  token?: string | null
+  phoneId: string | null,
+  token: string | null
 ): Promise<WASendResult> {
-  const pid = phoneId || process.env.WHATSAPP_PHONE_ID;
-  const tok = token || process.env.WHATSAPP_TOKEN;
+  if (!phoneId || !token) throw new Error("WhatsApp credentials not configured");
 
-  if (!pid || !tok) throw new Error("WhatsApp credentials not configured");
-
-  const res = await fetch(`${WA_API_BASE}/${pid}/messages`, {
+  const res = await fetch(`${WA_API_BASE}/${phoneId}/messages`, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${tok}`,
+      Authorization: `Bearer ${token}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
@@ -96,16 +89,14 @@ export async function sendWhatsAppTemplate(
  */
 export async function markMessageRead(
   messageId: string,
-  phoneId?: string | null,
-  token?: string | null
+  phoneId: string | null,
+  token: string | null
 ): Promise<void> {
-  const pid = phoneId || process.env.WHATSAPP_PHONE_ID;
-  const tok = token || process.env.WHATSAPP_TOKEN;
-  if (!pid || !tok) return;
+  if (!phoneId || !token) return;
 
-  await fetch(`${WA_API_BASE}/${pid}/messages`, {
+  await fetch(`${WA_API_BASE}/${phoneId}/messages`, {
     method: "POST",
-    headers: { Authorization: `Bearer ${tok}`, "Content-Type": "application/json" },
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
     body: JSON.stringify({ messaging_product: "whatsapp", status: "read", message_id: messageId }),
   });
 }
@@ -123,11 +114,8 @@ export function extractMessageText(message: Record<string, unknown>): string {
   return "";
 }
 
-/** Format a phone number to E.164 (strips spaces, dashes, leading 0, adds 91 for India) */
+/** Meta sender IDs already include the country calling code; never guess a local prefix. */
 export function normalizePhone(raw: string): string {
   const digits = raw.replace(/\D/g, "");
-  if (digits.startsWith("91") && digits.length === 12) return `+${digits}`;
-  if (digits.length === 9 && digits.startsWith("5")) return `+971${digits}`;
-  if (digits.length === 10) return `+971${digits.slice(1)}`;
   return `+${digits}`;
 }
