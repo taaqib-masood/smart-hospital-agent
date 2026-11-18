@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { sendWhatsAppMessage } from "@/lib/whatsapp";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { getWhatsAppCredentials } from "@/lib/whatsapp-credentials";
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -34,7 +33,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       const msg = fu.template_message
         .replace("{name}", patient.name)
         .replace("{clinic}", clinic.name);
-      const wa = await getWhatsAppCredentials(createAdminClient(), clinic.id);
+      const wa = await getWhatsAppCredentials(clinic.id);
       await sendWhatsAppMessage(patient.phone, msg, wa.phoneId, wa.token).catch(() => {});
     }
   }

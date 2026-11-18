@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { sendWhatsAppMessage } from "@/lib/whatsapp";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { getWhatsAppCredentials } from "@/lib/whatsapp-credentials";
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -33,7 +32,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (body.send_reminder) {
     const patient = data.patient as { name: string; phone: string } | null;
     if (patient?.phone) {
-      const wa = await getWhatsAppCredentials(createAdminClient(), clinic.id);
+      const wa = await getWhatsAppCredentials(clinic.id);
       await sendWhatsAppMessage(
         patient.phone,
         `Hi ${patient.name}, this is a reminder that you have an outstanding payment of AED ${data.amount.toLocaleString("en-AE")} at ${clinic.name}. Please contact us to clear the balance. Thank you! 🙏`,

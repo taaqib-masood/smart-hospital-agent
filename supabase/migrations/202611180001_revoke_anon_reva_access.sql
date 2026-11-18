@@ -6,18 +6,23 @@ begin;
 do $$
 declare r record;
 begin
+  -- Strip anon from policies; keep the rest of a shared policy for its other roles.
   for r in
-    select tablename, policyname from pg_policies
+    select tablename, policyname, array_remove(roles, 'anon'::name) as rest from pg_policies
     where schemaname = 'public' and tablename like 'reva\_%' and 'anon' = any(roles)
   loop
-    execute format('drop policy %I on public.%I', r.policyname, r.tablename);
+    if cardinality(r.rest) = 0 then
+      execute format('drop policy %I on public.%I', r.policyname, r.tablename);
+    else
+      execute format('alter policy %I on public.%I to %s', r.policyname, r.tablename,
+        (select string_agg(quote_ident(role_name), ', ') from unnest(r.rest) as role_name));
+    end if;
   end loop;
 
   for r in
     select tablename from pg_tables
     where schemaname = 'public' and tablename like 'reva\_%'
   loop
-    execute format('alter table public.%I enable row level security', r.tablename);
     execute format('revoke all on table public.%I from anon', r.tablename);
   end loop;
 end $$;

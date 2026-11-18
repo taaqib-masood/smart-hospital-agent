@@ -7,7 +7,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { sendWhatsAppMessage } from "@/lib/whatsapp";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { getWhatsAppCredentials } from "@/lib/whatsapp-credentials";
 
 export async function POST(req: NextRequest) {
@@ -34,7 +33,7 @@ export async function POST(req: NextRequest) {
   const clinic = conv.clinic as { id: string; owner_id: string };
   if (clinic.owner_id !== user.id) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  const wa = await getWhatsAppCredentials(createAdminClient(), clinic.id);
+  const wa = await getWhatsAppCredentials(clinic.id);
   // Send via WhatsApp
   const result = await sendWhatsAppMessage(
     conv.contact_phone,

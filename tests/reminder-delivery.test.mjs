@@ -58,3 +58,10 @@ test("reminders reject a wrong secret", async () => {
   assert.equal((await GET({ headers: new Headers({ authorization: "Bearer wrong" }) })).status, 401);
   assert.equal((await POST({ headers: new Headers({ "x-cron-secret": "wrong" }) })).status, 401);
 });
+
+test("WhatsApp credential lookup returns nulls instead of throwing when the admin client is unavailable", async () => {
+  const { getWhatsAppCredentials } = loadModule("lib/whatsapp-credentials.ts", {
+    "@/lib/supabase/admin": { createAdminClient: () => { throw new Error("Supabase service credentials are not configured"); } },
+  });
+  assert.deepEqual(await getWhatsAppCredentials("clinic"), { phoneId: null, token: null });
+});

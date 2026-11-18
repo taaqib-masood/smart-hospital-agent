@@ -76,7 +76,7 @@ export async function POST(req: NextRequest) {
   const messages = value.messages;
   if (!messages?.length) return NextResponse.json({ status: "ok" });
 
-  const wa = await getWhatsAppCredentials(supabase, clinicRow.id);
+  const wa = await getWhatsAppCredentials(clinicRow.id, supabase);
   const clinic = { ...clinicRow, whatsapp_phone_id: wa.phoneId, whatsapp_token: wa.token };
   const message = messages[0];
   const contactPhone = normalizePhone(message.from);

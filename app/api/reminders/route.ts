@@ -34,7 +34,7 @@ async function runReminders() {
   let totalSent = 0;
 
   for (const clinic of clinics) {
-    const wa = await getWhatsAppCredentials(supabase, clinic.id);
+    const wa = await getWhatsAppCredentials(clinic.id, supabase);
     const hoursAhead = clinic.reminder_hours_before ?? 2;
     const targetTime = new Date(Date.now() + hoursAhead * 60 * 60 * 1000);
     const targetDate = targetTime.toISOString().split("T")[0];
