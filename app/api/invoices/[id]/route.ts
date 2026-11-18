@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { sendWhatsAppMessage } from "@/lib/whatsapp";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { getWhatsAppCredentials } from "@/lib/whatsapp-credentials";
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -9,7 +11,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { data: clinic } = await supabase
-    .from("reva_clinics").select("id,name,whatsapp_phone_id,whatsapp_token")
+    .from("reva_clinics").select("id,name")
     .eq("owner_id", user.id).single();
   if (!clinic) return NextResponse.json({ error: "Clinic not found" }, { status: 404 });
 
@@ -31,11 +33,12 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (body.send_reminder) {
     const patient = data.patient as { name: string; phone: string } | null;
     if (patient?.phone) {
+      const wa = await getWhatsAppCredentials(createAdminClient(), clinic.id);
       await sendWhatsAppMessage(
         patient.phone,
         `Hi ${patient.name}, this is a reminder that you have an outstanding payment of AED ${data.amount.toLocaleString("en-AE")} at ${clinic.name}. Please contact us to clear the balance. Thank you! 🙏`,
-        clinic.whatsapp_phone_id,
-        clinic.whatsapp_token
+        wa.phoneId,
+        wa.token
       ).catch(() => {});
     }
   }

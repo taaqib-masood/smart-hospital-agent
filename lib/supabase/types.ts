@@ -4,7 +4,6 @@ export interface RevaClinic {
   name: string;
   phone: string | null;
   whatsapp_number: string | null;
-  whatsapp_token: string | null;
   whatsapp_phone_id: string | null;
   address: string | null;
   specialty: string;

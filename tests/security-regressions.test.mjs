@@ -22,3 +22,12 @@ test("logout awaits session revocation before navigation", () => {
 test("WhatsApp transport never uses deployment credentials", () => {
   assert.doesNotMatch(source("lib/whatsapp.ts"), /process.env.WHATSAPP_(PHONE_ID|TOKEN)/);
 });
+
+test("sessionless system paths use the service-role client, not the anon key", () => {
+  for (const path of ["app/api/whatsapp/webhook/route.ts", "lib/booking-bot.ts", "app/api/reminders/route.ts"]) {
+    assert.doesNotMatch(source(path), /@\/lib\/supabase\/server/, path);
+    assert.match(source(path), /createAdminClient\(\)/, path);
+  }
+  assert.doesNotMatch(source("lib/supabase/admin.ts"), /NEXT_PUBLIC_SUPABASE_ANON_KEY|NEXT_PUBLIC_[A-Z_]*SERVICE/);
+  assert.doesNotMatch(source("middleware.ts"), /\/api\/reminders/);
+});

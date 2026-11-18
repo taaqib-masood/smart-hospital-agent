@@ -565,6 +565,8 @@ Edit `.env.local`:
 # Supabase — get from supabase.com dashboard
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+# Server-only; used by the WhatsApp webhook, booking bot and reminders cron. Never prefix with NEXT_PUBLIC_.
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 
 # WhatsApp sender credentials are configured per clinic, not deployment-wide.
 WHATSAPP_VERIFY_TOKEN=your-random-verify-token
@@ -585,7 +587,7 @@ NEXT_PUBLIC_APP_URL=https://your-app.vercel.app
 1. Go to [developers.facebook.com](https://developers.facebook.com)
 2. Create a new app → Business → WhatsApp
 3. Add a WhatsApp phone number
-4. Configure each clinic's `reva_clinics.whatsapp_phone_id` and `reva_clinics.whatsapp_token` with its own **Phone Number ID** and **Permanent Access Token**. Both are required; deployment-wide sender credentials are not used.
+4. Apply `supabase/migrations/` in filename order. Set each clinic's `reva_clinics.whatsapp_phone_id` (inbound routing) and insert its **Phone Number ID** and **Permanent Access Token** into `reva_whatsapp_credentials` through a service-role process. Only the service role can read that table; deployment-wide sender credentials are not used.
 5. Set your webhook URL to: `https://your-app.vercel.app/api/whatsapp/webhook`
 6. Set webhook verify token to the same value as `WHATSAPP_VERIFY_TOKEN`
 7. Subscribe to `messages` events

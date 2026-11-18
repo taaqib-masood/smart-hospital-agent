@@ -14,9 +14,11 @@
  *   If user says "reschedule" or "cancel" from any state → handle inline
  */
 
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { sendWhatsAppMessage } from "@/lib/whatsapp";
 import type { RevaClinic, RevaDoctor } from "@/lib/supabase/types";
+
+type BotClinic = RevaClinic & { whatsapp_token: string | null };
 import { formatDate, formatTime } from "@/lib/utils";
 
 type BotState =
@@ -80,12 +82,12 @@ function matchesKeyword(text: string, group: string[]): boolean {
 }
 
 export async function handleBotMessage(
-  clinic: RevaClinic,
+  clinic: BotClinic,
   contactPhone: string,
   incomingText: string,
   waMessageId: string
 ) {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   // Load or init state
   const { data: stateRow } = await supabase
@@ -338,8 +340,8 @@ export async function handleBotMessage(
 // --- Helpers ---
 
 async function goToShowDoctors(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  clinic: RevaClinic,
+  supabase: ReturnType<typeof createAdminClient>,
+  clinic: BotClinic,
   contactPhone: string,
   context: BotContext
 ) {
@@ -370,8 +372,8 @@ async function goToShowDoctors(
 }
 
 async function confirmAndBook(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  clinic: RevaClinic,
+  supabase: ReturnType<typeof createAdminClient>,
+  clinic: BotClinic,
   contactPhone: string,
   context: BotContext
 ) {
@@ -383,12 +385,12 @@ async function confirmAndBook(
   await saveState(supabase, clinic.id, contactPhone, "booked", context);
 }
 
-async function reply(clinic: RevaClinic, to: string, text: string) {
+async function reply(clinic: BotClinic, to: string, text: string) {
   await sendWhatsAppMessage(to, text, clinic.whatsapp_phone_id, clinic.whatsapp_token);
 }
 
 async function saveState(
-  supabase: Awaited<ReturnType<typeof createClient>>,
+  supabase: ReturnType<typeof createAdminClient>,
   clinicId: string,
   phone: string,
   state: BotState,

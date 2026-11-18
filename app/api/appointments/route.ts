@@ -7,6 +7,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { sendWhatsAppMessage } from "@/lib/whatsapp";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { getWhatsAppCredentials } from "@/lib/whatsapp-credentials";
 
 async function getClinic(supabase: Awaited<ReturnType<typeof createClient>>, userId: string) {
   const { data } = await supabase
@@ -76,11 +78,12 @@ export async function POST(req: NextRequest) {
     const h12 = h % 12 || 12;
     const timeStr = `${h12}:${String(m).padStart(2, "0")} ${period}`;
 
+    const wa = await getWhatsAppCredentials(createAdminClient(), clinic.id);
     await sendWhatsAppMessage(
       patient.phone,
       `✅ *Appointment Confirmed!*\n\nHi ${patient.name}! Your appointment at ${clinic.name} is confirmed.\n📅 ${dateStr} at ${timeStr}\n\nWe'll send you a reminder before your appointment. See you! 😊`,
-      clinic.whatsapp_phone_id,
-      clinic.whatsapp_token
+      wa.phoneId,
+      wa.token
     ).catch(() => {});
   }
 
