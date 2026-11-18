@@ -13,11 +13,14 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     .eq("owner_id", user.id).single();
   if (!clinic) return NextResponse.json({ error: "Clinic not found" }, { status: 404 });
 
-  const body = await req.json();
+  const { status } = await req.json();
+  if (!["Pending", "Sent", "Skipped", "Failed"].includes(status)) {
+    return NextResponse.json({ error: "Invalid follow-up status" }, { status: 400 });
+  }
 
   const { data: fu, error } = await supabase
     .from("reva_follow_ups")
-    .update({ ...body, ...(body.status === "Sent" ? { sent_at: new Date().toISOString() } : {}) })
+    .update({ status, ...(status === "Sent" ? { sent_at: new Date().toISOString() } : {}) })
     .eq("id", id)
     .eq("clinic_id", clinic.id)
     .select("*, patient:reva_patients(id,name,phone)")
@@ -26,7 +29,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   // If marking as Sent, actually send the WhatsApp
-  if (body.status === "Sent") {
+  if (status === "Sent") {
     const patient = fu.patient as { name: string; phone: string } | null;
     if (patient?.phone) {
       const msg = fu.template_message
