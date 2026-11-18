@@ -12,7 +12,7 @@ export async function GET() {
 
   const [consentsResult, patientsResult, templatesResult] = await Promise.all([
     supabase.from("reva_consent_requests")
-      .select("id,status,sent_at,viewed_at,signed_at,expires_at,created_at,ip_address,patient:reva_patients(id,name,phone),template:reva_consent_templates(id,name,version)")
+      .select("id,status,sent_at,viewed_at,signed_at,expires_at,created_at,ip_address,template_id,document_name:document_snapshot->>name,document_version:document_snapshot->version,document_hash,document_origin,document_captured_at,patient:reva_patients(id,name,phone)")
       .eq("clinic_id", access.clinicId)
       .order("created_at", { ascending: false })
       .limit(100),
@@ -29,7 +29,15 @@ export async function GET() {
   const error = consentsResult.error ?? patientsResult.error ?? templatesResult.error;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({
-    consents: consentsResult.data,
+    consents: consentsResult.data?.map(({ template_id, document_name, document_version, ...consent }) => ({
+      ...consent,
+      template: document_name ? { id: template_id, name: document_name, version: document_version } : null,
+      evidence_notice: consent.document_origin === "legacy_unverified"
+        ? "The original signed wording cannot be verified."
+        : consent.document_origin === "legacy_unsigned_snapshot"
+          ? "These terms were preserved during an upgrade; earlier wording cannot be verified."
+          : null,
+    })),
     patients: patientsResult.data,
     templates: templatesResult.data,
   });
@@ -47,7 +55,7 @@ export async function POST(req: NextRequest) {
 
   const [{ data: patient }, { data: template }] = await Promise.all([
     supabase.from("reva_patients").select("id,name,phone").eq("id", body.patient_id).eq("clinic_id", access.clinicId).single(),
-    supabase.from("reva_consent_templates").select("id,name").eq("id", body.template_id).eq("clinic_id", access.clinicId).eq("active", true).single(),
+    supabase.from("reva_consent_templates").select("id").eq("id", body.template_id).eq("clinic_id", access.clinicId).eq("active", true).single(),
   ]);
   if (!patient || !template) return NextResponse.json({ error: "Patient or consent template not found" }, { status: 404 });
 
@@ -61,6 +69,9 @@ export async function POST(req: NextRequest) {
     expires_at: expiresAt,
   }).select().single();
   if (error || !consent) return NextResponse.json({ error: error?.message ?? "Could not create consent request" }, { status: 500 });
+  if (!consent.document_snapshot || !consent.document_hash) {
+    return NextResponse.json({ error: "Consent document protection is unavailable" }, { status: 503 });
+  }
 
   const origin = new URL(req.url).origin;
   const signingUrl = `${origin}/consent/${token}`;
@@ -84,12 +95,12 @@ export async function POST(req: NextRequest) {
         template_name: waTemplate.template_name,
         language_code: waTemplate.language_code,
         requires_consent: true,
-        components: [{ type: "body", parameters: [patient.name, template.name, signingUrl].map(text => ({ type: "text", text })) }],
+        components: [{ type: "body", parameters: [patient.name, consent.document_snapshot.name, signingUrl].map(text => ({ type: "text", text })) }],
       },
     });
     if (!jobError) {
       delivery = "queued";
-      await supabase.from("reva_consent_requests").update({ status: "Sent", sent_at: new Date().toISOString() }).eq("id", consent.id);
+      await supabase.from("reva_consent_requests").update({ status: "Sent", sent_at: new Date().toISOString() }).eq("id", consent.id).eq("status", "Pending");
     }
   }
 

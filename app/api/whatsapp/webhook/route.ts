@@ -151,7 +151,7 @@ async function handleInboundMessage(supabase: AdminClient, value: WAValue, messa
   const { data: routing } = await supabase.from("reva_conversations").select("is_bot_active").eq("id", conversation.id).single();
   if (!optedOut && !requestedHuman && routing?.is_bot_active !== false && textContent) {
     try {
-      await handleBotMessage(clinic, contactPhone, textContent, message.id);
+      await handleBotMessage({ ...clinic, whatsapp_phone_id: credentials.phoneId, whatsapp_token: credentials.token }, contactPhone, textContent, message.id);
     } catch (error) {
       await recordWebhookError(supabase, eventId, error instanceof Error ? error.message : "Booking bot failed");
       return "failed" as const;

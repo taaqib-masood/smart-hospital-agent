@@ -37,7 +37,13 @@ async function scheduleReminders() {
 
   for (const clinic of clinics ?? []) {
     const hoursAhead = clinic.reminder_hours_before ?? 24;
-    const target = localParts(new Date(Date.now() + hoursAhead * 60 * 60 * 1000), clinic.timezone ?? "Asia/Dubai");
+    let target: ReturnType<typeof localParts>;
+    try {
+      target = localParts(new Date(Date.now() + hoursAhead * 60 * 60 * 1000), clinic.timezone ?? "Asia/Dubai");
+    } catch {
+      skipped++;
+      continue;
+    }
     const { data: template } = await supabase.from("reva_whatsapp_templates")
       .select("template_name,language_code")
       .eq("clinic_id", clinic.id)
@@ -47,15 +53,15 @@ async function scheduleReminders() {
       .maybeSingle();
 
     const { data: appointments } = await supabase.from("reva_appointments")
-      .select("id,appointment_date,appointment_time,patient_id,patient:reva_patients(name,phone)")
+      .select("id,appointment_date,appointment_time,patient_id,patient:reva_patients(clinic_id,name,phone)")
       .eq("clinic_id", clinic.id)
       .eq("appointment_date", target.date)
       .in("status", ["Confirmed", "Pending"])
       .is("reminder_sent_at", null);
 
     for (const appointment of appointments ?? []) {
-      const patient = appointment.patient as unknown as { name: string; phone: string } | null;
-      if (!patient?.phone || !template) { skipped++; continue; }
+      const patient = appointment.patient as unknown as { clinic_id: string; name: string; phone: string } | null;
+      if (!patient?.phone || patient.clinic_id !== clinic.id || !template) { skipped++; continue; }
       const [hour, minute] = String(appointment.appointment_time).split(":").map(Number);
       if (Math.abs(hour * 60 + minute - (target.hour * 60 + target.minute)) > 30) continue;
 
@@ -90,7 +96,7 @@ async function scheduleReminders() {
 async function scheduleFollowUps(supabase: AdminClient) {
   const cutoff = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
   const { data: rules, error: rulesError } = await supabase.from("reva_automation_rules")
-    .select("id,clinic_id,name,trigger_type,delay_minutes,template:reva_whatsapp_templates(template_name,language_code,status)")
+    .select("id,clinic_id,name,trigger_type,delay_minutes,template:reva_whatsapp_templates(clinic_id,template_name,language_code,status)")
     .eq("enabled", true);
   if (rulesError) throw rulesError;
 
@@ -99,10 +105,10 @@ async function scheduleFollowUps(supabase: AdminClient) {
   let skipped = 0;
   for (const rule of rules ?? []) {
     const status = rule.trigger_type === "after_no_show" ? "No-Show" : "Completed";
-    const template = rule.template as unknown as { template_name: string; language_code: string; status: string } | null;
-    if (!template || template.status !== "approved") { skipped++; continue; }
+    const template = rule.template as unknown as { clinic_id: string; template_name: string; language_code: string; status: string } | null;
+    if (!template || template.clinic_id !== rule.clinic_id || template.status !== "approved") { skipped++; continue; }
     const { data: appointments, error: appointmentError } = await supabase.from("reva_appointments")
-      .select("id,patient_id,updated_at")
+      .select("id,patient_id,updated_at,patient:reva_patients(clinic_id)")
       .eq("clinic_id", rule.clinic_id)
       .eq("status", status)
       .gte("updated_at", cutoff)
@@ -110,7 +116,11 @@ async function scheduleFollowUps(supabase: AdminClient) {
     if (appointmentError) throw appointmentError;
 
     for (const appointment of appointments ?? []) {
-      const scheduledAt = new Date(new Date(appointment.updated_at).getTime() + rule.delay_minutes * 60 * 1000).toISOString();
+      const patient = appointment.patient as unknown as { clinic_id: string } | null;
+      if (patient?.clinic_id !== rule.clinic_id) { skipped++; continue; }
+      const scheduledFor = new Date(new Date(appointment.updated_at).getTime() + rule.delay_minutes * 60 * 1000);
+      if (!Number.isFinite(scheduledFor.getTime())) { skipped++; continue; }
+      const scheduledAt = scheduledFor.toISOString();
       const { error } = await supabase.from("reva_follow_ups").upsert({
         clinic_id: rule.clinic_id,
         patient_id: appointment.patient_id,
@@ -126,17 +136,17 @@ async function scheduleFollowUps(supabase: AdminClient) {
   }
 
   const { data: due, error: dueError } = await supabase.from("reva_follow_ups")
-    .select("id,clinic_id,patient_id,scheduled_at,patient:reva_patients(name,phone),rule:reva_automation_rules(template:reva_whatsapp_templates(template_name,language_code,status))")
+    .select("id,clinic_id,patient_id,scheduled_at,patient:reva_patients(clinic_id,name,phone),rule:reva_automation_rules(clinic_id,template:reva_whatsapp_templates(clinic_id,template_name,language_code,status))")
     .eq("status", "Pending")
     .lte("scheduled_at", new Date().toISOString())
     .limit(200);
   if (dueError) throw dueError;
 
   for (const followUp of due ?? []) {
-    const patient = followUp.patient as unknown as { name: string; phone: string } | null;
-    const rule = followUp.rule as unknown as { template: { template_name: string; language_code: string; status: string } | null } | null;
+    const patient = followUp.patient as unknown as { clinic_id: string; name: string; phone: string } | null;
+    const rule = followUp.rule as unknown as { clinic_id: string; template: { clinic_id: string; template_name: string; language_code: string; status: string } | null } | null;
     const template = rule?.template;
-    if (!patient?.phone || !template || template.status !== "approved") { skipped++; continue; }
+    if (!patient?.phone || patient.clinic_id !== followUp.clinic_id || rule?.clinic_id !== followUp.clinic_id || !template || template.clinic_id !== followUp.clinic_id || template.status !== "approved") { skipped++; continue; }
     const { error } = await supabase.from("reva_message_jobs").insert({
       clinic_id: followUp.clinic_id,
       patient_id: followUp.patient_id,

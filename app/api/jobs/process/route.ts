@@ -45,7 +45,7 @@ async function processJobs() {
           .maybeSingle();
         if (permission?.status !== "opted_in") {
           await supabase.from("reva_message_jobs").update({ status: "dead", last_error: "Recipient has not opted in" }).eq("id", job.id);
-          if (messageId) await supabase.from("reva_messages").update({ status: "suppressed", error_message: "Recipient has not opted in" }).eq("id", messageId);
+          if (messageId) await supabase.from("reva_messages").update({ status: "suppressed", error_message: "Recipient has not opted in" }).eq("id", messageId).eq("clinic_id", job.clinic_id);
           if (typeof payload.follow_up_id === "string") await supabase.from("reva_follow_ups").update({ status: "Skipped" }).eq("id", payload.follow_up_id).eq("clinic_id", job.clinic_id);
           suppressed++;
           continue;
@@ -64,7 +64,7 @@ async function processJobs() {
         if (!inboundAt || Date.now() - inboundAt > 24 * 60 * 60 * 1000) {
           const reason = "An approved WhatsApp template is required outside the 24-hour service window";
           await supabase.from("reva_message_jobs").update({ status: "dead", last_error: reason }).eq("id", job.id);
-          if (messageId) await supabase.from("reva_messages").update({ status: "suppressed", error_message: reason }).eq("id", messageId);
+          if (messageId) await supabase.from("reva_messages").update({ status: "suppressed", error_message: reason }).eq("id", messageId).eq("clinic_id", job.clinic_id);
           suppressed++;
           continue;
         }
@@ -91,7 +91,7 @@ async function processJobs() {
 
       const waMessageId = result.messages?.[0]?.id ?? null;
       await supabase.from("reva_message_jobs").update({ status: "sent", sent_at: new Date().toISOString(), last_error: null }).eq("id", job.id);
-      if (messageId) await supabase.from("reva_messages").update({ status: "sent", wa_message_id: waMessageId }).eq("id", messageId);
+      if (messageId) await supabase.from("reva_messages").update({ status: "sent", wa_message_id: waMessageId }).eq("id", messageId).eq("clinic_id", job.clinic_id);
       if (typeof payload.appointment_id === "string" && job.kind === "appointment_reminder") {
         await supabase.from("reva_appointments").update({ reminder_sent_at: new Date().toISOString() }).eq("id", payload.appointment_id).eq("clinic_id", job.clinic_id);
       }
@@ -108,7 +108,7 @@ async function processJobs() {
         last_error: lastError,
         run_at: new Date(Date.now() + delaySeconds * 1000).toISOString(),
       }).eq("id", job.id);
-      if (messageId) await supabase.from("reva_messages").update({ status: "failed", error_message: lastError }).eq("id", messageId);
+      if (messageId) await supabase.from("reva_messages").update({ status: "failed", error_message: lastError }).eq("id", messageId).eq("clinic_id", job.clinic_id);
       if (dead && typeof payload.follow_up_id === "string") {
         await supabase.from("reva_follow_ups").update({ status: "Failed" }).eq("id", payload.follow_up_id).eq("clinic_id", job.clinic_id);
       }
