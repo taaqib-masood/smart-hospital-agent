@@ -37,7 +37,7 @@ The pilot remains a modular monolith. Outbound messages are stored as durable jo
 
 2. Copy `.env.example` to `.env.local` and supply the required values.
 
-3. Apply `supabase/migrations/202609080001_receptionist_foundation.sql` to a development Supabase project.
+3. Apply every migration in `supabase/migrations/` in filename order to a development Supabase project, then provision each clinic's WhatsApp phone-number ID and access token in `reva_whatsapp_credentials` through a service-role/admin process.
 
 4. Start the app:
 
