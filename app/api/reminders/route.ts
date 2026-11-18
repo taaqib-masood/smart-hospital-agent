@@ -46,12 +46,13 @@ async function runReminders() {
       const period = apptH >= 12 ? "PM" : "AM";
       const timeStr = `${h12}:${String(apptM).padStart(2, "0")} ${period}`;
 
-      await sendWhatsAppMessage(
+      const reminderSent = await sendWhatsAppMessage(
         patient.phone,
         `⏰ *Appointment Reminder*\n\nHi ${patient.name}! You have an appointment at ${clinic.name} in ${hoursAhead} hour(s).\n📅 ${dateStr} at ${timeStr}\n\nSee you soon! 😊\n\nReply *CANCEL* if you need to cancel.`,
         clinic.whatsapp_phone_id,
         clinic.whatsapp_token
-      ).catch(() => {});
+      ).then(() => true, () => false);
+      if (!reminderSent) continue;
 
       // Mark reminder sent
       await supabase.from("reva_appointments")
@@ -77,7 +78,9 @@ async function runReminders() {
         .replace("{name}", patient.name)
         .replace("{clinic}", clinic.name);
 
-      await sendWhatsAppMessage(patient.phone, message, clinic.whatsapp_phone_id, clinic.whatsapp_token).catch(() => {});
+      const followUpSent = await sendWhatsAppMessage(patient.phone, message, clinic.whatsapp_phone_id, clinic.whatsapp_token)
+        .then(() => true, () => false);
+      if (!followUpSent) continue;
 
       await supabase.from("reva_follow_ups")
         .update({ status: "Sent", sent_at: new Date().toISOString() })

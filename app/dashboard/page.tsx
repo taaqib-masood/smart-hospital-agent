@@ -22,6 +22,7 @@ import DepositsView from "@/components/DepositsView";
 import ReviewsView from "@/components/ReviewsView";
 import MessagesView from "@/components/MessagesView";
 import { DashboardProvider, useDashboard } from "@/lib/dashboard-context";
+import { createClient } from "@/lib/supabase/client";
 import { updateAppointment } from "@/lib/api";
 import type { RevaAppointment } from "@/lib/supabase/types";
 import OnboardingWizard from "@/components/OnboardingWizard";
@@ -660,6 +661,7 @@ function DashboardPageInner() {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [toastId, setToastId] = useState(0);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
   const { clinic } = useDashboard();
 
   const addToast = (message: string, type: Toast["type"]) => {
@@ -667,6 +669,21 @@ function DashboardPageInner() {
     setToastId(id);
     setToasts(prev => [...prev, { id, message, type }]);
     setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 4000);
+  };
+
+  const handleLogout = async () => {
+    setLoggingOut(true);
+    try {
+      if (process.env.NEXT_PUBLIC_DEMO_MODE !== "true") {
+        const { error } = await createClient().auth.signOut();
+        if (error) throw error;
+      }
+      addToast("Logged out", "info");
+      window.location.replace("/login");
+    } catch {
+      addToast("Unable to log out. Please try again.", "warn");
+      setLoggingOut(false);
+    }
   };
 
   return (
@@ -717,7 +734,8 @@ function DashboardPageInner() {
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" /> AI Agent Live
             </span>
             <button
-              onClick={() => addToast("Logged out", "info")}
+              onClick={handleLogout}
+              disabled={loggingOut}
               className="text-slate-400 hover:text-slate-600 p-1"
               title="Logout"
             >
