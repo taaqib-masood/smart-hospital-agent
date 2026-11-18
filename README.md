@@ -566,9 +566,7 @@ Edit `.env.local`:
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 
-# WhatsApp Cloud API — get from Meta Developer Console
-WHATSAPP_PHONE_ID=your-phone-number-id
-WHATSAPP_TOKEN=your-permanent-access-token
+# WhatsApp webhook verification
 WHATSAPP_VERIFY_TOKEN=reva_webhook_verify_2026
 
 # Cron security — any random string
@@ -586,7 +584,7 @@ NEXT_PUBLIC_APP_URL=https://your-app.vercel.app
 1. Go to [developers.facebook.com](https://developers.facebook.com)
 2. Create a new app → Business → WhatsApp
 3. Add a WhatsApp phone number
-4. Copy the **Phone Number ID** and **Permanent Access Token**
+4. Configure each clinic's `reva_clinics.whatsapp_phone_id` and `reva_clinics.whatsapp_token` with its own **Phone Number ID** and **Permanent Access Token**. Both are required to send messages; deployment-wide sender credentials are not used.
 5. Set your webhook URL to: `https://your-app.vercel.app/api/whatsapp/webhook`
 6. Set webhook verify token to: `reva_webhook_verify_2026`
 7. Subscribe to `messages` events
