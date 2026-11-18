@@ -44,6 +44,7 @@ interface ConsentRecord {
   signedAt: string | null;
   signTimeMin: number | null;
   ipAddress: string;
+  evidenceNotice?: string | null;
 }
 
 interface Template {
@@ -95,6 +96,7 @@ function mapConsent(record: ConsentWorkspace["consents"][number]): ConsentRecord
     signedAt: record.signed_at ? formatClock(record.signed_at) : null,
     signTimeMin: signed ? Math.max(0, Math.round((signed - created) / 60000)) : null,
     ipAddress: record.ip_address ? record.ip_address.replace(/\.\d+$/, ".xx") : "",
+    evidenceNotice: record.evidence_notice,
   };
 }
 
@@ -333,7 +335,10 @@ export default function ConsentView({ addToast }: ConsentViewProps) {
                     <span className="font-bold text-[#0F172A]">{rec.patient}</span>
                   </div>
 
-                  <span className="min-w-0 truncate text-slate-600 font-medium" title={rec.procedure}>{rec.procedure}</span>
+                  <div className="min-w-0">
+                    <span className="block truncate text-slate-600 font-medium" title={rec.procedure}>{rec.procedure}</span>
+                    {rec.evidenceNotice && <p className="mt-1 text-[11px] text-amber-800">{rec.evidenceNotice}</p>}
+                  </div>
                   <span className="text-slate-500">{rec.sentTime}</span>
 
                   <div>

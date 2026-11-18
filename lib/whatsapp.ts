@@ -123,11 +123,8 @@ export function extractMessageText(message: Record<string, unknown>): string {
   return "";
 }
 
-/** Format a phone number to E.164 (strips spaces, dashes, leading 0, adds 91 for India) */
+/** Meta sender IDs already include the country calling code; never guess a local prefix. */
 export function normalizePhone(raw: string): string {
   const digits = raw.replace(/\D/g, "");
-  if (digits.startsWith("91") && digits.length === 12) return `+${digits}`;
-  if (digits.length === 9 && digits.startsWith("5")) return `+971${digits}`;
-  if (digits.length === 10) return `+971${digits.slice(1)}`;
   return `+${digits}`;
 }

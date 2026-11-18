@@ -190,7 +190,8 @@ export async function handleBotMessage(
       const { data: doctors } = await supabase
         .from("reva_doctors")
         .select("id, name, specialization")
-        .eq("clinic_id", clinic.id);
+        .eq("clinic_id", clinic.id)
+        .eq("active", true);
 
       if (!doctors?.length) {
         await reply(clinic, contactPhone, "Sorry, no doctors are currently available. Please call the clinic directly.");
@@ -238,15 +239,6 @@ export async function handleBotMessage(
       if (!isNaN(num) && num >= 1 && num <= dates.length) {
         pickedDate = dates[num - 1];
       } else {
-        // Try to find a slot time directly (e.g. "10:30 AM")
-        const timeMatch = text.match(/\d{1,2}:\d{2}/);
-        if (timeMatch && ctx.selected_date) {
-          pickedDate = ctx.selected_date;
-          context.selected_time = timeMatch[0];
-          await confirmAndBook(supabase, clinic, contactPhone, context);
-          break;
-        }
-
         await reply(clinic, contactPhone, `Please reply with a number 1-${dates.length} to pick a date.`);
         break;
       }
@@ -302,6 +294,20 @@ export async function handleBotMessage(
 
     case "booked": {
       if (matchesKeyword(text, KEYWORDS.yes)) {
+        const { data: doctor } = await supabase.from("reva_doctors")
+          .select("slot_duration_minutes")
+          .eq("id", context.selected_doctor_id)
+          .eq("clinic_id", clinic.id)
+          .eq("active", true)
+          .maybeSingle();
+        const available = doctor && context.selected_date && context.selected_doctor_id
+          ? await getAvailableSlots(supabase, clinic.id, context.selected_doctor_id, context.selected_date, doctor.slot_duration_minutes)
+          : [];
+        if (!context.selected_time || !available.includes(context.selected_time.slice(0, 5))) {
+          await reply(clinic, contactPhone, "That slot is no longer available. Please choose another date and time.");
+          await saveState(supabase, clinic.id, contactPhone, "show_slots", { ...context, selected_time: undefined });
+          break;
+        }
         // Create appointment
         const booking = {
               clinic_id: clinic.id,
@@ -394,7 +400,8 @@ async function goToShowDoctors(
   const { data: doctors } = await supabase
     .from("reva_doctors")
     .select("id, name, specialization")
-    .eq("clinic_id", clinic.id);
+    .eq("clinic_id", clinic.id)
+    .eq("active", true);
 
   if (!doctors?.length) {
     await reply(clinic, contactPhone, "Sorry, no doctors are available right now. Please call the clinic.");
@@ -415,19 +422,6 @@ async function goToShowDoctors(
     await reply(clinic, contactPhone, `Who would you like to see?\n\n${list}\n\nReply with a number.`);
     await saveState(supabase, clinic.id, contactPhone, "show_doctors", context);
   }
-}
-
-async function confirmAndBook(
-  supabase: ReturnType<typeof createAdminClient>,
-  clinic: RevaClinic,
-  contactPhone: string,
-  context: BotContext
-) {
-  const dateStr = formatDate(context.selected_date!);
-  const timeStr = formatTime(context.selected_time!);
-  await reply(clinic, contactPhone,
-    `Almost done! ✅\n\n*${context.patient_name}*\nDoctor: ${context.selected_doctor_name}\nDate: ${dateStr}\nTime: ${timeStr}\n\nReply *YES* to confirm or *NO* to cancel.`);
-  await saveState(supabase, clinic.id, contactPhone, "booked", context);
 }
 
 async function reply(clinic: RevaClinic, to: string, text: string) {
