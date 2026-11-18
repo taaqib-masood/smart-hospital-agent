@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { sendWhatsAppMessage } from "@/lib/whatsapp";
+import { ownsClinicRefs } from "@/lib/clinic-refs";
 
 async function getClinic(supabase: Awaited<ReturnType<typeof createClient>>, userId: string) {
   const { data } = await supabase
@@ -57,6 +58,9 @@ export async function POST(req: NextRequest) {
 
   if (!appointment_date || !appointment_time) {
     return NextResponse.json({ error: "date and time required" }, { status: 400 });
+  }
+  if (!await ownsClinicRefs(supabase, clinic.id, [["reva_patients", patient_id], ["reva_doctors", doctor_id]])) {
+    return NextResponse.json({ error: "Patient or doctor not found in this clinic" }, { status: 400 });
   }
 
   const { data: appt, error } = await supabase
