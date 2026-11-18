@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { sendWhatsAppMessage } from "@/lib/whatsapp";
+import { getWhatsAppCredentials } from "@/lib/whatsapp-credentials";
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -19,7 +20,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   const { data: clinic } = await supabase
     .from("reva_clinics")
-    .select("id, whatsapp_phone_id, whatsapp_token, name")
+    .select("id, name")
     .eq("owner_id", user.id)
     .single();
 
@@ -49,7 +50,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     if (status === "Cancelled") msg = `❌ Hi ${patient.name}, your appointment at ${clinic.name} has been cancelled. Please contact us to reschedule.`;
     if (status === "No-Show") msg = `Hi ${patient.name}, we noticed you couldn't make it today. Would you like to reschedule? Reply to this message and we'll help you book a new slot. 😊`;
     if (msg) {
-      await sendWhatsAppMessage(patient.phone, msg, clinic.whatsapp_phone_id, clinic.whatsapp_token).catch(() => {});
+      const wa = await getWhatsAppCredentials(clinic.id);
+      await sendWhatsAppMessage(patient.phone, msg, wa.phoneId, wa.token).catch(() => {});
     }
   }
 

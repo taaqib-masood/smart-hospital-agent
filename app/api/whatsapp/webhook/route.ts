@@ -10,7 +10,8 @@
 
 import crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { getWhatsAppCredentials } from "@/lib/whatsapp-credentials";
 import { handleBotMessage } from "@/lib/booking-bot";
 import { markMessageRead, extractMessageText, normalizePhone } from "@/lib/whatsapp";
 
@@ -54,27 +55,29 @@ export async function POST(req: NextRequest) {
   if (!waPhoneId) return NextResponse.json({ status: "ok" });
 
   // Find clinic by whatsapp_phone_id
-  const supabase = await createClient();
-  const { data: clinic } = await supabase
+  const supabase = createAdminClient();
+  const { data: clinicRow } = await supabase
     .from("reva_clinics")
     .select("*")
     .eq("whatsapp_phone_id", waPhoneId)
     .single();
 
-  if (!clinic) {
+  if (!clinicRow) {
     console.warn(`No clinic found for phone_id: ${waPhoneId}`);
     return NextResponse.json({ status: "ok" });
   }
 
   // Status updates (delivered, read) — just acknowledge
   if (value.statuses?.length) {
-    await handleStatusUpdate(value.statuses, clinic.id);
+    await handleStatusUpdate(supabase, value.statuses, clinicRow.id);
     return NextResponse.json({ status: "ok" });
   }
 
   const messages = value.messages;
   if (!messages?.length) return NextResponse.json({ status: "ok" });
 
+  const wa = await getWhatsAppCredentials(clinicRow.id, supabase);
+  const clinic = { ...clinicRow, whatsapp_phone_id: wa.phoneId, whatsapp_token: wa.token };
   const message = messages[0];
   const contactPhone = normalizePhone(message.from);
 
@@ -137,8 +140,11 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ status: "ok" });
 }
 
-async function handleStatusUpdate(statuses: { id: string; status: string }[], clinicId: string) {
-  const supabase = await createClient();
+async function handleStatusUpdate(
+  supabase: ReturnType<typeof createAdminClient>,
+  statuses: { id: string; status: string }[],
+  clinicId: string
+) {
   for (const s of statuses) {
     await supabase
       .from("reva_messages")

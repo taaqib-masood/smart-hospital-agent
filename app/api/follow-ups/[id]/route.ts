@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { sendWhatsAppMessage } from "@/lib/whatsapp";
+import { getWhatsAppCredentials } from "@/lib/whatsapp-credentials";
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -9,7 +10,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { data: clinic } = await supabase
-    .from("reva_clinics").select("id,name,whatsapp_phone_id,whatsapp_token")
+    .from("reva_clinics").select("id,name")
     .eq("owner_id", user.id).single();
   if (!clinic) return NextResponse.json({ error: "Clinic not found" }, { status: 404 });
 
@@ -32,7 +33,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       const msg = fu.template_message
         .replace("{name}", patient.name)
         .replace("{clinic}", clinic.name);
-      await sendWhatsAppMessage(patient.phone, msg, clinic.whatsapp_phone_id, clinic.whatsapp_token).catch(() => {});
+      const wa = await getWhatsAppCredentials(clinic.id);
+      await sendWhatsAppMessage(patient.phone, msg, wa.phoneId, wa.token).catch(() => {});
     }
   }
 

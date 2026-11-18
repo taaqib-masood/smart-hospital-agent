@@ -43,11 +43,15 @@ function LoginForm() {
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
-          options: { emailRedirectTo: `${window.location.origin}/api/auth/callback` },
+          options: {
+            emailRedirectTo: `${window.location.origin}/api/auth/callback`,
+            data: { clinic_name: clinicName || "My Clinic" },
+          },
         });
         if (error) throw error;
 
-        if (data.user) {
+        // Without email confirmation there is already a session; otherwise /api/auth/callback creates the clinic.
+        if (data.session && data.user) {
           await supabase.from("reva_clinics").insert({
             owner_id: data.user.id,
             name: clinicName || "My Clinic",
