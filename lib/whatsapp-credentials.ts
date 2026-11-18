@@ -3,9 +3,10 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 type CredentialRow = { phone_id: string; access_token: string } | null;
 
 export function resolveWhatsAppCredentials(stored: CredentialRow) {
+  if (!stored?.phone_id || !stored.access_token) return { phoneId: null, token: null };
   return {
-    phoneId: stored?.phone_id || process.env.WHATSAPP_PHONE_ID || null,
-    token: stored?.access_token || process.env.WHATSAPP_TOKEN || null,
+    phoneId: stored.phone_id,
+    token: stored.access_token,
   };
 }
 
