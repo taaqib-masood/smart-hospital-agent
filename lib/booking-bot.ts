@@ -114,7 +114,7 @@ export async function handleBotMessage(
     await saveState(supabase, clinic.id, contactPhone, "idle", {});
     // Mid-flow "cancel" only stops the unfinished booking; it must not cancel an earlier appointment.
     if (state !== "idle") {
-      await reply(clinic, contactPhone, "No problem! The booking was stopped and no appointment was made. You can start again anytime. 😊");
+      await reply(clinic, contactPhone, "The new booking was stopped. Any existing appointment remains scheduled. Reply CANCEL again to cancel it, or BOOK to start again.");
       return;
     }
     const upcoming = await findUpcomingAppointment(supabase, clinic.id, contactPhone);

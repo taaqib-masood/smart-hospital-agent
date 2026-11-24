@@ -64,7 +64,7 @@ test("cancel only claims a cancellation when a real appointment was cancelled", 
   const midFlow = bot({ upcoming: { id: "appt" } });
   await midFlow.send("cancel");
   assert.equal(midFlow.db.queries.filter(q => q.action === "update").length, 0);
-  assert.match(midFlow.replies.at(-1), /no appointment was made/);
+  assert.match(midFlow.replies.at(-1), /existing appointment remains scheduled/);
 
   for (const upcoming of [null, { id: "appt" }]) {
     const idle = bot({ upcoming });
