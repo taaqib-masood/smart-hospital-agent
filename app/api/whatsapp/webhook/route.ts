@@ -5,11 +5,13 @@
  *
  * Set this URL in Meta Developer Console:
  *   https://yourdomain.com/api/whatsapp/webhook
- * Verify Token: reva_webhook_verify_2026  (or WHATSAPP_VERIFY_TOKEN env)
+ * Required env: WHATSAPP_VERIFY_TOKEN, WHATSAPP_APP_SECRET
  */
 
+import { createHmac, timingSafeEqual } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { getWhatsAppCredentials } from "@/lib/whatsapp-credentials";
 import { handleBotMessage } from "@/lib/booking-bot";
 import { markMessageRead, extractMessageText, normalizePhone } from "@/lib/whatsapp";
 
@@ -19,9 +21,9 @@ export async function GET(req: NextRequest) {
   const mode = searchParams.get("hub.mode");
   const token = searchParams.get("hub.verify_token");
   const challenge = searchParams.get("hub.challenge");
-  const verifyToken = process.env.WHATSAPP_VERIFY_TOKEN ?? "reva_webhook_verify_2026";
+  const verifyToken = process.env.WHATSAPP_VERIFY_TOKEN;
 
-  if (mode === "subscribe" && token === verifyToken) {
+  if (verifyToken && mode === "subscribe" && token === verifyToken) {
     return new NextResponse(challenge, { status: 200 });
   }
   return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -29,7 +31,20 @@ export async function GET(req: NextRequest) {
 
 // POST — incoming messages
 export async function POST(req: NextRequest) {
-  const body = await req.json().catch(() => null);
+  const rawBody = await req.text();
+  const secret = process.env.WHATSAPP_APP_SECRET;
+  const signature = req.headers.get("x-hub-signature-256") ?? "";
+  const expected = secret ? createHmac("sha256", secret).update(rawBody).digest() : null;
+  const received = Buffer.from(signature.startsWith("sha256=") ? signature.slice(7) : "", "hex");
+  if (!expected || expected.length !== received.length || !timingSafeEqual(expected, received)) {
+    return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
+  }
+  let body;
+  try {
+    body = JSON.parse(rawBody);
+  } catch {
+    return NextResponse.json({ status: "ok" });
+  }
   if (!body) return NextResponse.json({ status: "ok" });
 
   const entry = body?.entry?.[0];
@@ -38,31 +53,35 @@ export async function POST(req: NextRequest) {
 
   if (!value) return NextResponse.json({ status: "ok" });
 
+  const waPhoneId = value.metadata?.phone_number_id as string;
+  if (!waPhoneId) return NextResponse.json({ status: "ok" });
+
+  // Find clinic by whatsapp_phone_id
+  const supabase = createAdminClient();
+  const { data: clinicRow } = await supabase
+    .from("reva_clinics")
+    .select("*")
+    .eq("whatsapp_phone_id", waPhoneId)
+    .single();
+
+  if (!clinicRow) {
+    console.warn(`No clinic found for phone_id: ${waPhoneId}`);
+    return NextResponse.json({ status: "ok" });
+  }
+
   // Status updates (delivered, read) — just acknowledge
   if (value.statuses?.length) {
-    await handleStatusUpdate(value.statuses);
+    await handleStatusUpdate(supabase, value.statuses, clinicRow.id);
     return NextResponse.json({ status: "ok" });
   }
 
   const messages = value.messages;
   if (!messages?.length) return NextResponse.json({ status: "ok" });
 
+  const wa = await getWhatsAppCredentials(clinicRow.id, supabase);
+  const clinic = { ...clinicRow, whatsapp_phone_id: wa.phoneId, whatsapp_token: wa.token };
   const message = messages[0];
   const contactPhone = normalizePhone(message.from);
-  const waPhoneId = value.metadata?.phone_number_id as string;
-
-  // Find clinic by whatsapp_phone_id
-  const supabase = await createClient();
-  const { data: clinic } = await supabase
-    .from("reva_clinics")
-    .select("*")
-    .eq("whatsapp_phone_id", waPhoneId)
-    .single();
-
-  if (!clinic) {
-    console.warn(`No clinic found for phone_id: ${waPhoneId}`);
-    return NextResponse.json({ status: "ok" });
-  }
 
   // Mark message as read
   await markMessageRead(message.id, clinic.whatsapp_phone_id, clinic.whatsapp_token).catch(() => {});
@@ -84,16 +103,11 @@ export async function POST(req: NextRequest) {
     .select("id, unread_count")
     .single();
 
-  // Increment unread count
-  if (conversation?.id) {
-    await supabase.from("reva_conversations")
-      .update({ unread_count: (conversation.unread_count ?? 0) + 1 })
-      .eq("id", conversation.id);
-  }
+  if (!conversation?.id) return NextResponse.json({ error: "Conversation unavailable" }, { status: 500 });
 
   // Save inbound message
   if (conversation?.id) {
-    await supabase.from("reva_messages").insert({
+    const { error } = await supabase.from("reva_messages").insert({
       conversation_id: conversation.id,
       clinic_id: clinic.id,
       direction: "inbound",
@@ -104,7 +118,12 @@ export async function POST(req: NextRequest) {
       sent_by: "patient",
       sent_at: new Date(Number(message.timestamp) * 1000).toISOString(),
     });
+    if (error) return NextResponse.json({ status: error.code === "23505" ? "ok" : "retry" }, { status: error.code === "23505" ? 200 : 500 });
   }
+
+  await supabase.from("reva_conversations")
+    .update({ unread_count: (conversation.unread_count ?? 0) + 1 })
+    .eq("id", conversation.id);
 
   // Check if bot is active for this conversation
   const { data: conv } = await supabase
@@ -123,12 +142,16 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ status: "ok" });
 }
 
-async function handleStatusUpdate(statuses: { id: string; status: string }[]) {
-  const supabase = await createClient();
+async function handleStatusUpdate(
+  supabase: ReturnType<typeof createAdminClient>,
+  statuses: { id: string; status: string }[],
+  clinicId: string
+) {
   for (const s of statuses) {
     await supabase
       .from("reva_messages")
       .update({ status: s.status })
-      .eq("wa_message_id", s.id);
+      .eq("wa_message_id", s.id)
+      .eq("clinic_id", clinicId);
   }
 }

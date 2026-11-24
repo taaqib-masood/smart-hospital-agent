@@ -11,13 +11,16 @@
  *   booked        → terminal (resets to idle after 5 min)
  *
  * Reschedule / cancel flows:
- *   If user says "reschedule" or "cancel" from any state → handle inline
+ *   "reschedule" mid-flow → back to date selection (times only come from offered slots)
+ *   "cancel" mid-flow → stops the booking; "cancel" when idle → cancels the next real appointment
  */
 
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { sendWhatsAppMessage } from "@/lib/whatsapp";
 import type { RevaClinic, RevaDoctor } from "@/lib/supabase/types";
 import { formatDate, formatTime } from "@/lib/utils";
+
+type BotClinic = RevaClinic & { whatsapp_token: string | null };
 
 type BotState =
   | "idle"
@@ -80,12 +83,12 @@ function matchesKeyword(text: string, group: string[]): boolean {
 }
 
 export async function handleBotMessage(
-  clinic: RevaClinic,
+  clinic: BotClinic,
   contactPhone: string,
   incomingText: string,
   waMessageId: string
 ) {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   // Load or init state
   const { data: stateRow } = await supabase
@@ -107,16 +110,43 @@ export async function handleBotMessage(
   const text = incomingText.trim();
 
   // --- Global keyword overrides ---
-  if (matchesKeyword(text, KEYWORDS.cancel) && state !== "idle") {
+  if (matchesKeyword(text, KEYWORDS.cancel) && text.toUpperCase() !== "CANCEL") {
+    await reply(clinic, contactPhone, "I have not cancelled anything. Reply CANCEL only if you want to cancel your appointment.");
+    return;
+  }
+  if (matchesKeyword(text, KEYWORDS.cancel)) {
     await saveState(supabase, clinic.id, contactPhone, "idle", {});
-    await reply(clinic, contactPhone, `No problem! Your appointment has been cancelled. Feel free to book again anytime. 😊`);
+    // Mid-flow "cancel" only stops the unfinished booking; it must not cancel an earlier appointment.
+    if (state !== "idle") {
+      await reply(clinic, contactPhone, "The new booking was stopped. Any existing appointment remains scheduled. Reply CANCEL again to cancel it, or BOOK to start again.");
+      return;
+    }
+    const upcoming = await findUpcomingAppointment(supabase, clinic.id, contactPhone);
+    const { error } = upcoming
+      ? await supabase.from("reva_appointments").update({ status: "Cancelled" }).eq("id", upcoming.id).eq("clinic_id", clinic.id)
+      : { error: null };
+    await reply(clinic, contactPhone, !upcoming
+      ? "I couldn't find an upcoming appointment to cancel. Feel free to book anytime. 😊"
+      : error
+        ? "Sorry, I couldn't cancel your appointment. Please call the clinic."
+        : "Your upcoming appointment has been cancelled. Feel free to book again anytime. 😊");
     return;
   }
 
   if (matchesKeyword(text, KEYWORDS.reschedule) && state !== "idle") {
-    state = "show_slots";
+    if (!context.patient_name) {
+      await reply(clinic, contactPhone, "Please tell me your name first so we can continue your booking.");
+      return;
+    }
+    if (!context.selected_doctor_id) {
+      await goToShowDoctors(supabase, clinic, contactPhone, context);
+      return;
+    }
     context.selected_time = undefined;
-    await saveState(supabase, clinic.id, contactPhone, state, context);
+    const dates = nextDays(5);
+    await saveState(supabase, clinic.id, contactPhone, "show_slots", { ...context, _dates: dates });
+    await reply(clinic, contactPhone, dates.map((date, index) => `${index + 1}. ${formatDate(date)}`).join("\n") + "\n\nReply with a number to choose a date.");
+    return;
   }
 
   // --- State machine ---
@@ -225,42 +255,12 @@ export async function handleBotMessage(
       if (!isNaN(num) && num >= 1 && num <= dates.length) {
         pickedDate = dates[num - 1];
       } else {
-        // Try to find a slot time directly (e.g. "10:30 AM")
-        const timeMatch = text.match(/\d{1,2}:\d{2}/);
-        if (timeMatch && ctx.selected_date) {
-          pickedDate = ctx.selected_date;
-          context.selected_time = timeMatch[0];
-          await confirmAndBook(supabase, clinic, contactPhone, context);
-          break;
-        }
-
         await reply(clinic, contactPhone, `Please reply with a number 1-${dates.length} to pick a date.`);
         break;
       }
 
       context.selected_date = pickedDate;
-
-      // Get doctor slot duration
-      const { data: doctor } = await supabase
-        .from("reva_doctors")
-        .select("slot_duration_minutes")
-        .eq("id", context.selected_doctor_id!)
-        .single();
-
-      const duration = doctor?.slot_duration_minutes ?? 15;
-      const slots = generateSlots(pickedDate, duration);
-
-      // Check existing appointments for that doctor+date to show only free slots
-      const { data: taken } = await supabase
-        .from("reva_appointments")
-        .select("appointment_time")
-        .eq("clinic_id", clinic.id)
-        .eq("doctor_id", context.selected_doctor_id!)
-        .eq("appointment_date", pickedDate)
-        .in("status", ["Confirmed", "Pending"]);
-
-      const takenTimes = new Set((taken ?? []).map(a => a.appointment_time.slice(0, 5)));
-      const freeSlots = slots.filter(s => !takenTimes.has(s));
+      const freeSlots = await getFreeSlots(supabase, clinic.id, context.selected_doctor_id!, pickedDate);
 
       if (!freeSlots.length) {
         await reply(clinic, contactPhone, `Sorry, no slots available on ${formatDate(pickedDate)}. Please pick another date.`);
@@ -301,8 +301,16 @@ export async function handleBotMessage(
 
     case "booked": {
       if (matchesKeyword(text, KEYWORDS.yes)) {
-        // Create appointment
-        const { data: appt } = await supabase
+        // Re-check at confirm time: the slot may have been taken since it was offered.
+        const freeSlots = context.selected_doctor_id && context.selected_date
+          ? await getFreeSlots(supabase, clinic.id, context.selected_doctor_id, context.selected_date)
+          : [];
+        if (!context.selected_time || !freeSlots.includes(context.selected_time)) {
+          await replySlotUnavailable(supabase, clinic, contactPhone, context);
+          break;
+        }
+
+        const { error } = await supabase
           .from("reva_appointments")
           .insert({
             clinic_id: clinic.id,
@@ -313,9 +321,18 @@ export async function handleBotMessage(
             type: "General Checkup",
             status: "Confirmed",
             confirmed_via: "whatsapp",
-          })
-          .select("id")
-          .single();
+          });
+
+        if (error) {
+          // 23505 = unique index on active slots: another booking won the race.
+          if (error.code === "23505") {
+            await replySlotUnavailable(supabase, clinic, contactPhone, context);
+          } else {
+            await reply(clinic, contactPhone, "Sorry, I couldn't complete that booking. Please call the clinic.");
+            await saveState(supabase, clinic.id, contactPhone, "idle", {});
+          }
+          break;
+        }
 
         const dateStr = formatDate(context.selected_date!);
         const timeStr = formatTime(context.selected_time!);
@@ -338,8 +355,8 @@ export async function handleBotMessage(
 // --- Helpers ---
 
 async function goToShowDoctors(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  clinic: RevaClinic,
+  supabase: ReturnType<typeof createAdminClient>,
+  clinic: BotClinic,
   contactPhone: string,
   context: BotContext
 ) {
@@ -369,26 +386,78 @@ async function goToShowDoctors(
   }
 }
 
-async function confirmAndBook(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  clinic: RevaClinic,
+async function getFreeSlots(
+  supabase: ReturnType<typeof createAdminClient>,
+  clinicId: string,
+  doctorId: string,
+  date: string
+) {
+  const { data: doctor } = await supabase
+    .from("reva_doctors")
+    .select("slot_duration_minutes")
+    .eq("id", doctorId)
+    .eq("clinic_id", clinicId)
+    .single();
+
+  const { data: taken, error } = await supabase
+    .from("reva_appointments")
+    .select("appointment_time")
+    .eq("clinic_id", clinicId)
+    .eq("doctor_id", doctorId)
+    .eq("appointment_date", date)
+    .in("status", ["Confirmed", "Pending"]);
+  if (error) throw error;
+
+  const takenTimes = new Set((taken ?? []).map(a => a.appointment_time.slice(0, 5)));
+  return generateSlots(date, doctor?.slot_duration_minutes ?? 15).filter(s => !takenTimes.has(s));
+}
+
+async function replySlotUnavailable(
+  supabase: ReturnType<typeof createAdminClient>,
+  clinic: BotClinic,
   contactPhone: string,
   context: BotContext
 ) {
-  const dateStr = formatDate(context.selected_date!);
-  const timeStr = formatTime(context.selected_time!);
-  await sendWhatsAppMessage(contactPhone,
-    `Almost done! ✅\n\n*${context.patient_name}*\nDoctor: ${context.selected_doctor_name}\nDate: ${dateStr}\nTime: ${timeStr}\n\nReply *YES* to confirm or *NO* to cancel.`,
-    clinic.whatsapp_phone_id, clinic.whatsapp_token);
-  await saveState(supabase, clinic.id, contactPhone, "booked", context);
+  const dates = nextDays(5);
+  const dateList = dates.map((d, i) => `${i + 1}. ${formatDate(d)}`).join("\n");
+  await reply(clinic, contactPhone, `Sorry, that slot is no longer available. Please pick another date:\n\n${dateList}\n\nReply with a number (1-5).`);
+  await saveState(supabase, clinic.id, contactPhone, "show_slots", { ...context, selected_time: undefined, _dates: dates });
 }
 
-async function reply(clinic: RevaClinic, to: string, text: string) {
+async function findUpcomingAppointment(
+  supabase: ReturnType<typeof createAdminClient>,
+  clinicId: string,
+  phone: string
+) {
+  const { data: patient } = await supabase
+    .from("reva_patients")
+    .select("id")
+    .eq("clinic_id", clinicId)
+    .eq("phone", phone)
+    .maybeSingle();
+  if (!patient) return null;
+
+  const now = new Date().toISOString();
+  const { data } = await supabase
+    .from("reva_appointments")
+    .select("id")
+    .eq("clinic_id", clinicId)
+    .eq("patient_id", patient.id)
+    .in("status", ["Confirmed", "Pending"])
+    .or(`appointment_date.gt.${now.slice(0, 10)},and(appointment_date.eq.${now.slice(0, 10)},appointment_time.gte.${now.slice(11, 19)})`)
+    .order("appointment_date")
+    .order("appointment_time")
+    .limit(1)
+    .maybeSingle();
+  return data;
+}
+
+async function reply(clinic: BotClinic, to: string, text: string) {
   await sendWhatsAppMessage(to, text, clinic.whatsapp_phone_id, clinic.whatsapp_token);
 }
 
 async function saveState(
-  supabase: Awaited<ReturnType<typeof createClient>>,
+  supabase: ReturnType<typeof createAdminClient>,
   clinicId: string,
   phone: string,
   state: BotState,

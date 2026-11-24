@@ -180,8 +180,16 @@ function DashboardView({ addToast, setActiveView }: { addToast: (msg: string, ty
     }
   }, [realAppts]);
 
-  const updateStatus = (idx: number, status: AppointmentStatus) => {
+  const updateStatus = async (idx: number, status: AppointmentStatus) => {
     const appt = appts[idx] as Appointment & { _id?: string };
+    if (appt._id) {
+      try {
+        await updateAppointment(appt._id, { status });
+      } catch (error) {
+        addToast(error instanceof Error ? error.message : "Could not update appointment", "warn");
+        return;
+      }
+    }
     setAppts(prev => prev.map((a, i) => i === idx ? { ...a, status } : a));
     setExpandedIdx(null);
     addToast(
@@ -190,7 +198,7 @@ function DashboardView({ addToast, setActiveView }: { addToast: (msg: string, ty
       status === "Confirmed" ? "success" : status === "Cancelled" ? "warn" : "info"
     );
     if (appt._id) {
-      updateAppointment(appt._id, { status }).then(() => refresh()).catch(() => {});
+      refresh();
     }
   };
 

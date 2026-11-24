@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const PROTECTED = ["/dashboard", "/api/appointments", "/api/patients", "/api/whatsapp/send", "/api/reminders"];
+const PROTECTED = ["/dashboard", "/api/appointments", "/api/patients", "/api/whatsapp/send"];
 
 export async function middleware(req: NextRequest) {
   const res = NextResponse.next();
@@ -49,5 +49,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/api/appointments/:path*", "/api/patients/:path*", "/api/whatsapp/send", "/api/reminders"],
+  matcher: ["/dashboard/:path*", "/api/appointments/:path*", "/api/patients/:path*", "/api/whatsapp/send"],
 };
