@@ -616,7 +616,7 @@ export default function MessagesView({ addToast }: MessagesViewProps) {
                   setContacts((prev) =>
                     prev.map((item) => (item.id === c.id ? { ...item, unreadCount: 0 } : item))
                   );
-                  if (c._realId) void markConversationRead(c._realId).then(refresh);
+                  if (c._realId) void markConversationRead(c._realId).then(refresh, refresh);
                 }}
                 className={`p-3.5 flex items-start gap-3 cursor-pointer transition-colors relative ${
                   isSelected ? "bg-teal-50/70 border-l-4 border-[#00685f]" : "bg-white hover:bg-slate-50"
