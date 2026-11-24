@@ -132,7 +132,7 @@ export default function BillingView({ addToast }: BillingViewProps) {
   };
 
   const sendAllReminders = () => {
-    addToast(`WhatsApp payment reminders dispatched to ${pendingInvoices.length} patients ✓`, "success");
+    addToast("Payment reminders are not connected in this dashboard. No messages were sent.", "warn");
   };
 
   const handleCreateInvoice = () => {
