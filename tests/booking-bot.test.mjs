@@ -12,7 +12,7 @@ function bot({ insertError = null, upcoming = null } = {}) {
   const db = mockDatabase(q => {
     if (q.table === "reva_booking_state" && q.action === "upsert") { stateRow = { ...q.value }; return { data: null }; }
     if (q.table === "reva_booking_state") return { data: stateRow };
-    if (q.table === "reva_doctors") return { data: { slot_duration_minutes: 15 } };
+    if (q.table === "reva_doctors") return { data: q.filters.id ? { slot_duration_minutes: 15 } : [{ id: "doctor", name: "Dr. Bob" }, { id: "doctor2", name: "Dr. Alice" }] };
     if (q.table === "reva_patients") return { data: { id: "patient" } };
     if (q.table === "reva_appointments" && q.action === "insert") return { data: null, error: insertError };
     if (q.table === "reva_appointments" && q.action === "update") return { data: null, error: null };
@@ -67,6 +67,18 @@ test("free-form cancellation messages require explicit CANCEL confirmation", asy
     await idle.send(text);
     assert.equal(idle.db.queries.filter(q => q.action === "update").length, 0);
     assert.match(idle.replies.at(-1), /not cancelled anything/);
+  }
+});
+
+test("reschedule preserves prerequisite prompts and shows the date menu after doctor selection", async () => {
+  for (const stage of ["name", "doctor", "date"]) {
+    const flow = bot();
+    if (stage === "name") { flow.state().state = "collect_name"; delete flow.state().context.patient_name; }
+    if (stage !== "date") delete flow.state().context.selected_doctor_id;
+    await flow.send("reschedule");
+    assert.equal(inserts(flow.db).length, 0);
+    assert.match(flow.replies.at(-1), stage === "name" ? /tell me your name/ : stage === "doctor" ? /Who would you like to see/ : /1\. \d{4}-\d{2}-\d{2}/);
+    assert.equal(flow.state().state, stage === "name" ? "collect_name" : stage === "doctor" ? "show_doctors" : "show_slots");
   }
 });
 

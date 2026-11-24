@@ -134,9 +134,19 @@ export async function handleBotMessage(
   }
 
   if (matchesKeyword(text, KEYWORDS.reschedule) && state !== "idle") {
-    state = "show_slots";
+    if (!context.patient_name) {
+      await reply(clinic, contactPhone, "Please tell me your name first so we can continue your booking.");
+      return;
+    }
+    if (!context.selected_doctor_id) {
+      await goToShowDoctors(supabase, clinic, contactPhone, context);
+      return;
+    }
     context.selected_time = undefined;
-    await saveState(supabase, clinic.id, contactPhone, state, context);
+    const dates = nextDays(5);
+    await saveState(supabase, clinic.id, contactPhone, "show_slots", { ...context, _dates: dates });
+    await reply(clinic, contactPhone, dates.map((date, index) => `${index + 1}. ${formatDate(date)}`).join("\n") + "\n\nReply with a number to choose a date.");
+    return;
   }
 
   // --- State machine ---
