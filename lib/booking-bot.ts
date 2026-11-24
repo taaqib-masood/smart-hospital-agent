@@ -41,10 +41,6 @@ interface BotContext extends Record<string, unknown> {
   appointment_type?: string;
 }
 
-function today() {
-  return new Date().toISOString().split("T")[0];
-}
-
 function nextDays(n: number): string[] {
   const days: string[] = [];
   for (let i = 1; i <= n; i++) {
@@ -97,10 +93,20 @@ export async function handleBotMessage(
 
   // --- Global keyword overrides ---
   if (matchesKeyword(text, KEYWORDS.cancel)) {
-    const cancelled = await findUpcomingAppointment(supabase, clinic.id, contactPhone);
+    if (state !== "idle") {
+      await saveState(supabase, clinic.id, contactPhone, "idle", {});
+      await reply(clinic, contactPhone, "The new booking was stopped. Any existing appointment remains scheduled. Reply CANCEL again to cancel it, or BOOK to start again.");
+      return;
+    }
+    const cancelled = await findUpcomingAppointment(supabase, clinic, contactPhone);
+    if (cancelled && "error" in cancelled) return;
     if (cancelled) {
       const { error } = await supabase.from("reva_appointments").update({ status: "Cancelled" }).eq("id", cancelled.id).eq("clinic_id", clinic.id);
-      if (!error) await recordBotAudit(supabase, clinic.id, "appointment.cancelled_via_whatsapp", cancelled.id, contactPhone);
+      if (error) {
+        await reply(clinic, contactPhone, "I couldn't cancel that appointment. Please contact the clinic.");
+        return;
+      }
+      await recordBotAudit(supabase, clinic.id, "appointment.cancelled_via_whatsapp", cancelled.id, contactPhone);
     }
     await saveState(supabase, clinic.id, contactPhone, "idle", {});
     await reply(clinic, contactPhone, cancelled
@@ -110,7 +116,8 @@ export async function handleBotMessage(
   }
 
   if (matchesKeyword(text, KEYWORDS.reschedule)) {
-    const appointment = await findUpcomingAppointment(supabase, clinic.id, contactPhone);
+    const appointment = await findUpcomingAppointment(supabase, clinic, contactPhone);
+    if (appointment && "error" in appointment) return;
     if (!appointment?.doctor_id) {
       await reply(clinic, contactPhone, "I could not find an upcoming appointment to reschedule. A receptionist can help you.");
       return;
@@ -365,22 +372,35 @@ export async function handleBotMessage(
 
 async function findUpcomingAppointment(
   supabase: ReturnType<typeof createAdminClient>,
-  clinicId: string,
+  clinic: RevaClinic,
   phone: string,
 ) {
   const { data: patient } = await supabase.from("reva_patients")
     .select("id")
-    .eq("clinic_id", clinicId)
+    .eq("clinic_id", clinic.id)
     .eq("phone", phone)
     .maybeSingle();
   if (!patient) return null;
 
+  let parts: Record<string, string>;
+  try {
+    parts = Object.fromEntries(new Intl.DateTimeFormat("en-CA", {
+      timeZone: clinic.timezone ?? "Asia/Dubai", year: "numeric", month: "2-digit", day: "2-digit",
+      hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23",
+    }).formatToParts(new Date()).map(part => [part.type, part.value]));
+  } catch (error) {
+    if (!(error instanceof RangeError)) throw error;
+    await reply(clinic, phone, "I couldn't verify appointment times. No appointment has been changed. Please contact the clinic to cancel or reschedule.");
+    return { error: "invalid_timezone" as const };
+  }
+  const date = `${parts.year}-${parts.month}-${parts.day}`;
+  const time = `${parts.hour}:${parts.minute}:${parts.second}`;
   const { data } = await supabase.from("reva_appointments")
     .select("id,patient_id,doctor_id,type,appointment_date,appointment_time,doctor:reva_doctors(name)")
-    .eq("clinic_id", clinicId)
+    .eq("clinic_id", clinic.id)
     .eq("patient_id", patient.id)
     .in("status", ["Pending", "Confirmed"])
-    .gte("appointment_date", today())
+    .or(`appointment_date.gt.${date},and(appointment_date.eq.${date},appointment_time.gte.${time})`)
     .order("appointment_date")
     .order("appointment_time")
     .limit(1)
