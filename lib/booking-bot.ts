@@ -41,10 +41,6 @@ interface BotContext extends Record<string, unknown> {
   appointment_type?: string;
 }
 
-function today() {
-  return new Date().toISOString().split("T")[0];
-}
-
 function nextDays(n: number): string[] {
   const days: string[] = [];
   for (let i = 1; i <= n; i++) {
@@ -102,7 +98,7 @@ export async function handleBotMessage(
       await reply(clinic, contactPhone, "The new booking was stopped. Any existing appointment remains scheduled. Reply CANCEL again to cancel it, or BOOK to start again.");
       return;
     }
-    const cancelled = await findUpcomingAppointment(supabase, clinic.id, contactPhone);
+    const cancelled = await findUpcomingAppointment(supabase, clinic.id, contactPhone, clinic.timezone);
     if (cancelled) {
       const { error } = await supabase.from("reva_appointments").update({ status: "Cancelled" }).eq("id", cancelled.id).eq("clinic_id", clinic.id);
       if (error) {
@@ -119,7 +115,7 @@ export async function handleBotMessage(
   }
 
   if (matchesKeyword(text, KEYWORDS.reschedule)) {
-    const appointment = await findUpcomingAppointment(supabase, clinic.id, contactPhone);
+    const appointment = await findUpcomingAppointment(supabase, clinic.id, contactPhone, clinic.timezone);
     if (!appointment?.doctor_id) {
       await reply(clinic, contactPhone, "I could not find an upcoming appointment to reschedule. A receptionist can help you.");
       return;
@@ -376,6 +372,7 @@ async function findUpcomingAppointment(
   supabase: ReturnType<typeof createAdminClient>,
   clinicId: string,
   phone: string,
+  timeZone = "Asia/Dubai",
 ) {
   const { data: patient } = await supabase.from("reva_patients")
     .select("id")
@@ -384,12 +381,18 @@ async function findUpcomingAppointment(
     .maybeSingle();
   if (!patient) return null;
 
+  const parts = Object.fromEntries(new Intl.DateTimeFormat("en-CA", {
+    timeZone, year: "numeric", month: "2-digit", day: "2-digit",
+    hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23",
+  }).formatToParts(new Date()).map(part => [part.type, part.value]));
+  const date = `${parts.year}-${parts.month}-${parts.day}`;
+  const time = `${parts.hour}:${parts.minute}:${parts.second}`;
   const { data } = await supabase.from("reva_appointments")
     .select("id,patient_id,doctor_id,type,appointment_date,appointment_time,doctor:reva_doctors(name)")
     .eq("clinic_id", clinicId)
     .eq("patient_id", patient.id)
     .in("status", ["Pending", "Confirmed"])
-    .gte("appointment_date", today())
+    .or(`appointment_date.gt.${date},and(appointment_date.eq.${date},appointment_time.gte.${time})`)
     .order("appointment_date")
     .order("appointment_time")
     .limit(1)
