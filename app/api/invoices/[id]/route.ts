@@ -33,7 +33,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   // Send WhatsApp reminder if requested
-  if (body.send_reminder) {
+  if (body.send_reminder && data.status === "Pending") {
     const patient = data.patient as { name: string; phone: string } | null;
     if (patient?.phone) {
       const wa = await getWhatsAppCredentials(clinic.id);
