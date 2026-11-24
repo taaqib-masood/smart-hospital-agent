@@ -17,4 +17,11 @@ test("service-role webhook requires a valid signature and scopes status updates"
     assert.equal(result.status, signature.length > 20 ? 200 : 401);
   }
   assert.deepEqual(db.queries.find(q => q.action === "update").filters, { wa_message_id: "message", clinic_id: "clinic" });
+  const queryCount = db.queries.length;
+  for (const raw of ["{", "", "null", "{}"] ) {
+    const signature = `sha256=${createHmac("sha256", "local-test-secret").update(raw).digest("hex")}`;
+    const result = await POST(new Request("http://localhost/api/whatsapp/webhook", { method: "POST", headers: { "x-hub-signature-256": signature }, body: raw }));
+    assert.equal(result.status, 200);
+  }
+  assert.equal(db.queries.length, queryCount);
 });

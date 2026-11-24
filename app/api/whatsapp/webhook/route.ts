@@ -5,7 +5,7 @@
  *
  * Set this URL in Meta Developer Console:
  *   https://yourdomain.com/api/whatsapp/webhook
- * Verify Token: reva_webhook_verify_2026  (or WHATSAPP_VERIFY_TOKEN env)
+ * Required env: WHATSAPP_VERIFY_TOKEN, WHATSAPP_APP_SECRET
  */
 
 import { createHmac, timingSafeEqual } from "node:crypto";
@@ -39,7 +39,12 @@ export async function POST(req: NextRequest) {
   if (!expected || expected.length !== received.length || !timingSafeEqual(expected, received)) {
     return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
   }
-  const body = JSON.parse(rawBody);
+  let body;
+  try {
+    body = JSON.parse(rawBody);
+  } catch {
+    return NextResponse.json({ status: "ok" });
+  }
   if (!body) return NextResponse.json({ status: "ok" });
 
   const entry = body?.entry?.[0];

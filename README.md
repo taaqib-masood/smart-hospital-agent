@@ -570,6 +570,7 @@ SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 
 # WhatsApp webhook verification
 WHATSAPP_VERIFY_TOKEN=reva_webhook_verify_2026
+WHATSAPP_APP_SECRET=your-meta-app-secret
 
 # Cron security — any random string
 CRON_SECRET=your-random-secret

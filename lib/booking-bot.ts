@@ -18,9 +18,9 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendWhatsAppMessage } from "@/lib/whatsapp";
 import type { RevaClinic, RevaDoctor } from "@/lib/supabase/types";
+import { formatDate, formatTime } from "@/lib/utils";
 
 type BotClinic = RevaClinic & { whatsapp_token: string | null };
-import { formatDate, formatTime } from "@/lib/utils";
 
 type BotState =
   | "idle"
