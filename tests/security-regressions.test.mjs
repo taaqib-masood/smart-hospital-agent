@@ -27,7 +27,7 @@ test("signup clinic is created server-side, never inserted by the browser", () =
   const login = source("app/(auth)/login/page.tsx");
   assert.doesNotMatch(login, /from\("reva_clinics"\)/);
   assert.match(login, /reva_create_clinic: "true"/);
-  const migration = source("supabase/migrations/202611180001_server_side_signup_clinic.sql");
+  const migration = source("supabase/migrations/20261118000500_server_side_signup_clinic.sql");
   assert.match(migration, /unique \(owner_id\)/);
   assert.match(migration, /revoke insert on public.reva_clinics from anon, public/);
   assert.match(migration, /for insert to authenticated\s+with check \(owner_id = auth.uid\(\)\)/);

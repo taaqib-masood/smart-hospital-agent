@@ -81,7 +81,7 @@ test("follow-up update writes only a validated status and server-set sent_at", a
 });
 
 test("schema ties child rows to their clinic", () => {
-  const sql = readFileSync(new URL("../supabase/migrations/202611180001_enforce_clinic_relations.sql", import.meta.url), "utf8");
+  const sql = readFileSync(new URL("../supabase/migrations/20261118000200_enforce_clinic_relations.sql", import.meta.url), "utf8");
   for (const fk of ["reva_appointments_patient_id_fkey", "reva_appointments_doctor_id_fkey", "reva_invoices_patient_id_fkey", "reva_invoices_appointment_id_fkey", "reva_follow_ups_patient_id_fkey", "reva_follow_ups_appointment_id_fkey"]) {
     assert.match(sql, new RegExp(`add constraint ${fk} foreign key \\(\\w+, clinic_id\\)`));
   }
