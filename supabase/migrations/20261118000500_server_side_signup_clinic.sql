@@ -27,7 +27,6 @@ end;
 $$;
 
 revoke insert on public.reva_clinics from anon, public;
-grant insert on public.reva_clinics to authenticated;
 
 create policy reva_clinics_insert_own on public.reva_clinics
 for insert to authenticated
