@@ -53,9 +53,9 @@ test("mark-as-read is scoped and returns 404 for absent or foreign conversations
 });
 
 test("cancel stops an in-progress booking and never reports a failed update as cancelled", async () => {
-  for (const scenario of ["midflow", "empty", "ok", "failure"]) {
+  for (const scenario of ["midflow", "reschedule", "empty", "ok", "failure"]) {
     const db = mockDatabase(q => {
-      if (q.table === "reva_booking_state" && q.action === "select") return { data: { state: scenario === "midflow" ? "booked" : "idle", context: {}, expires_at: "2099-01-01" } };
+      if (q.table === "reva_booking_state" && q.action === "select") return { data: { state: scenario === "reschedule" ? "show_slots" : scenario === "midflow" ? "booked" : "idle", context: { reschedule_appointment_id: scenario === "reschedule" ? "appointment" : undefined }, expires_at: "2099-01-01" } };
       if (q.table === "reva_patients") return { data: { id: "patient" } };
       if (q.table === "reva_appointments") return { data: scenario === "empty" ? null : { id: "appointment" }, error: q.action === "update" && scenario === "failure" ? { message: "failed" } : null };
       return { data: null };
@@ -68,7 +68,7 @@ test("cancel stops an in-progress booking and never reports a failed update as c
       "@/lib/availability": { getAvailableSlots: async () => [] },
     });
     await handleBotMessage({ id: "clinic", name: "Clinic" }, "+10000000000", "CANCEL", "message");
-    assert.match(replies.at(-1) ?? "", scenario === "midflow" ? /no appointment was made/ : scenario === "failure" ? /couldn't cancel/ : scenario === "ok" ? /has been cancelled/ : /could not find/);
+    assert.match(replies.at(-1) ?? "", ["midflow", "reschedule"].includes(scenario) ? /existing appointment remains scheduled/ : scenario === "failure" ? /couldn't cancel/ : scenario === "ok" ? /has been cancelled/ : /could not find/);
     assert.equal(db.queries.filter(q => q.table === "reva_appointments" && q.action === "update").length, ["ok", "failure"].includes(scenario) ? 1 : 0);
   }
 });
