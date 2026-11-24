@@ -98,7 +98,8 @@ export async function handleBotMessage(
       await reply(clinic, contactPhone, "The new booking was stopped. Any existing appointment remains scheduled. Reply CANCEL again to cancel it, or BOOK to start again.");
       return;
     }
-    const cancelled = await findUpcomingAppointment(supabase, clinic.id, contactPhone, clinic.timezone);
+    const cancelled = await findUpcomingAppointment(supabase, clinic, contactPhone);
+    if (cancelled && "error" in cancelled) return;
     if (cancelled) {
       const { error } = await supabase.from("reva_appointments").update({ status: "Cancelled" }).eq("id", cancelled.id).eq("clinic_id", clinic.id);
       if (error) {
@@ -115,7 +116,8 @@ export async function handleBotMessage(
   }
 
   if (matchesKeyword(text, KEYWORDS.reschedule)) {
-    const appointment = await findUpcomingAppointment(supabase, clinic.id, contactPhone, clinic.timezone);
+    const appointment = await findUpcomingAppointment(supabase, clinic, contactPhone);
+    if (appointment && "error" in appointment) return;
     if (!appointment?.doctor_id) {
       await reply(clinic, contactPhone, "I could not find an upcoming appointment to reschedule. A receptionist can help you.");
       return;
@@ -370,26 +372,32 @@ export async function handleBotMessage(
 
 async function findUpcomingAppointment(
   supabase: ReturnType<typeof createAdminClient>,
-  clinicId: string,
+  clinic: RevaClinic,
   phone: string,
-  timeZone = "Asia/Dubai",
 ) {
   const { data: patient } = await supabase.from("reva_patients")
     .select("id")
-    .eq("clinic_id", clinicId)
+    .eq("clinic_id", clinic.id)
     .eq("phone", phone)
     .maybeSingle();
   if (!patient) return null;
 
-  const parts = Object.fromEntries(new Intl.DateTimeFormat("en-CA", {
-    timeZone, year: "numeric", month: "2-digit", day: "2-digit",
-    hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23",
-  }).formatToParts(new Date()).map(part => [part.type, part.value]));
+  let parts: Record<string, string>;
+  try {
+    parts = Object.fromEntries(new Intl.DateTimeFormat("en-CA", {
+      timeZone: clinic.timezone ?? "Asia/Dubai", year: "numeric", month: "2-digit", day: "2-digit",
+      hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23",
+    }).formatToParts(new Date()).map(part => [part.type, part.value]));
+  } catch (error) {
+    if (!(error instanceof RangeError)) throw error;
+    await reply(clinic, phone, "I couldn't verify appointment times. No appointment has been changed. Please contact the clinic to cancel or reschedule.");
+    return { error: "invalid_timezone" as const };
+  }
   const date = `${parts.year}-${parts.month}-${parts.day}`;
   const time = `${parts.hour}:${parts.minute}:${parts.second}`;
   const { data } = await supabase.from("reva_appointments")
     .select("id,patient_id,doctor_id,type,appointment_date,appointment_time,doctor:reva_doctors(name)")
-    .eq("clinic_id", clinicId)
+    .eq("clinic_id", clinic.id)
     .eq("patient_id", patient.id)
     .in("status", ["Pending", "Confirmed"])
     .or(`appointment_date.gt.${date},and(appointment_date.eq.${date},appointment_time.gte.${time})`)
