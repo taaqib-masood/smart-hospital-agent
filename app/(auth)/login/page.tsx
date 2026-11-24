@@ -39,19 +39,16 @@ function LoginForm() {
         if (error) throw error;
         router.push(next);
       } else {
-        const { data, error } = await supabase.auth.signUp({
+        const { error } = await supabase.auth.signUp({
           email,
           password,
-          options: { emailRedirectTo: `${window.location.origin}/api/auth/callback` },
+          options: {
+            emailRedirectTo: `${window.location.origin}/api/auth/callback`,
+            // reva_bootstrap_signup_clinic trigger creates the clinic from this metadata.
+            data: { reva_create_clinic: "true", clinic_name: clinicName },
+          },
         });
         if (error) throw error;
-
-        if (data.user) {
-          await supabase.from("reva_clinics").insert({
-            owner_id: data.user.id,
-            name: clinicName || "My Clinic",
-          });
-        }
 
         setSuccess("Check your email to confirm your account, then log in.");
         setMode("login");

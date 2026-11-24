@@ -7,6 +7,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { sendWhatsAppMessage } from "@/lib/whatsapp";
+import { ownsClinicRefs } from "@/lib/clinic-refs";
+import { getWhatsAppCredentials } from "@/lib/whatsapp-credentials";
 
 async function getClinic(supabase: Awaited<ReturnType<typeof createClient>>, userId: string) {
   const { data } = await supabase
@@ -58,6 +60,9 @@ export async function POST(req: NextRequest) {
   if (!appointment_date || !appointment_time) {
     return NextResponse.json({ error: "date and time required" }, { status: 400 });
   }
+  if (!await ownsClinicRefs(supabase, clinic.id, [["reva_patients", patient_id], ["reva_doctors", doctor_id]])) {
+    return NextResponse.json({ error: "Patient or doctor not found in this clinic" }, { status: 400 });
+  }
 
   const { data: appt, error } = await supabase
     .from("reva_appointments")
@@ -76,11 +81,12 @@ export async function POST(req: NextRequest) {
     const h12 = h % 12 || 12;
     const timeStr = `${h12}:${String(m).padStart(2, "0")} ${period}`;
 
+    const wa = await getWhatsAppCredentials(clinic.id);
     await sendWhatsAppMessage(
       patient.phone,
       `✅ *Appointment Confirmed!*\n\nHi ${patient.name}! Your appointment at ${clinic.name} is confirmed.\n📅 ${dateStr} at ${timeStr}\n\nWe'll send you a reminder before your appointment. See you! 😊`,
-      clinic.whatsapp_phone_id,
-      clinic.whatsapp_token
+      wa.phoneId,
+      wa.token
     ).catch(() => {});
   }
 

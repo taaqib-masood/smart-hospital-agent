@@ -10,7 +10,7 @@ import { createClient } from "@/lib/supabase/client";
 import type { RevaAppointment, RevaPatient, RevaConversation, RevaClinic } from "@/lib/supabase/types";
 
 interface DashboardData {
-  clinic: RevaClinic | null;
+  clinic: Pick<RevaClinic, "id"> | null;
   appointments: RevaAppointment[];
   patients: RevaPatient[];
   conversations: RevaConversation[];
@@ -30,7 +30,7 @@ const Ctx = createContext<DashboardData>({
 });
 
 export function DashboardProvider({ children }: { children: React.ReactNode }) {
-  const [clinic, setClinic] = useState<RevaClinic | null>(null);
+  const [clinic, setClinic] = useState<Pick<RevaClinic, "id"> | null>(null);
   const [appointments, setAppointments] = useState<RevaAppointment[]>([]);
   const [patients, setPatients] = useState<RevaPatient[]>([]);
   const [conversations, setConversations] = useState<RevaConversation[]>([]);
@@ -48,23 +48,24 @@ export function DashboardProvider({ children }: { children: React.ReactNode }) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { setLoading(false); return; }
 
-      const [clinicRes, apptRes, patientRes, convRes] = await Promise.all([
-        supabase.from("reva_clinics").select("*").eq("owner_id", user.id).single(),
+      const { data: clinicRow } = await supabase.from("reva_clinics").select("id").eq("owner_id", user.id).single();
+      if (!clinicRow) return;
+      setClinic(clinicRow);
+      const cid = clinicRow.id;
+
+      const [apptRes, patientRes, convRes] = await Promise.all([
         supabase.from("reva_appointments")
           .select("*, patient:reva_patients(id,name,phone,allergies,conditions), doctor:reva_doctors(id,name,specialization)")
+          .eq("clinic_id", cid)
           .eq("appointment_date", todayStr)
           .order("appointment_time"),
-        supabase.from("reva_patients").select("*").order("updated_at", { ascending: false }).limit(100),
-        supabase.from("reva_conversations").select("*").order("last_message_at", { ascending: false }).limit(50),
+        supabase.from("reva_patients").select("*").eq("clinic_id", cid).order("updated_at", { ascending: false }).limit(100),
+        supabase.from("reva_conversations").select("*").eq("clinic_id", cid).order("last_message_at", { ascending: false }).limit(50),
       ]);
 
-      if (clinicRes.data) setClinic(clinicRes.data);
-      const cid = clinicRes.data?.id;
-      if (cid) {
-        setAppointments((apptRes.data ?? []).filter(a => a.clinic_id === cid) as RevaAppointment[]);
-        setPatients((patientRes.data ?? []).filter(p => p.clinic_id === cid) as RevaPatient[]);
-        setConversations((convRes.data ?? []).filter(c => c.clinic_id === cid) as RevaConversation[]);
-      }
+      setAppointments((apptRes.data ?? []) as RevaAppointment[]);
+      setPatients((patientRes.data ?? []) as RevaPatient[]);
+      setConversations((convRes.data ?? []) as RevaConversation[]);
     } catch {
       // Fallback to demo mock data on any network or database error
     } finally {

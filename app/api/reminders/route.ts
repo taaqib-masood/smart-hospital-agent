@@ -3,13 +3,29 @@
  * POST /api/reminders  — manual trigger (secured with x-cron-secret header)
  */
 
+import { timingSafeEqual } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { getWhatsAppCredentials } from "@/lib/whatsapp-credentials";
 import { sendWhatsAppMessage } from "@/lib/whatsapp";
 
-async function runReminders() {
+function safeEqual(received: string | null, expected: string) {
+  const a = Buffer.from(received ?? "");
+  const b = Buffer.from(expected);
+  return a.length === b.length && timingSafeEqual(a, b);
+}
 
-  const supabase = await createClient();
+// Fail closed: an unset or empty CRON_SECRET rejects every caller.
+function isAuthorized(req: NextRequest) {
+  const secret = process.env.CRON_SECRET;
+  return Boolean(secret) && (
+    safeEqual(req.headers.get("authorization"), `Bearer ${secret}`) ||
+    safeEqual(req.headers.get("x-cron-secret"), secret!)
+  );
+}
+
+async function runReminders() {
+  const supabase = createAdminClient();
 
   // Find all clinics
   const { data: clinics } = await supabase.from("reva_clinics").select("*");
@@ -18,6 +34,7 @@ async function runReminders() {
   let totalSent = 0;
 
   for (const clinic of clinics) {
+    const wa = await getWhatsAppCredentials(clinic.id, supabase);
     const hoursAhead = clinic.reminder_hours_before ?? 2;
     const targetTime = new Date(Date.now() + hoursAhead * 60 * 60 * 1000);
     const targetDate = targetTime.toISOString().split("T")[0];
@@ -49,8 +66,8 @@ async function runReminders() {
       const reminderSent = await sendWhatsAppMessage(
         patient.phone,
         `⏰ *Appointment Reminder*\n\nHi ${patient.name}! You have an appointment at ${clinic.name} in ${hoursAhead} hour(s).\n📅 ${dateStr} at ${timeStr}\n\nSee you soon! 😊\n\nReply *CANCEL* if you need to cancel.`,
-        clinic.whatsapp_phone_id,
-        clinic.whatsapp_token
+        wa.phoneId,
+        wa.token
       ).then(() => true, () => false);
       if (!reminderSent) continue;
 
@@ -78,7 +95,7 @@ async function runReminders() {
         .replace("{name}", patient.name)
         .replace("{clinic}", clinic.name);
 
-      const followUpSent = await sendWhatsAppMessage(patient.phone, message, clinic.whatsapp_phone_id, clinic.whatsapp_token)
+      const followUpSent = await sendWhatsAppMessage(patient.phone, message, wa.phoneId, wa.token)
         .then(() => true, () => false);
       if (!followUpSent) continue;
 
@@ -96,9 +113,7 @@ async function runReminders() {
 // Vercel Cron calls GET
 export async function GET(req: NextRequest) {
   // Vercel sets Authorization: Bearer <CRON_SECRET> on cron requests
-  const auth = req.headers.get("authorization");
-  const cronSecret = process.env.CRON_SECRET;
-  if (cronSecret && auth !== `Bearer ${cronSecret}`) {
+  if (!isAuthorized(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   return runReminders();
@@ -106,8 +121,7 @@ export async function GET(req: NextRequest) {
 
 // Manual trigger via POST
 export async function POST(req: NextRequest) {
-  const secret = req.headers.get("x-cron-secret");
-  if (secret !== process.env.CRON_SECRET) {
+  if (!isAuthorized(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   return runReminders();
