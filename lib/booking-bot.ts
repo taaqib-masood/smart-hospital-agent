@@ -110,6 +110,10 @@ export async function handleBotMessage(
   const text = incomingText.trim();
 
   // --- Global keyword overrides ---
+  if (matchesKeyword(text, KEYWORDS.cancel) && text.toUpperCase() !== "CANCEL") {
+    await reply(clinic, contactPhone, "I have not cancelled anything. Reply CANCEL only if you want to cancel your appointment.");
+    return;
+  }
   if (matchesKeyword(text, KEYWORDS.cancel)) {
     await saveState(supabase, clinic.id, contactPhone, "idle", {});
     // Mid-flow "cancel" only stops the unfinished booking; it must not cancel an earlier appointment.

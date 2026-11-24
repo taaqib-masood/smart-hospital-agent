@@ -60,6 +60,16 @@ test("free slot books once; insert errors never reply Booked", async () => {
   }
 });
 
+test("free-form cancellation messages require explicit CANCEL confirmation", async () => {
+  for (const text of ["Please don't cancel my appointment", "Please don’t cancel my appointment", "Do not cancel my appointment", "I do not want to cancel", "Cancel is not what I want", "Please refrain from cancelling", "Cancel my appointment"]) {
+    const idle = bot({ upcoming: { id: "appt" } });
+    idle.state().state = "idle";
+    await idle.send(text);
+    assert.equal(idle.db.queries.filter(q => q.action === "update").length, 0);
+    assert.match(idle.replies.at(-1), /not cancelled anything/);
+  }
+});
+
 test("cancel only claims a cancellation when a real appointment was cancelled", async () => {
   const midFlow = bot({ upcoming: { id: "appt" } });
   await midFlow.send("cancel");
