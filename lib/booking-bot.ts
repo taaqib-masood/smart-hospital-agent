@@ -97,10 +97,19 @@ export async function handleBotMessage(
 
   // --- Global keyword overrides ---
   if (matchesKeyword(text, KEYWORDS.cancel)) {
+    if (state !== "idle") {
+      await saveState(supabase, clinic.id, contactPhone, "idle", {});
+      await reply(clinic, contactPhone, "No problem — the booking was stopped; no appointment was made. Reply BOOK to start again.");
+      return;
+    }
     const cancelled = await findUpcomingAppointment(supabase, clinic.id, contactPhone);
     if (cancelled) {
       const { error } = await supabase.from("reva_appointments").update({ status: "Cancelled" }).eq("id", cancelled.id).eq("clinic_id", clinic.id);
-      if (!error) await recordBotAudit(supabase, clinic.id, "appointment.cancelled_via_whatsapp", cancelled.id, contactPhone);
+      if (error) {
+        await reply(clinic, contactPhone, "I couldn't cancel that appointment. Please contact the clinic.");
+        return;
+      }
+      await recordBotAudit(supabase, clinic.id, "appointment.cancelled_via_whatsapp", cancelled.id, contactPhone);
     }
     await saveState(supabase, clinic.id, contactPhone, "idle", {});
     await reply(clinic, contactPhone, cancelled
