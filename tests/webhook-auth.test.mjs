@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { createHmac } from "node:crypto";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 import { loadModule, mockDatabase } from "./mock-module.ts";
 
@@ -24,4 +25,37 @@ test("service-role webhook requires a valid signature and scopes status updates"
     assert.equal(result.status, 200);
   }
   assert.equal(db.queries.length, queryCount);
+});
+
+test("duplicate inbound deliveries cannot repeat destructive bot actions", async () => {
+  assert.match(readFileSync(new URL("../supabase/migrations/20261118000700_unique_inbound_whatsapp_message.sql", import.meta.url), "utf8"), /unique index[\s\S]*clinic_id, wa_message_id/);
+  for (const failure of [false, true]) {
+    let claimed = false;
+    let botCalls = 0;
+    const db = mockDatabase(q => {
+      if (q.table === "reva_clinics") return { data: { id: "clinic" } };
+      if (q.table === "reva_conversations") return { data: { id: "conv", unread_count: 0, is_bot_active: true } };
+      if (q.table === "reva_messages" && q.action === "insert") {
+        if (failure || claimed) return { error: { code: failure ? "XX000" : "23505" } };
+        claimed = true;
+      }
+      return { data: null };
+    });
+    const { POST } = loadModule("app/api/whatsapp/webhook/route.ts", {
+      "next/server": { NextResponse: { json: (body, init) => ({ body, status: init?.status ?? 200 }) } },
+      "@/lib/supabase/admin": { createAdminClient: () => db },
+      "@/lib/whatsapp-credentials": { getWhatsAppCredentials: async () => ({}) },
+      "@/lib/booking-bot": { handleBotMessage: async () => { botCalls++; } },
+      "@/lib/whatsapp": { normalizePhone: String, extractMessageText: message => message.text?.body ?? "", markMessageRead: async () => {} },
+    });
+    process.env.WHATSAPP_APP_SECRET = "local-test-secret";
+    const body = JSON.stringify({ entry: [{ changes: [{ value: { metadata: { phone_number_id: "phone" }, messages: [{ id: "same-id", from: "10000000000", type: "text", text: { body: "CANCEL" }, timestamp: "1700000000" }] } }] }] });
+    const signature = `sha256=${createHmac("sha256", "local-test-secret").update(body).digest("hex")}`;
+    for (let n = 0; n < 2; n++) {
+      const result = await POST(new Request("http://localhost/api/whatsapp/webhook", { method: "POST", headers: { "x-hub-signature-256": signature }, body }));
+      assert.equal(result.status, failure ? 500 : 200);
+    }
+    assert.equal(botCalls, failure ? 0 : 1);
+    assert.equal(db.queries.filter(q => q.table === "reva_conversations" && q.action === "update").length, failure ? 0 : 1);
+  }
 });

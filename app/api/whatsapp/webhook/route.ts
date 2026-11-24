@@ -103,16 +103,11 @@ export async function POST(req: NextRequest) {
     .select("id, unread_count")
     .single();
 
-  // Increment unread count
-  if (conversation?.id) {
-    await supabase.from("reva_conversations")
-      .update({ unread_count: (conversation.unread_count ?? 0) + 1 })
-      .eq("id", conversation.id);
-  }
+  if (!conversation?.id) return NextResponse.json({ error: "Conversation unavailable" }, { status: 500 });
 
   // Save inbound message
   if (conversation?.id) {
-    await supabase.from("reva_messages").insert({
+    const { error } = await supabase.from("reva_messages").insert({
       conversation_id: conversation.id,
       clinic_id: clinic.id,
       direction: "inbound",
@@ -123,7 +118,12 @@ export async function POST(req: NextRequest) {
       sent_by: "patient",
       sent_at: new Date(Number(message.timestamp) * 1000).toISOString(),
     });
+    if (error) return NextResponse.json({ status: error.code === "23505" ? "ok" : "retry" }, { status: error.code === "23505" ? 200 : 500 });
   }
+
+  await supabase.from("reva_conversations")
+    .update({ unread_count: (conversation.unread_count ?? 0) + 1 })
+    .eq("id", conversation.id);
 
   // Check if bot is active for this conversation
   const { data: conv } = await supabase
