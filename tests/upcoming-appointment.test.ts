@@ -44,6 +44,14 @@ test("cancellation and rescheduling skip elapsed appointments in the clinic time
         "@/lib/availability": { getAvailableSlots: async () => [] },
       });
       await handleBotMessage({ id: "clinic", name: "Clinic", timezone }, "+10000000000", scenario === "reschedule" ? "reschedule" : "CANCEL", "message");
+      const lookups = db.queries.filter(q => q.table === "reva_appointments" && q.action === "select");
+      assert.equal(lookups.length, scenario === "no-patient" ? 0 : 1);
+      if (scenario === "reschedule") {
+        const saved = db.queries.find(q => q.table === "reva_booking_state" && q.action === "upsert")?.value as { state: string; context: { reschedule_appointment_id: string } } | undefined;
+        assert.equal(saved?.state, "show_slots");
+        assert.equal(saved?.context.reschedule_appointment_id, "future");
+        assert.match(replies.at(-1) ?? "", /choose a new date/);
+      }
       const updates = db.queries.filter(q => q.table === "reva_appointments" && q.action === "update");
       assert.equal(updates.length, scenario === "ok" ? 1 : 0);
       if (scenario === "ok") assert.equal(updates[0].filters.id, "future");
