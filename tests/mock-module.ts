@@ -31,10 +31,11 @@ export function mockDatabase(respond: (query: Query) => unknown) {
     const record: Query = { table, action: "select", filters: {} };
     queries.push(record);
     const query: Record<string, unknown> = {};
-    for (const method of ["select", "eq", "in", "is", "lte", "gte", "not", "limit", "order", "insert", "update", "upsert"]) {
+    for (const method of ["select", "eq", "in", "is", "or", "lte", "gte", "not", "limit", "order", "insert", "update", "upsert"]) {
       query[method] = (key: string | unknown, value: unknown) => {
         if (["insert", "update", "upsert"].includes(method)) { record.action = method; record.value = key; }
         if (["eq", "in", "is"].includes(method)) record.filters[String(key)] = value;
+        if (method === "or") record.filters.or = key;
         return query;
       };
     }

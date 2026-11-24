@@ -83,5 +83,7 @@ test("cancel only claims a cancellation when a real appointment was cancelled", 
     const updates = idle.db.queries.filter(q => q.table === "reva_appointments" && q.action === "update");
     assert.equal(updates.length, upcoming ? 1 : 0);
     assert.match(idle.replies.at(-1), upcoming ? /has been cancelled/ : /couldn't find/);
+    const query = idle.db.queries.find(q => q.table === "reva_appointments" && q.action === "select");
+    assert.match(query.filters.or, /^appointment_date.gt.\d{4}-\d{2}-\d{2},and\(appointment_date.eq.\d{4}-\d{2}-\d{2},appointment_time.gte.\d{2}:\d{2}:\d{2}\)$/);
   }
 });

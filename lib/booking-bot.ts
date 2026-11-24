@@ -427,13 +427,14 @@ async function findUpcomingAppointment(
     .maybeSingle();
   if (!patient) return null;
 
+  const now = new Date().toISOString();
   const { data } = await supabase
     .from("reva_appointments")
     .select("id")
     .eq("clinic_id", clinicId)
     .eq("patient_id", patient.id)
     .in("status", ["Confirmed", "Pending"])
-    .gte("appointment_date", today())
+    .or(`appointment_date.gt.${now.slice(0, 10)},and(appointment_date.eq.${now.slice(0, 10)},appointment_time.gte.${now.slice(11, 19)})`)
     .order("appointment_date")
     .order("appointment_time")
     .limit(1)
