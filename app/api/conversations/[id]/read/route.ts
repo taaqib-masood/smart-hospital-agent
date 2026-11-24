@@ -8,10 +8,12 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
   const access = await getClinicAccess(supabase);
   if (!access) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const { error } = await supabase.from("reva_conversations")
+  const { data, error } = await supabase.from("reva_conversations")
     .update({ unread_count: 0 })
     .eq("id", id)
-    .eq("clinic_id", access.clinicId);
+    .eq("clinic_id", access.clinicId)
+    .select("id");
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (!data?.length) return NextResponse.json({ error: "Not found" }, { status: 404 });
   return NextResponse.json({ ok: true });
 }

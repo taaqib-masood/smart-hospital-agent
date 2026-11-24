@@ -20,7 +20,12 @@ export async function PATCH(req: NextRequest) {
   if (!access) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   if (access.role === "receptionist") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-  const body = await req.json();
+  const body = await req.json().catch(() => null);
+  if (!body || typeof body !== "object" || Array.isArray(body)) return NextResponse.json({ error: "Invalid body" }, { status: 400 });
+  const hours = body.reminder_hours_before;
+  if (hours !== undefined && !(Number.isInteger(hours) && hours >= 1 && hours <= 168)) {
+    return NextResponse.json({ error: "reminder_hours_before must be an integer between 1 and 168" }, { status: 400 });
+  }
   if (body.timezone !== undefined) {
     try {
       if (typeof body.timezone !== "string" || !body.timezone.trim()) throw new Error("Invalid timezone");
