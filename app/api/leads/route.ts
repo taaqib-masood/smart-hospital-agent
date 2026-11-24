@@ -14,7 +14,7 @@ const leadSchema = z.object({
 });
 
 /* ---- Simple in-memory rate limiter (per-IP, sliding window) ---- */
-// shortcut: per-instance Map trusting the first X-Forwarded-For hop (set by Vercel); move to shared storage (Upstash/Postgres) if deployed off Vercel or abused across instances.
+// shortcut: non-Vercel requests share one per-instance bucket; use a trusted proxy and shared storage for higher-volume self-hosting.
 const WINDOW_MS = 60_000; // 1 minute
 const MAX_REQUESTS = 5; // submissions per window
 const hits = new Map<string, { count: number; resetAt: number }>();
@@ -39,6 +39,7 @@ function isRateLimited(ip: string): boolean {
 }
 
 function getClientIp(req: Request): string {
+  if (process.env.VERCEL !== "1") return "unknown";
   const fwd = req.headers.get("x-forwarded-for");
   if (fwd) return fwd.split(",")[0].trim();
   return req.headers.get("x-real-ip") ?? "unknown";
