@@ -38,6 +38,20 @@ test("clinic PATCH preserves its allowlist and validates reminder hours and body
   assert.ok(writes.every(q => q.filters.id === "clinic"));
 });
 
+test("clinic PATCH accepts valid reminder intervals", async () => {
+  const db = mockDatabase(() => ({ data: {} }));
+  const { PATCH } = loadModule("app/api/clinic/route.ts", {
+    "next/server": { NextResponse: { json } },
+    "@/lib/supabase/server": { createClient: async () => db },
+    "@/lib/auth": { getClinicAccess: async () => access },
+  });
+  for (const reminder_hours_before of [1, 24, 168]) {
+    const result = await PATCH({ json: async () => ({ reminder_hours_before }) }) as { status: number };
+    assert.equal(result.status, 200);
+  }
+  assert.deepEqual(db.queries.filter(q => q.action === "update").map(q => q.value), [1, 24, 168].map(reminder_hours_before => ({ reminder_hours_before })));
+});
+
 test("mark-as-read is scoped and returns 404 for absent or foreign conversations", async () => {
   for (const owned of [true, false]) {
     const db = mockDatabase(() => ({ data: owned ? [{ id: "conversation" }] : [] }));
