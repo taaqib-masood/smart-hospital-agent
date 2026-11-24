@@ -77,5 +77,5 @@ test("clinic routing fields cannot be written directly and anon grants are retir
   const migration = readFileSync(new URL("../supabase/migrations/202611180001_lock_clinic_routing_columns.sql", import.meta.url), "utf8");
   assert.match(migration, /revoke insert, update/);
   assert.doesNotMatch(migration, /grant (insert|update) \([^)]*(whatsapp_phone_id|whatsapp_token)/);
-  assert.match(readFileSync(new URL("../supabase/migrations/202611180001_revoke_anon_reva_access.sql", import.meta.url), "utf8"), /revoke all on table/);
+  assert.match(readFileSync(new URL("../supabase/migrations/20261118000200_revoke_anon_reva_access.sql", import.meta.url), "utf8"), /revoke all on table/);
 });
