@@ -99,7 +99,7 @@ export async function handleBotMessage(
   if (matchesKeyword(text, KEYWORDS.cancel)) {
     if (state !== "idle") {
       await saveState(supabase, clinic.id, contactPhone, "idle", {});
-      await reply(clinic, contactPhone, "No problem — the booking was stopped; no appointment was made. Reply BOOK to start again.");
+      await reply(clinic, contactPhone, "The new booking was stopped. Any existing appointment remains scheduled. Reply CANCEL again to cancel it, or BOOK to start again.");
       return;
     }
     const cancelled = await findUpcomingAppointment(supabase, clinic.id, contactPhone);
