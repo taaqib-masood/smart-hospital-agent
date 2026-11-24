@@ -289,7 +289,7 @@ export default function MessagesView({ addToast }: MessagesViewProps) {
   const { locale, t } = usePortalLanguage();
   const { clinic, conversations: realConvos, refresh } = useDashboard();
   const demoMode = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
-  const [contacts, setContacts] = useState<WhatsAppContact[]>(DEFAULT_CONTACTS);
+  const [contacts, setContacts] = useState<WhatsAppContact[]>(demoMode ? DEFAULT_CONTACTS : []);
   const [activeContactId, setActiveContactId] = useState<string>("c1");
   const [takenOverIds, setTakenOverIds] = useState<Record<string, boolean>>({});
   const [search, setSearch] = useState("");
@@ -308,7 +308,7 @@ export default function MessagesView({ addToast }: MessagesViewProps) {
   const activeContact = contacts.find((c) => c.id === activeContactId) || contacts[0];
   const serviceWindow = demoMode
     ? { isOpen: true, remainingSeconds: 0, openedAt: null, closesAt: null }
-    : getWhatsAppWindow(activeContact.lastInboundAt);
+    : getWhatsAppWindow(activeContact?.lastInboundAt);
 
   const formatWindowRemaining = (remainingSeconds: number) => {
     const hours = Math.floor(remainingSeconds / 3600);
@@ -317,7 +317,7 @@ export default function MessagesView({ addToast }: MessagesViewProps) {
   };
 
   useEffect(() => {
-    if (!realConvos.length) return;
+    if (demoMode && !realConvos.length) return;
     const mapped = realConvos.map((conversation) => {
       const name = conversation.contact_name || conversation.contact_phone;
       return {
@@ -341,8 +341,8 @@ export default function MessagesView({ addToast }: MessagesViewProps) {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setContacts(mapped);
     setTakenOverIds(Object.fromEntries(realConvos.map(conversation => [conversation.id, !conversation.is_bot_active])));
-    setActiveContactId(current => mapped.some(contact => contact.id === current) ? current : mapped[0].id);
-  }, [realConvos]);
+    setActiveContactId(current => mapped.some(contact => contact.id === current) ? current : mapped[0]?.id ?? "");
+  }, [realConvos, demoMode]);
 
   useEffect(() => {
     if (demoMode) return;
@@ -534,6 +534,8 @@ export default function MessagesView({ addToast }: MessagesViewProps) {
     setPlayingVoiceId(playingVoiceId === id ? null : id);
   };
 
+  if (!activeContact) return <p className="p-6 text-sm text-slate-500">No conversations yet.</p>;
+
   return (
     <div className="flex h-[calc(100vh-140px)] bg-white border border-[#CCD5DF] rounded-2xl overflow-hidden shadow-xs">
       {/* ── LEFT PANEL: WhatsApp Chat List (340px) ─────────────────────────────────── */}
@@ -616,7 +618,7 @@ export default function MessagesView({ addToast }: MessagesViewProps) {
                   setContacts((prev) =>
                     prev.map((item) => (item.id === c.id ? { ...item, unreadCount: 0 } : item))
                   );
-                  if (c._realId) void markConversationRead(c._realId).then(refresh);
+                  if (c._realId) void markConversationRead(c._realId).then(refresh, refresh);
                 }}
                 className={`p-3.5 flex items-start gap-3 cursor-pointer transition-colors relative ${
                   isSelected ? "bg-teal-50/70 border-l-4 border-[#00685f]" : "bg-white hover:bg-slate-50"
